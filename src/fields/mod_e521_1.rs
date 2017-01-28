@@ -170,34 +170,25 @@ impl Mod_e521_1 {
         let m18: i64 = a18 * b;
         let m19: i64 = a19 * b;
 
-        let d0 = (m0 & 0x3fffffffffffff) + ((m1 & 0x07ffffff) << 27) + cin;
+        let d0 = m0 + ((m1 & 0x07ffffff) << 27) + cin;
         let c0 = d0 >> 54;
-        let d1 = (m1 >> 27) + (m2 & 0x3fffffffffffff) +
-                 ((m3 & 0x07ffffff) << 27) + c0;
+        let d1 = (m1 >> 27) + m2 + ((m3 & 0x07ffffff) << 27) + c0;
         let c1 = d1 >> 54;
-        let d2 = (m3 >> 27) + (m4 & 0x3fffffffffffff) +
-                 ((m5 & 0x07ffffff) << 27) + c1;
+        let d2 = (m3 >> 27) + m4 + ((m5 & 0x07ffffff) << 27) + c1;
         let c2 = d2 >> 54;
-        let d3 = (m5 >> 27) + (m6 & 0x3fffffffffffff) +
-                 ((m7 & 0x07ffffff) << 27) + c2;
+        let d3 = (m5 >> 27) + m6 + ((m7 & 0x07ffffff) << 27) + c2;
         let c3 = d3 >> 54;
-        let d4 = (m7 >> 27) + (m8 & 0x3fffffffffffff) +
-                 ((m9 & 0x07ffffff) << 27) + c3;
+        let d4 = (m7 >> 27) + m8 + ((m9 & 0x07ffffff) << 27) + c3;
         let c4 = d4 >> 54;
-        let d5 = (m9 >> 27) + (m10 & 0x3fffffffffffff) +
-                 ((m11 & 0x07ffffff) << 27) + c4;
+        let d5 = (m9 >> 27) + m10 + ((m11 & 0x07ffffff) << 27) + c4;
         let c5 = d5 >> 54;
-        let d6 = (m11 >> 27) + (m12 & 0x3fffffffffffff) +
-                 ((m13 & 0x07ffffff) << 27) + c5;
+        let d6 = (m11 >> 27) + m12 + ((m13 & 0x07ffffff) << 27) + c5;
         let c6 = d5 >> 54;
-        let d7 = (m13 >> 27) + (m14 & 0x3fffffffffffff) +
-                 ((m15 & 0x07ffffff) << 27) + c6;
+        let d7 = (m13 >> 27) + m14 + ((m15 & 0x07ffffff) << 27) + c6;
         let c7 = d6 >> 54;
-        let d8 = (m15 >> 27) + (m16 & 0x3fffffffffffff) +
-                 ((m17 & 0x07ffffff) << 27) + c7;
+        let d8 = (m15 >> 27) + m16 + ((m17 & 0x07ffffff) << 27) + c7;
         let c8 = d7 >> 54;
-        let d9 = (m17 >> 27) + (m18 & 0x3fffffffffffff) +
-                 ((m19 & 0x07ffffff) << 27) + c8;
+        let d9 = (m17 >> 27) + m18 + ((m19 & 0x07ffffff) << 27) + c8;
 
         out[0] = (d0 & 0x07ffffff) as u32;
         out[1] = ((d0 >> 27) & 0x07ffffff) as u32;
@@ -456,47 +447,27 @@ impl<'a> Neg for &'a Mod_e521_1 {
 
 impl<'b> AddAssign<&'b Mod_e521_1> for Mod_e521_1 {
     fn add_assign(&mut self, rhs: &'b Mod_e521_1) {
-        let a0: i64 = (self[0] & 0x07ffffff) as i64 |
-                       ((self[1] & 0x07ffffff) as i64) << 27;
-        let a1: i64 = (self[2] & 0x07ffffff) as i64 |
-                       ((self[3] & 0x07ffffff) as i64) << 27;
-        let a2: i64 = (self[4] & 0x07ffffff) as i64 |
-                       ((self[5] & 0x07ffffff) as i64) << 27;
-        let a3: i64 = (self[6] & 0x07ffffff) as i64 |
-                       ((self[7] & 0x07ffffff) as i64) << 27;
-        let a4: i64 = (self[8] & 0x07ffffff) as i64 |
-                       ((self[9] & 0x07ffffff) as i64) << 27;
-        let a5: i64 = (self[10] & 0x07ffffff) as i64 |
-                       ((self[11] & 0x07ffffff) as i64) << 27;
-        let a6: i64 = (self[12] & 0x07ffffff) as i64 |
-                       ((self[13] & 0x07ffffff) as i64) << 27;
-        let a7: i64 = (self[14] & 0x07ffffff) as i64 |
-                       ((self[15] & 0x07ffffff) as i64) << 27;
-        let a8: i64 = (self[16] & 0x07ffffff) as i64 |
-                       ((self[17] & 0x07ffffff) as i64) << 27;
-        let a9: i64 = (self[18] & 0x07ffffff) as i64 |
-                       ((self[19] & 0x000000ff) as i64) << 27;
+        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
+        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
+        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
+        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
+        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
+        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
+        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
+        let a7: i64 = self[14] as i64 | (self[15] as i64) << 27;
+        let a8: i64 = self[16] as i64 | (self[17] as i64) << 27;
+        let a9: i64 = self[18] as i64 | ((self[19] & 0x000000ff) as i64) << 27;
 
-        let b0: i64 = (rhs[0] & 0x07ffffff) as i64 |
-                       ((rhs[1] & 0x07ffffff) as i64) << 27;
-        let b1: i64 = (rhs[2] & 0x07ffffff) as i64 |
-                       ((rhs[3] & 0x07ffffff) as i64) << 27;
-        let b2: i64 = (rhs[4] & 0x07ffffff) as i64 |
-                       ((rhs[5] & 0x07ffffff) as i64) << 27;
-        let b3: i64 = (rhs[6] & 0x07ffffff) as i64 |
-                       ((rhs[7] & 0x07ffffff) as i64) << 27;
-        let b4: i64 = (rhs[8] & 0x07ffffff) as i64 |
-                       ((rhs[9] & 0x07ffffff) as i64) << 27;
-        let b5: i64 = (rhs[10] & 0x07ffffff) as i64 |
-                       ((rhs[11] & 0x07ffffff) as i64) << 27;
-        let b6: i64 = (rhs[12] & 0x07ffffff) as i64 |
-                       ((rhs[13] & 0x07ffffff) as i64) << 27;
-        let b7: i64 = (rhs[14] & 0x07ffffff) as i64 |
-                       ((rhs[15] & 0x07ffffff) as i64) << 27;
-        let b8: i64 = (rhs[16] & 0x07ffffff) as i64 |
-                       ((rhs[17] & 0x07ffffff) as i64) << 27;
-        let b9: i64 = (rhs[18] & 0x07ffffff) as i64 |
-                       ((rhs[19] & 0x000000ff) as i64) << 27;
+        let b0: i64 = rhs[0] as i64 | (rhs[1] as i64) << 27;
+        let b1: i64 = rhs[2] as i64 | (rhs[3] as i64) << 27;
+        let b2: i64 = rhs[4] as i64 | (rhs[5] as i64) << 27;
+        let b3: i64 = rhs[6] as i64 | (rhs[7] as i64) << 27;
+        let b4: i64 = rhs[8] as i64 | (rhs[9] as i64) << 27;
+        let b5: i64 = rhs[10] as i64 | (rhs[11] as i64) << 27;
+        let b6: i64 = rhs[12] as i64 | (rhs[13] as i64) << 27;
+        let b7: i64 = rhs[14] as i64 | (rhs[15] as i64) << 27;
+        let b8: i64 = rhs[16] as i64 | (rhs[17] as i64) << 27;
+        let b9: i64 = rhs[18] as i64 | ((rhs[19] & 0x000000ff) as i64) << 27;
 
         let cin: i64 = self.carry_out() + rhs.carry_out();
         let s0: i64 = a0 + b0 + cin;
@@ -554,47 +525,27 @@ impl<'a, 'b> Add<&'b Mod_e521_1> for &'a Mod_e521_1 {
 
 impl<'b> SubAssign<&'b Mod_e521_1> for Mod_e521_1 {
     fn sub_assign(&mut self, rhs: &'b Mod_e521_1) {
-        let a0: i64 = (self[0] & 0x07ffffff) as i64 |
-                      ((self[1] & 0x07ffffff) as i64) << 27;
-        let a1: i64 = (self[2] & 0x07ffffff) as i64 |
-                      ((self[3] & 0x07ffffff) as i64) << 27;
-        let a2: i64 = (self[4] & 0x07ffffff) as i64 |
-                      ((self[5] & 0x07ffffff) as i64) << 27;
-        let a3: i64 = (self[6] & 0x07ffffff) as i64 |
-                      ((self[7] & 0x07ffffff) as i64) << 27;
-        let a4: i64 = (self[8] & 0x07ffffff) as i64 |
-                      ((self[9] & 0x07ffffff) as i64) << 27;
-        let a5: i64 = (self[10] & 0x07ffffff) as i64 |
-                      ((self[11] & 0x07ffffff) as i64) << 27;
-        let a6: i64 = (self[12] & 0x07ffffff) as i64 |
-                      ((self[13] & 0x07ffffff) as i64) << 27;
-        let a7: i64 = (self[14] & 0x07ffffff) as i64 |
-                      ((self[15] & 0x07ffffff) as i64) << 27;
-        let a8: i64 = (self[16] & 0x07ffffff) as i64 |
-                      ((self[17] & 0x07ffffff) as i64) << 27;
-        let a9: i64 = (self[18] & 0x07ffffff) as i64 |
-                       ((self[19] & 0x000000ff) as i64) << 27;
+        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
+        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
+        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
+        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
+        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
+        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
+        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
+        let a7: i64 = self[14] as i64 | (self[15] as i64) << 27;
+        let a8: i64 = self[16] as i64 | (self[17] as i64) << 27;
+        let a9: i64 = self[18] as i64 | ((self[19] & 0x000000ff) as i64) << 27;
 
-        let b0: i64 = (rhs[0] & 0x07ffffff) as i64 |
-                      ((rhs[1] & 0x07ffffff) as i64) << 27;
-        let b1: i64 = (rhs[2] & 0x07ffffff) as i64 |
-                      ((rhs[3] & 0x07ffffff) as i64) << 27;
-        let b2: i64 = (rhs[4] & 0x07ffffff) as i64 |
-                      ((rhs[5] & 0x07ffffff) as i64) << 27;
-        let b3: i64 = (rhs[6] & 0x07ffffff) as i64 |
-                      ((rhs[7] & 0x07ffffff) as i64) << 27;
-        let b4: i64 = (rhs[8] & 0x07ffffff) as i64 |
-                      ((rhs[9] & 0x07ffffff) as i64) << 27;
-        let b5: i64 = (rhs[10] & 0x07ffffff) as i64 |
-                      ((rhs[11] & 0x07ffffff) as i64) << 27;
-        let b6: i64 = (rhs[12] & 0x07ffffff) as i64 |
-                      ((rhs[13] & 0x07ffffff) as i64) << 27;
-        let b7: i64 = (rhs[14] & 0x07ffffff) as i64 |
-                      ((rhs[15] & 0x07ffffff) as i64) << 27;
-        let b8: i64 = (rhs[16] & 0x07ffffff) as i64 |
-                      ((rhs[17] & 0x07ffffff) as i64) << 27;
-        let b9: i64 = (rhs[18] & 0x07ffffff) as i64 |
-                      ((rhs[19] & 0x000000ff) as i64) << 27;
+        let b0: i64 = rhs[0] as i64 | (rhs[1] as i64) << 27;
+        let b1: i64 = rhs[2] as i64 | (rhs[3] as i64) << 27;
+        let b2: i64 = rhs[4] as i64 | (rhs[5] as i64) << 27;
+        let b3: i64 = rhs[6] as i64 | (rhs[7] as i64) << 27;
+        let b4: i64 = rhs[8] as i64 | (rhs[9] as i64) << 27;
+        let b5: i64 = rhs[10] as i64 | (rhs[11] as i64) << 27;
+        let b6: i64 = rhs[12] as i64 | (rhs[13] as i64) << 27;
+        let b7: i64 = rhs[14] as i64 | (rhs[15] as i64) << 27;
+        let b8: i64 = rhs[16] as i64 | (rhs[17] as i64) << 27;
+        let b9: i64 = rhs[18] as i64 | ((rhs[19] & 0x000000ff) as i64) << 27;
 
         let cin: i64 = self.carry_out() + rhs.carry_out();
         let s0: i64 = a0 - b0 + cin;
