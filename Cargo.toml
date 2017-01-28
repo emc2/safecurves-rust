@@ -1,0 +1,8 @@
+[package]
+
+name = "safecurves-rust"
+version = "0.0.0"
+authors = [ "Eric McCorkle <eric@metricspace.net>" ]
+exclude = [
+    ".gitignore"
+]
