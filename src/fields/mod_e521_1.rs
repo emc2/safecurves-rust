@@ -115,7 +115,10 @@ impl Mod_e521_1 {
         are_equal
     }
 
-    fn carry_in(&self) -> i64 {
+    /// Get the carry-in value.  We use the highest carry slot to
+    /// stash the carry-out value of each operation, and feed that
+    /// back into the next one.
+    fn carry_out(&self) -> i64 {
         i64::from((self[19] as i32) >> 8)
     }
 
@@ -124,7 +127,7 @@ impl Mod_e521_1 {
     pub fn small_mult(self, b: i64) -> Mod_e521_1 {
         let mut out = self.clone();
 
-        let cin: u32 = self[19] >> 8;
+        let cin: i64 = self.carry_out();
         let a0: i64 = self[0] as i64;
         let a1: i64 = self[1] as i64;
         let a2: i64 = self[2] as i64;
@@ -167,118 +170,69 @@ impl Mod_e521_1 {
         let m18: i64 = a18 * b;
         let m19: i64 = a19 * b;
 
-        let p0: u32 = (m0 & 0x07ffffff) as u32;
-        let p1: u32 = (m1 & 0x07ffffff) as u32;
-        let p2: u32 = (m2 & 0x07ffffff) as u32;
-        let p3: u32 = (m3 & 0x07ffffff) as u32;
-        let p4: u32 = (m4 & 0x07ffffff) as u32;
-        let p5: u32 = (m5 & 0x07ffffff) as u32;
-        let p6: u32 = (m6 & 0x07ffffff) as u32;
-        let p7: u32 = (m7 & 0x07ffffff) as u32;
-        let p8: u32 = (m8 & 0x07ffffff) as u32;
-        let p9: u32 = (m9 & 0x07ffffff) as u32;
-        let p10: u32 = (m10 & 0x07ffffff) as u32;
-        let p11: u32 = (m11 & 0x07ffffff) as u32;
-        let p12: u32 = (m12 & 0x07ffffff) as u32;
-        let p13: u32 = (m13 & 0x07ffffff) as u32;
-        let p14: u32 = (m14 & 0x07ffffff) as u32;
-        let p15: u32 = (m15 & 0x07ffffff) as u32;
-        let p16: u32 = (m16 & 0x07ffffff) as u32;
-        let p17: u32 = (m17 & 0x07ffffff) as u32;
-        let p18: u32 = (m18 & 0x07ffffff) as u32;
-        let p19: u32 = (m19 & 0x07ffffff) as u32;
+        let d0 = (m0 & 0x3fffffffffffff) + ((m1 & 0x07ffffff) << 27) + cin;
+        let c0 = d0 >> 54;
+        let d1 = (m1 >> 27) + (m2 & 0x3fffffffffffff) +
+                 ((m3 & 0x07ffffff) << 27) + c0;
+        let c1 = d1 >> 54;
+        let d2 = (m3 >> 27) + (m4 & 0x3fffffffffffff) +
+                 ((m5 & 0x07ffffff) << 27) + c1;
+        let c2 = d2 >> 54;
+        let d3 = (m5 >> 27) + (m6 & 0x3fffffffffffff) +
+                 ((m7 & 0x07ffffff) << 27) + c2;
+        let c3 = d3 >> 54;
+        let d4 = (m7 >> 27) + (m8 & 0x3fffffffffffff) +
+                 ((m9 & 0x07ffffff) << 27) + c3;
+        let c4 = d4 >> 54;
+        let d5 = (m9 >> 27) + (m10 & 0x3fffffffffffff) +
+                 ((m11 & 0x07ffffff) << 27) + c4;
+        let c5 = d5 >> 54;
+        let d6 = (m11 >> 27) + (m12 & 0x3fffffffffffff) +
+                 ((m13 & 0x07ffffff) << 27) + c5;
+        let c6 = d5 >> 54;
+        let d7 = (m13 >> 27) + (m14 & 0x3fffffffffffff) +
+                 ((m15 & 0x07ffffff) << 27) + c6;
+        let c7 = d6 >> 54;
+        let d8 = (m15 >> 27) + (m16 & 0x3fffffffffffff) +
+                 ((m17 & 0x07ffffff) << 27) + c7;
+        let c8 = d7 >> 54;
+        let d9 = (m17 >> 27) + (m18 & 0x3fffffffffffff) +
+                 ((m19 & 0x07ffffff) << 27) + c8;
 
-        let o0: u32 = (m0 >> 27) as u32;
-        let o1: u32 = (m1 >> 27) as u32;
-        let o2: u32 = (m2 >> 27) as u32;
-        let o3: u32 = (m3 >> 27) as u32;
-        let o4: u32 = (m4 >> 27) as u32;
-        let o5: u32 = (m5 >> 27) as u32;
-        let o6: u32 = (m6 >> 27) as u32;
-        let o7: u32 = (m7 >> 27) as u32;
-        let o8: u32 = (m8 >> 27) as u32;
-        let o9: u32 = (m9 >> 27) as u32;
-        let o10: u32 = (m10 >> 27) as u32;
-        let o11: u32 = (m11 >> 27) as u32;
-        let o12: u32 = (m12 >> 27) as u32;
-        let o13: u32 = (m13 >> 27) as u32;
-        let o14: u32 = (m14 >> 27) as u32;
-        let o15: u32 = (m15 >> 27) as u32;
-        let o16: u32 = (m16 >> 27) as u32;
-        let o17: u32 = (m17 >> 27) as u32;
-        let o18: u32 = (m18 >> 27) as u32;
-
-        let d0: u32 = p0 + cin;
-        let c0: u32 = d0 >> 27;
-        let d1: u32 = p1 + c0 + o0;
-        let c1: u32 = d1 >> 27;
-        let d2: u32 = p2 + c1 + o1;
-        let c2: u32 = d2 >> 27;
-        let d3: u32 = p3 + c2 + o2;
-        let c3: u32 = d3 >> 27;
-        let d4: u32 = p4 + c3 + o3;
-        let c4: u32 = d4 >> 27;
-        let d5: u32 = p5 + c4 + o4;
-        let c5: u32 = d5 >> 27;
-        let d6: u32 = p6 + c5 + o5;
-        let c6: u32 = d6 >> 27;
-        let d7: u32 = p7 + c6 + o6;
-        let c7: u32 = d7 >> 27;
-        let d8: u32 = p8 + c7 + o7;
-        let c8: u32 = d8 >> 27;
-        let d9: u32 = p9 + c8 + o8;
-        let c9: u32 = d9 >> 27;
-        let d10: u32 = p10 + c9 + o9;
-        let c10: u32 = d10 >> 27;
-        let d11: u32 = p11 + c10 + o10;
-        let c11: u32 = d11 >> 27;
-        let d12: u32 = p12 + c11 + o11;
-        let c12: u32 = d12 >> 27;
-        let d13: u32 = p13 + c12 + o12;
-        let c13: u32 = d13 >> 27;
-        let d14: u32 = p14 + c13 + o13;
-        let c14: u32 = d14 >> 27;
-        let d15: u32 = p15 + c14 + o14;
-        let c15: u32 = d15 >> 27;
-        let d16: u32 = p16 + c15 + o15;
-        let c16: u32 = d16 >> 27;
-        let d17: u32 = p17 + c16 + o16;
-        let c17: u32 = d17 >> 27;
-        let d18: u32 = p18 + c17 + o17;
-        let c18: u32 = d18 >> 27;
-        let d19: u32 = p19 + c18 + o18;
-
-        out[0] = d0 & 0x07ffffff;
-        out[1] = d1 & 0x07ffffff;
-        out[2] = d2 & 0x07ffffff;
-        out[3] = d3 & 0x07ffffff;
-        out[4] = d4 & 0x07ffffff;
-        out[5] = d5 & 0x07ffffff;
-        out[6] = d6 & 0x07ffffff;
-        out[7] = d7 & 0x07ffffff;
-        out[8] = d8 & 0x07ffffff;
-        out[9] = d9 & 0x07ffffff;
-        out[10] = d10 & 0x07ffffff;
-        out[11] = d11 & 0x07ffffff;
-        out[12] = d12 & 0x07ffffff;
-        out[13] = d13 & 0x07ffffff;
-        out[14] = d14 & 0x07ffffff;
-        out[15] = d15 & 0x07ffffff;
-        out[16] = d16 & 0x07ffffff;
-        out[17] = d17 & 0x07ffffff;
-        out[18] = d18 & 0x07ffffff;
-        out[19] = d19;
+        out[0] = (d0 & 0x07ffffff) as u32;
+        out[1] = ((d0 >> 27) & 0x07ffffff) as u32;
+        out[2] = (d1 & 0x07ffffff) as u32;
+        out[3] = ((d1 >> 27) & 0x07ffffff) as u32;
+        out[4] = (d2 & 0x07ffffff) as u32;
+        out[5] = ((d2 >> 27) & 0x07ffffff) as u32;
+        out[6] = (d3 & 0x07ffffff) as u32;
+        out[7] = ((d3 >> 27) & 0x07ffffff) as u32;
+        out[8] = (d4 & 0x07ffffff) as u32;
+        out[9] = ((d4 >> 27) & 0x07ffffff) as u32;
+        out[10] = (d5 & 0x07ffffff) as u32;
+        out[11] = ((d5 >> 27) & 0x07ffffff) as u32;
+        out[12] = (d6 & 0x07ffffff) as u32;
+        out[13] = ((d6 >> 27) & 0x07ffffff) as u32;
+        out[14] = (d7 & 0x07ffffff) as u32;
+        out[15] = ((d7 >> 27) & 0x07ffffff) as u32;
+        out[16] = (d8 & 0x07ffffff) as u32;
+        out[17] = ((d8 >> 27) & 0x07ffffff) as u32;
+        out[18] = (d9 & 0x07ffffff) as u32;
+        out[19] = ((d9 >> 27) & 0x07ffffff) as u32;
 
         out
     }
 
     /// Normalize the representation, resulting in the internal digits
     /// holding a value that is truly less than 2^521 - 1.
+    ///
+    /// This can be done n mod (2^m - c) using a single add and small
+    /// multiply as follows: we can detect overflow by doing
+    /// carry_out(n + c), thus, we can normalize the number by doing
+    /// n - (carry_out(n + c) * (2^m - c))
     pub fn normalize(&mut self) {
-        let mut plusone = self.clone();
-        plusone += &ONE;
-        let carry: i32 = (plusone[19] >> 8) as i32;
-        let offset = MODULUS.small_mult(i64::from(carry));
+        let plusone = &(self.clone()) + &ONE;
+        let offset = MODULUS.small_mult(plusone.carry_out());
         *self -= &offset;
     }
 
@@ -544,7 +498,7 @@ impl<'b> AddAssign<&'b Mod_e521_1> for Mod_e521_1 {
         let b9: i64 = (rhs[18] & 0x07ffffff) as i64 |
                        ((rhs[19] & 0x000000ff) as i64) << 27;
 
-        let cin: i64 = self.carry_in() + rhs.carry_in();
+        let cin: i64 = self.carry_out() + rhs.carry_out();
         let s0: i64 = a0 + b0 + cin;
         let c0: i64 = s0 >> 54;
         let s1: i64 = a1 + b1 + c0;
@@ -642,7 +596,7 @@ impl<'b> SubAssign<&'b Mod_e521_1> for Mod_e521_1 {
         let b9: i64 = (rhs[18] & 0x07ffffff) as i64 |
                       ((rhs[19] & 0x000000ff) as i64) << 27;
 
-        let cin: i64 = self.carry_in() + rhs.carry_in();
+        let cin: i64 = self.carry_out() + rhs.carry_out();
         let s0: i64 = a0 - b0 + cin;
         let c0: i64 = s0 >> 54;
         let s1: i64 = a1 - b1 + c0;
