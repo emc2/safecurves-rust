@@ -58,12 +58,19 @@ pub trait PrimeField {
     /// Get the representation of the modulus.
     fn modulus() -> Self;
 
+    /// In-place square.
     fn square(&mut self);
+
+    /// Functional square.
     fn squared(&self) -> Self;
+
+    /// In-place invert.
     fn invert(&mut self);
+
+    /// Functional invert.
     fn inverted(&self) -> Self;
 
     /// Multiply by a small number (an i64 that really contains an
     /// i32-representable value).
-    fn small_mult(self, b: i64) -> Self;
+    fn small_mult(self, b: i32) -> Self;
 }
