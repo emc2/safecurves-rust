@@ -115,7 +115,7 @@ impl Mod_e521_1 {
     /// n - (carry_out(n + c) * (2^m - c))
     pub fn normalize(&mut self) {
         let plusone = &(self.clone()) + &ONE;
-        let offset = MODULUS.small_mult(plusone.carry_out() as i32);
+        let offset = MODULUS.small_mul(plusone.carry_out() as i32);
         *self -= &offset;
     }
 
@@ -1235,7 +1235,7 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
         let h8_0 = ((d17 & 0x003fffffffffffff) >> 35) |
                    ((d18 & 0x00000007ffffffff) << 19);
         let h9_0 = ((d18 & 0x003fffffffffffff) >> 35) |
-                   ((d19 & 0x000000000003ffff) << 19);
+                   (d19 << 19);
 
         // Normally, we multiply h by c, but since c = 1 here, we skip.
 
@@ -1314,6 +1314,8 @@ impl PrimeField for Mod_e521_1 {
     }
 
     fn square(&mut self) {
+        println!("square {:?}", self);
+
         let a0: i64 = self[0] as i64;
         let a1: i64 = self[1] as i64;
         let a2: i64 = self[2] as i64;
@@ -2017,7 +2019,7 @@ impl PrimeField for Mod_e521_1 {
         let h8_0 = ((d17 & 0x003fffffffffffff) >> 35) |
                    ((d18 & 0x00000007ffffffff) << 19);
         let h9_0 = ((d18 & 0x003fffffffffffff) >> 35) |
-                   ((d19 & 0x000000000003ffff) << 19);
+                   (d19 << 19);
 
         // Normally, we multiply h by c, but since c = 1 here, we skip.
 
@@ -2065,6 +2067,8 @@ impl PrimeField for Mod_e521_1 {
         self[17] = ((s8_0 >> 27) & 0x07ffffff) as u32;
         self[18] = (s9_0 & 0x07ffffff) as u32;
         self[19] = (s9_0 >> 27) as u32;
+
+        println!("result {:?}", self);
     }
 
     fn squared(&self) -> Self {
@@ -2096,10 +2100,137 @@ impl PrimeField for Mod_e521_1 {
         out
     }
 
-    fn small_mult(self, _b: i32) -> Mod_e521_1 {
-        let mut out = self.clone();
-        let b: i64 = _b as i64;
+    fn small_add_assign(&mut self, rhs: i32) {
+        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
+        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
+        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
+        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
+        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
+        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
+        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
+        let a7: i64 = self[14] as i64 | (self[15] as i64) << 27;
+        let a8: i64 = self[16] as i64 | (self[17] as i64) << 27;
+        let a9: i64 = self[18] as i64 | ((self[19] & 0x000000ff) as i64) << 27;
 
+        let b: i64 = i64::from(rhs);
+
+        let cin: i64 = self.carry_out();
+        let s0: i64 = a0 + b + cin;
+        let c0: i64 = s0 >> 54;
+        let s1: i64 = a1 + c0;
+        let c1: i64 = s1 >> 54;
+        let s2: i64 = a2 + c1;
+        let c2: i64 = s2 >> 54;
+        let s3: i64 = a3 + c2;
+        let c3: i64 = s3 >> 54;
+        let s4: i64 = a4 + c3;
+        let c4: i64 = s4 >> 54;
+        let s5: i64 = a5 + c4;
+        let c5: i64 = s5 >> 54;
+        let s6: i64 = a6 + c5;
+        let c6: i64 = s6 >> 54;
+        let s7: i64 = a7 + c6;
+        let c7: i64 = s7 >> 54;
+        let s8: i64 = a8 + c7;
+        let c8: i64 = s8 >> 54;
+        let s9: i64 = a9 + c8;
+
+        self[0] = (s0 & 0x07ffffff) as u32;
+        self[1] = ((s0 >> 27) & 0x07ffffff) as u32;
+        self[2] = (s1 & 0x07ffffff) as u32;
+        self[3] = ((s1 >> 27) & 0x07ffffff) as u32;
+        self[4] = (s2 & 0x07ffffff) as u32;
+        self[5] = ((s2 >> 27) & 0x07ffffff) as u32;
+        self[6] = (s3 & 0x07ffffff) as u32;
+        self[7] = ((s3 >> 27) & 0x07ffffff) as u32;
+        self[8] = (s4 & 0x07ffffff) as u32;
+        self[9] = ((s4 >> 27) & 0x07ffffff) as u32;
+        self[10] = (s5 & 0x07ffffff) as u32;
+        self[11] = ((s5 >> 27) & 0x07ffffff) as u32;
+        self[12] = (s6 & 0x07ffffff) as u32;
+        self[13] = ((s6 >> 27) & 0x07ffffff) as u32;
+        self[14] = (s7 & 0x07ffffff) as u32;
+        self[15] = ((s7 >> 27) & 0x07ffffff) as u32;
+        self[16] = (s8 & 0x07ffffff) as u32;
+        self[17] = ((s8 >> 27) & 0x07ffffff) as u32;
+        self[18] = (s9 & 0x07ffffff) as u32;
+        self[19] = (s9 >> 27) as u32;
+    }
+
+    fn small_add(&self, rhs: i32) -> Mod_e521_1 {
+        let mut out = self.clone();
+
+        out.small_add_assign(rhs);
+
+        out
+    }
+
+    fn small_sub_assign(&mut self, rhs: i32) {
+        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
+        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
+        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
+        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
+        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
+        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
+        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
+        let a7: i64 = self[14] as i64 | (self[15] as i64) << 27;
+        let a8: i64 = self[16] as i64 | (self[17] as i64) << 27;
+        let a9: i64 = self[18] as i64 | ((self[19] & 0x000000ff) as i64) << 27;
+
+        let b: i64 = i64::from(rhs);
+
+        let cin: i64 = self.carry_out();
+        let s0: i64 = a0 - b + cin;
+        let c0: i64 = s0 >> 54;
+        let s1: i64 = a1 + c0;
+        let c1: i64 = s1 >> 54;
+        let s2: i64 = a2 + c1;
+        let c2: i64 = s2 >> 54;
+        let s3: i64 = a3 + c2;
+        let c3: i64 = s3 >> 54;
+        let s4: i64 = a4 + c3;
+        let c4: i64 = s4 >> 54;
+        let s5: i64 = a5 + c4;
+        let c5: i64 = s5 >> 54;
+        let s6: i64 = a6 + c5;
+        let c6: i64 = s6 >> 54;
+        let s7: i64 = a7 + c6;
+        let c7: i64 = s7 >> 54;
+        let s8: i64 = a8 + c7;
+        let c8: i64 = s8 >> 54;
+        let s9: i64 = a9 + c8;
+
+        self[0] = (s0 & 0x07ffffff) as u32;
+        self[1] = ((s0 >> 27) & 0x07ffffff) as u32;
+        self[2] = (s1 & 0x07ffffff) as u32;
+        self[3] = ((s1 >> 27) & 0x07ffffff) as u32;
+        self[4] = (s2 & 0x07ffffff) as u32;
+        self[5] = ((s2 >> 27) & 0x07ffffff) as u32;
+        self[6] = (s3 & 0x07ffffff) as u32;
+        self[7] = ((s3 >> 27) & 0x07ffffff) as u32;
+        self[8] = (s4 & 0x07ffffff) as u32;
+        self[9] = ((s4 >> 27) & 0x07ffffff) as u32;
+        self[10] = (s5 & 0x07ffffff) as u32;
+        self[11] = ((s5 >> 27) & 0x07ffffff) as u32;
+        self[12] = (s6 & 0x07ffffff) as u32;
+        self[13] = ((s6 >> 27) & 0x07ffffff) as u32;
+        self[14] = (s7 & 0x07ffffff) as u32;
+        self[15] = ((s7 >> 27) & 0x07ffffff) as u32;
+        self[16] = (s8 & 0x07ffffff) as u32;
+        self[17] = ((s8 >> 27) & 0x07ffffff) as u32;
+        self[18] = (s9 & 0x07ffffff) as u32;
+        self[19] = (s9 >> 27) as u32;
+    }
+
+    fn small_sub(&self, rhs: i32) -> Mod_e521_1 {
+        let mut out = self.clone();
+
+        out.small_sub_assign(rhs);
+
+        out
+    }
+
+    fn small_mul_assign(&mut self, rhs: i32) {
         let cin: i64 = self.carry_out();
         let a0: i64 = self[0] as i64;
         let a1: i64 = self[1] as i64;
@@ -2121,6 +2252,8 @@ impl PrimeField for Mod_e521_1 {
         let a17: i64 = self[17] as i64;
         let a18: i64 = self[18] as i64;
         let a19: i64 = self[19] as i64;
+
+        let b: i64 = i64::from(rhs);
 
         let m0: i64 = a0 * b;
         let m1: i64 = a1 * b;
@@ -2161,28 +2294,34 @@ impl PrimeField for Mod_e521_1 {
         let c7 = d6 >> 54;
         let d8 = (m15 >> 27) + m16 + ((m17 & 0x07ffffff) << 27) + c7;
         let c8 = d7 >> 54;
-        let d9 = (m17 >> 27) + m18 + ((m19 & 0x07ffffff) << 27) + c8;
+        let d9 = (m17 >> 27) + m18 + (m19 << 27) + c8;
 
-        out[0] = (d0 & 0x07ffffff) as u32;
-        out[1] = ((d0 >> 27) & 0x07ffffff) as u32;
-        out[2] = (d1 & 0x07ffffff) as u32;
-        out[3] = ((d1 >> 27) & 0x07ffffff) as u32;
-        out[4] = (d2 & 0x07ffffff) as u32;
-        out[5] = ((d2 >> 27) & 0x07ffffff) as u32;
-        out[6] = (d3 & 0x07ffffff) as u32;
-        out[7] = ((d3 >> 27) & 0x07ffffff) as u32;
-        out[8] = (d4 & 0x07ffffff) as u32;
-        out[9] = ((d4 >> 27) & 0x07ffffff) as u32;
-        out[10] = (d5 & 0x07ffffff) as u32;
-        out[11] = ((d5 >> 27) & 0x07ffffff) as u32;
-        out[12] = (d6 & 0x07ffffff) as u32;
-        out[13] = ((d6 >> 27) & 0x07ffffff) as u32;
-        out[14] = (d7 & 0x07ffffff) as u32;
-        out[15] = ((d7 >> 27) & 0x07ffffff) as u32;
-        out[16] = (d8 & 0x07ffffff) as u32;
-        out[17] = ((d8 >> 27) & 0x07ffffff) as u32;
-        out[18] = (d9 & 0x07ffffff) as u32;
-        out[19] = ((d9 >> 27) & 0x07ffffff) as u32;
+        self[0] = (d0 & 0x07ffffff) as u32;
+        self[1] = ((d0 >> 27) & 0x07ffffff) as u32;
+        self[2] = (d1 & 0x07ffffff) as u32;
+        self[3] = ((d1 >> 27) & 0x07ffffff) as u32;
+        self[4] = (d2 & 0x07ffffff) as u32;
+        self[5] = ((d2 >> 27) & 0x07ffffff) as u32;
+        self[6] = (d3 & 0x07ffffff) as u32;
+        self[7] = ((d3 >> 27) & 0x07ffffff) as u32;
+        self[8] = (d4 & 0x07ffffff) as u32;
+        self[9] = ((d4 >> 27) & 0x07ffffff) as u32;
+        self[10] = (d5 & 0x07ffffff) as u32;
+        self[11] = ((d5 >> 27) & 0x07ffffff) as u32;
+        self[12] = (d6 & 0x07ffffff) as u32;
+        self[13] = ((d6 >> 27) & 0x07ffffff) as u32;
+        self[14] = (d7 & 0x07ffffff) as u32;
+        self[15] = ((d7 >> 27) & 0x07ffffff) as u32;
+        self[16] = (d8 & 0x07ffffff) as u32;
+        self[17] = ((d8 >> 27) & 0x07ffffff) as u32;
+        self[18] = (d9 & 0x07ffffff) as u32;
+        self[19] = (d9 >> 27) as u32;
+    }
+
+    fn small_mul(&self, b: i32) -> Mod_e521_1 {
+        let mut out = self.clone();
+
+        out.small_mul_assign(b);
 
         out
     }
@@ -3415,6 +3554,626 @@ mod tests {
 
         for i in 0..6 {
             assert!(M_FOUR.normalize_eq(l1_mfours[i]));
+        }
+    }
+
+    #[test]
+    fn test_small_add() {
+        let l1_zeros: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_add(0),
+                                               &mut M_ONE.small_add(1),
+                                               &mut ONE.small_add(-1),
+                                               &mut M_TWO.small_add(2),
+                                               &mut TWO.small_add(-2) ];
+
+        let l1_ones: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_add(1),
+                                              &mut M_ONE.small_add(2),
+                                              &mut ONE.small_add(0),
+                                              &mut M_TWO.small_add(3),
+                                              &mut TWO.small_add(-1) ];
+
+        let l1_twos: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_add(2),
+                                              &mut ONE.small_add(1),
+                                              &mut M_ONE.small_add(3),
+                                              &mut TWO.small_add(0),
+                                              &mut M_TWO.small_add(4) ];
+
+        let l1_mones: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_add(-1),
+                                               &mut M_ONE.small_add(0),
+                                               &mut ONE.small_add(-2),
+                                               &mut M_TWO.small_add(1),
+                                               &mut TWO.small_add(-3) ];
+
+        let l1_mtwos: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_add(-2),
+                                               &mut M_ONE.small_add(-1),
+                                               &mut ONE.small_add(-3),
+                                               &mut M_TWO.small_add(0),
+                                               &mut TWO.small_add(-4) ];
+
+        for i in 0..5 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..5 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..5 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..5 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..5 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(-1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(-2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(0);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(-1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(2);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(3);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(2);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(1);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(0);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(3);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(4);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(-1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(-2);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(-3);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(0);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(-2);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(-3);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(-4);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(-1);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(0);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_small_sub() {
+        let l1_zeros: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_sub(0),
+                                               &mut M_ONE.small_sub(-1),
+                                               &mut ONE.small_sub(1),
+                                               &mut M_TWO.small_sub(-2),
+                                               &mut TWO.small_sub(2) ];
+
+        let l1_ones: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_sub(-1),
+                                              &mut M_ONE.small_sub(-2),
+                                              &mut ONE.small_sub(0),
+                                              &mut M_TWO.small_sub(-3),
+                                              &mut TWO.small_sub(1) ];
+
+        let l1_twos: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_sub(-2),
+                                              &mut ONE.small_sub(-1),
+                                              &mut M_ONE.small_sub(-3),
+                                              &mut TWO.small_sub(0),
+                                              &mut M_TWO.small_sub(-4) ];
+
+        let l1_mones: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_sub(1),
+                                               &mut M_ONE.small_sub(0),
+                                               &mut ONE.small_sub(2),
+                                               &mut M_TWO.small_sub(-1),
+                                               &mut TWO.small_sub(3) ];
+
+        let l1_mtwos: [&mut Mod_e521_1; 5] = [ &mut ZERO.small_sub(2),
+                                               &mut M_ONE.small_sub(1),
+                                               &mut ONE.small_sub(3),
+                                               &mut M_TWO.small_sub(0),
+                                               &mut TWO.small_sub(4) ];
+
+        for i in 0..5 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..5 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..5 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..5 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..5 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(-1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(-2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(-1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(0);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(-2);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(-3);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(-2);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(-1);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(0);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(-3);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(-4);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(2);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(3);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(0);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(-1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(2);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(3);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(4);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(1);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(0);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_small_mul() {
+
+        let l1_zeros: [&mut Mod_e521_1; 9] = [ &mut ZERO.small_mul(0),
+                                               &mut ONE.small_mul(0),
+                                               &mut TWO.small_mul(0),
+                                               &mut M_ONE.small_mul(0),
+                                               &mut M_TWO.small_mul(0),
+                                               &mut ZERO.small_mul(1),
+                                               &mut ZERO.small_mul(2),
+                                               &mut ZERO.small_mul(-1),
+                                               &mut ZERO.small_mul(-2) ];
+
+        let l1_ones: [&mut Mod_e521_1; 2] = [ &mut ONE.small_mul(1),
+                                              &mut M_ONE.small_mul(-1) ];
+
+        let l1_twos: [&mut Mod_e521_1; 4] = [ &mut ONE.small_mul(2),
+                                              &mut TWO.small_mul(1),
+                                              &mut M_ONE.small_mul(-2),
+                                              &mut M_TWO.small_mul(-1) ];
+
+        let l1_fours: [&mut Mod_e521_1; 2] = [ &mut TWO.small_mul(2),
+                                               &mut M_TWO.small_mul(-2) ];
+
+        let l1_mones: [&mut Mod_e521_1; 2] = [ &mut ONE.small_mul(-1),
+                                               &mut M_ONE.small_mul(1) ];
+
+        let l1_mtwos: [&mut Mod_e521_1; 4] = [ &mut ONE.small_mul(-2),
+                                               &mut TWO.small_mul(-1),
+                                               &mut M_ONE.small_mul(2),
+                                               &mut M_TWO.small_mul(1) ];
+
+        let l1_mfours: [&mut Mod_e521_1; 2] = [ &mut TWO.small_mul(-2),
+                                                &mut M_TWO.small_mul(2) ];
+
+        for i in 0..9 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..2 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..4 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..2 {
+            assert!(FOUR.normalize_eq(l1_fours[i]));
+        }
+
+        for i in 0..2 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..4 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..2 {
+            assert!(M_FOUR.normalize_eq(l1_mfours[i]));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_twos[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_mtwos[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(-1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(-2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(-1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(2);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_twos[i].small_mul(1);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(-2);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_mtwos[i].small_mul(-1);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_twos[i].small_mul(2);
+
+            assert!(FOUR.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mtwos[i].small_mul(-2);
+
+            assert!(FOUR.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(-1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(-2);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_twos[i].small_mul(-1);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(2);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_mtwos[i].small_mul(1);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_twos[i].small_mul(-2);
+
+            assert!(M_FOUR.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mtwos[i].small_mul(2);
+
+            assert!(M_FOUR.normalize_eq(&mut val));
         }
     }
 }

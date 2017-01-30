@@ -70,7 +70,21 @@ pub trait PrimeField {
     /// Functional invert.
     fn inverted(&self) -> Self;
 
-    /// Multiply by a small number (an i64 that really contains an
-    /// i32-representable value).
-    fn small_mult(self, b: i32) -> Self;
+    /// Add an i32 in-place.
+    fn small_add_assign(&mut self, b: i32);
+
+    /// Add an i32.
+    fn small_add(&self, b: i32) -> Self;
+
+    /// Subtract an i32 in-place.
+    fn small_sub_assign(&mut self, b: i32);
+
+    /// Subtract an i32.
+    fn small_sub(&self, b: i32) -> Self;
+
+    /// Multiply in-place by an i32.
+    fn small_mul_assign(&mut self, b: i32);
+
+    /// Multiply by an i32.
+    fn small_mul(&self, b: i32) -> Self;
 }
