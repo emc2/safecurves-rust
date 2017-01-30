@@ -7,6 +7,8 @@ use std::fmt::LowerHex;
 use std::fmt::UpperHex;
 use std::ops::AddAssign;
 use std::ops::Add;
+use std::ops::DivAssign;
+use std::ops::Div;
 use std::ops::MulAssign;
 use std::ops::Mul;
 use std::ops::SubAssign;
@@ -84,24 +86,6 @@ impl UpperHex for Mod_e521_1 {
     }
 }
 
-impl PrimeField for Mod_e521_1 {
-    fn zero() -> Mod_e521_1 {
-        return ZERO;
-    }
-
-    fn one() -> Mod_e521_1 {
-        return ONE;
-    }
-
-    fn m_one() -> Mod_e521_1 {
-        return M_ONE;
-    }
-
-    fn modulus() -> Mod_e521_1 {
-        return MODULUS;
-    }
-}
-
 impl Mod_e521_1 {
     fn normalize_eq(&mut self, other: &mut Mod_e521_1) -> bool {
         let self_bytes =  self.pack();
@@ -120,98 +104,6 @@ impl Mod_e521_1 {
     /// back into the next one.
     fn carry_out(&self) -> i64 {
         i64::from((self[19] as i32) >> 8)
-    }
-
-    /// Multiply by a small number (an i64 that really contains an
-    /// i32-representable value).
-    pub fn small_mult(self, b: i64) -> Mod_e521_1 {
-        let mut out = self.clone();
-
-        let cin: i64 = self.carry_out();
-        let a0: i64 = self[0] as i64;
-        let a1: i64 = self[1] as i64;
-        let a2: i64 = self[2] as i64;
-        let a3: i64 = self[3] as i64;
-        let a4: i64 = self[4] as i64;
-        let a5: i64 = self[5] as i64;
-        let a6: i64 = self[6] as i64;
-        let a7: i64 = self[7] as i64;
-        let a8: i64 = self[8] as i64;
-        let a9: i64 = self[9] as i64;
-        let a10: i64 = self[10] as i64;
-        let a11: i64 = self[11] as i64;
-        let a12: i64 = self[12] as i64;
-        let a13: i64 = self[13] as i64;
-        let a14: i64 = self[14] as i64;
-        let a15: i64 = self[15] as i64;
-        let a16: i64 = self[16] as i64;
-        let a17: i64 = self[17] as i64;
-        let a18: i64 = self[18] as i64;
-        let a19: i64 = self[19] as i64;
-
-        let m0: i64 = a0 * b;
-        let m1: i64 = a1 * b;
-        let m2: i64 = a2 * b;
-        let m3: i64 = a3 * b;
-        let m4: i64 = a4 * b;
-        let m5: i64 = a5 * b;
-        let m6: i64 = a6 * b;
-        let m7: i64 = a7 * b;
-        let m8: i64 = a8 * b;
-        let m9: i64 = a9 * b;
-        let m10: i64 = a10 * b;
-        let m11: i64 = a11 * b;
-        let m12: i64 = a12 * b;
-        let m13: i64 = a13 * b;
-        let m14: i64 = a14 * b;
-        let m15: i64 = a15 * b;
-        let m16: i64 = a16 * b;
-        let m17: i64 = a17 * b;
-        let m18: i64 = a18 * b;
-        let m19: i64 = a19 * b;
-
-        let d0 = m0 + ((m1 & 0x07ffffff) << 27) + cin;
-        let c0 = d0 >> 54;
-        let d1 = (m1 >> 27) + m2 + ((m3 & 0x07ffffff) << 27) + c0;
-        let c1 = d1 >> 54;
-        let d2 = (m3 >> 27) + m4 + ((m5 & 0x07ffffff) << 27) + c1;
-        let c2 = d2 >> 54;
-        let d3 = (m5 >> 27) + m6 + ((m7 & 0x07ffffff) << 27) + c2;
-        let c3 = d3 >> 54;
-        let d4 = (m7 >> 27) + m8 + ((m9 & 0x07ffffff) << 27) + c3;
-        let c4 = d4 >> 54;
-        let d5 = (m9 >> 27) + m10 + ((m11 & 0x07ffffff) << 27) + c4;
-        let c5 = d5 >> 54;
-        let d6 = (m11 >> 27) + m12 + ((m13 & 0x07ffffff) << 27) + c5;
-        let c6 = d5 >> 54;
-        let d7 = (m13 >> 27) + m14 + ((m15 & 0x07ffffff) << 27) + c6;
-        let c7 = d6 >> 54;
-        let d8 = (m15 >> 27) + m16 + ((m17 & 0x07ffffff) << 27) + c7;
-        let c8 = d7 >> 54;
-        let d9 = (m17 >> 27) + m18 + ((m19 & 0x07ffffff) << 27) + c8;
-
-        out[0] = (d0 & 0x07ffffff) as u32;
-        out[1] = ((d0 >> 27) & 0x07ffffff) as u32;
-        out[2] = (d1 & 0x07ffffff) as u32;
-        out[3] = ((d1 >> 27) & 0x07ffffff) as u32;
-        out[4] = (d2 & 0x07ffffff) as u32;
-        out[5] = ((d2 >> 27) & 0x07ffffff) as u32;
-        out[6] = (d3 & 0x07ffffff) as u32;
-        out[7] = ((d3 >> 27) & 0x07ffffff) as u32;
-        out[8] = (d4 & 0x07ffffff) as u32;
-        out[9] = ((d4 >> 27) & 0x07ffffff) as u32;
-        out[10] = (d5 & 0x07ffffff) as u32;
-        out[11] = ((d5 >> 27) & 0x07ffffff) as u32;
-        out[12] = (d6 & 0x07ffffff) as u32;
-        out[13] = ((d6 >> 27) & 0x07ffffff) as u32;
-        out[14] = (d7 & 0x07ffffff) as u32;
-        out[15] = ((d7 >> 27) & 0x07ffffff) as u32;
-        out[16] = (d8 & 0x07ffffff) as u32;
-        out[17] = ((d8 >> 27) & 0x07ffffff) as u32;
-        out[18] = (d9 & 0x07ffffff) as u32;
-        out[19] = ((d9 >> 27) & 0x07ffffff) as u32;
-
-        out
     }
 
     /// Normalize the representation, resulting in the internal digits
@@ -523,6 +415,22 @@ impl<'a, 'b> Add<&'b Mod_e521_1> for &'a Mod_e521_1 {
     }
 }
 
+impl<'b> DivAssign<&'b Mod_e521_1> for Mod_e521_1 {
+    fn div_assign(&mut self, rhs: &'b Mod_e521_1) {
+        *self *= &rhs.inverted();
+    }
+}
+
+impl<'a, 'b> Div<&'b Mod_e521_1> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn div(self, a: &'b Mod_e521_1) -> Mod_e521_1 {
+        let mut out = self.clone();
+        out /= a;
+        out
+    }
+}
+
 impl<'b> SubAssign<&'b Mod_e521_1> for Mod_e521_1 {
     fn sub_assign(&mut self, rhs: &'b Mod_e521_1) {
         let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
@@ -603,7 +511,6 @@ impl<'a, 'b> Sub<&'b Mod_e521_1> for &'a Mod_e521_1 {
 
 impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
     fn mul_assign(&mut self, rhs: &'b Mod_e521_1) {
-        println!("{:?} * {:?}", self, rhs);
         let a0: i64 = self[0] as i64;
         let a1: i64 = self[1] as i64;
         let a2: i64 = self[2] as i64;
@@ -1051,23 +958,18 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
         // Compute the 40-digit combined product using 64-bit operations.
         let d0 = m_0_0 + ((m_0_1 & 0x07ffffff) << 27) +
                  ((m_1_0 & 0x07ffffff) << 27);
-        println!("d0 = {:x}", d0);
         let c0 = d0 >> 54;
-        println!("c0 = {:x}", c0);
         let d1 = (m_0_1 >> 27) + m_0_2 + ((m_0_3 & 0x07ffffff) << 27) +
                  (m_1_0 >> 27) + m_1_1 + ((m_1_2 & 0x07ffffff) << 27) +
                  m_2_0 + ((m_2_1 & 0x07ffffff) << 27) +
                  ((m_3_0 & 0x07ffffff) << 27) + c0;
-        println!("d1 = {:x}", d1);
         let c1 = d1 >> 54;
-        println!("c1 = {:x}", c1);
         let d2 = (m_0_3 >> 27) + m_0_4 + ((m_0_5 & 0x07ffffff) << 27) +
                  (m_1_2 >> 27) + m_1_3 + ((m_1_4 & 0x07ffffff) << 27) +
                  (m_2_1 >> 27) + m_2_2 + ((m_2_3 & 0x07ffffff) << 27) +
                  (m_3_0 >> 27) + m_3_1 + ((m_3_2 & 0x07ffffff) << 27) +
                  m_4_0 + ((m_4_1 & 0x07ffffff) << 27) +
                  ((m_5_0 & 0x07ffffff) << 27) + c1;
-        println!("d2 = {:x}", d2);
         let c2 = d2 >> 54;
         let d3 = (m_0_5 >> 27) + m_0_6 + ((m_0_7 & 0x07ffffff) << 27) +
                  (m_1_4 >> 27) + m_1_5 + ((m_1_6 & 0x07ffffff) << 27) +
@@ -1077,7 +979,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                  (m_5_0 >> 27) + m_5_1 + ((m_5_2 & 0x07ffffff) << 27) +
                  m_6_0 + ((m_6_1 & 0x07ffffff) << 27) +
                  ((m_7_0 & 0x07ffffff) << 27) + c2;
-        println!("d3 = {:x}", d3);
         let c3 = d3 >> 54;
         let d4 = (m_0_7 >> 27) + m_0_8 + ((m_0_9 & 0x07ffffff) << 27) +
                  (m_1_6 >> 27) + m_1_7 + ((m_1_8 & 0x07ffffff) << 27) +
@@ -1089,7 +990,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                  (m_7_0 >> 27) + m_7_1 + ((m_7_2 & 0x07ffffff) << 27) +
                  m_8_0 + ((m_8_1 & 0x07ffffff) << 27) +
                  ((m_9_0 & 0x07ffffff) << 27) + c3;
-        println!("d4 = {:x}", d4);
         let c4 = d4 >> 54;
         let d5 = (m_0_9 >> 27) + m_0_10 + ((m_0_11 & 0x07ffffff) << 27) +
                  (m_1_8 >> 27) + m_1_9 + ((m_1_10 & 0x07ffffff) << 27) +
@@ -1103,7 +1003,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                  (m_9_0 >> 27) + m_9_1 + ((m_9_2 & 0x07ffffff) << 27) +
                  m_10_0 + ((m_10_1 & 0x07ffffff) << 27) +
                  ((m_11_0 & 0x07ffffff) << 27) + c4;
-        println!("d5 = {:x}", d5);
         let c5 = d5 >> 54;
         let d6 = (m_0_11 >> 27) + m_0_12 + ((m_0_13 & 0x07ffffff) << 27) +
                  (m_1_10 >> 27) + m_1_11 + ((m_1_12 & 0x07ffffff) << 27) +
@@ -1119,7 +1018,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                  (m_11_0 >> 27) + m_11_1 + ((m_11_2 & 0x07ffffff) << 27) +
                  m_12_0 + ((m_12_1 & 0x07ffffff) << 27) +
                  ((m_13_0 & 0x07ffffff) << 27) + c5;
-        println!("d6 = {:x}", d6);
         let c6 = d6 >> 54;
         let d7 = (m_0_13 >> 27) + m_0_14 + ((m_0_15 & 0x07ffffff) << 27) +
                  (m_1_12 >> 27) + m_1_13 + ((m_1_14 & 0x07ffffff) << 27) +
@@ -1137,7 +1035,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                  (m_13_0 >> 27) + m_13_1 + ((m_13_2 & 0x07ffffff) << 27) +
                  m_14_0 + ((m_14_1 & 0x07ffffff) << 27) +
                  ((m_15_0 & 0x07ffffff) << 27) + c6;
-        println!("d7 = {:x}", d7);
         let c7 = d7 >> 54;
         let d8 = (m_0_15 >> 27) + m_0_16 + ((m_0_17 & 0x07ffffff) << 27) +
                  (m_1_14 >> 27) + m_1_15 + ((m_1_16 & 0x07ffffff) << 27) +
@@ -1157,7 +1054,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                  (m_15_0 >> 27) + m_15_1 + ((m_15_2 & 0x07ffffff) << 27) +
                  m_16_0 + ((m_16_1 & 0x07ffffff) << 27) +
                  ((m_17_0 & 0x07ffffff) << 27) + c7;
-        println!("d8 = {:x}", d8);
         let c8 = d8 >> 54;
         let d9 = (m_0_17 >> 27) + m_0_18 + ((m_0_19 & 0x07ffffff) << 27) +
                  (m_1_16 >> 27) + m_1_17 + ((m_1_18 & 0x07ffffff) << 27) +
@@ -1179,7 +1075,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                  (m_17_0 >> 27) + m_17_1 + ((m_17_2 & 0x07ffffff) << 27) +
                  m_18_0 + ((m_18_1 & 0x07ffffff) << 27) +
                  ((m_19_0 & 0x07ffffff) << 27) + c8;
-        println!("d9 = {:x}", d9);
         let c9 = d9 >> 54;
         let d10 = (m_0_19 >> 27) +
                   (m_1_18 >> 27) + m_1_19 +
@@ -1201,7 +1096,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                   (m_17_2 >> 27) + m_17_3 + ((m_17_4 & 0x07ffffff) << 27) +
                   (m_18_1 >> 27) + m_18_2 + ((m_18_3 & 0x07ffffff) << 27) +
                   (m_19_0 >> 27) + m_19_1 + ((m_19_2 & 0x07ffffff) << 27) + c9;
-        println!("d10 = {:x}", d10);
         let c10 = d10 >> 54;
         let d11 = (m_2_19 >> 27) +
                   (m_3_18 >> 27) + m_3_19 +
@@ -1221,7 +1115,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                   (m_17_4 >> 27) + m_17_5 + ((m_17_6 & 0x07ffffff) << 27) +
                   (m_18_3 >> 27) + m_18_4 + ((m_18_5 & 0x07ffffff) << 27) +
                   (m_19_2 >> 27) + m_19_3 + ((m_19_4 & 0x07ffffff) << 27) + c10;
-        println!("d11 = {:x}", d11);
         let c11 = d11 >> 54;
         let d12 = (m_4_19 >> 27) +
                   (m_5_18 >> 27) + m_5_19 +
@@ -1239,7 +1132,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                   (m_17_6 >> 27) + m_17_7 + ((m_17_8 & 0x07ffffff) << 27) +
                   (m_18_5 >> 27) + m_18_6 + ((m_18_7 & 0x07ffffff) << 27) +
                   (m_19_4 >> 27) + m_19_5 + ((m_19_6 & 0x07ffffff) << 27) + c11;
-        println!("d12 = {:x}", d12);
         let c12 = d12 >> 54;
         let d13 = (m_6_19 >> 27) +
                   (m_7_18 >> 27) + m_7_19 +
@@ -1255,7 +1147,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                   (m_17_8 >> 27) + m_17_9 + ((m_17_10 & 0x07ffffff) << 27) +
                   (m_18_7 >> 27) + m_18_8 + ((m_18_9 & 0x07ffffff) << 27) +
                   (m_19_6 >> 27) + m_19_7 + ((m_19_8 & 0x07ffffff) << 27) + c12;
-        println!("d13 = {:x}", d13);
         let c13 = d13 >> 54;
         let d14 = (m_8_19 >> 27) +
                   (m_9_18 >> 27) + m_9_19 +
@@ -1270,7 +1161,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                   (m_18_9 >> 27) + m_18_10 + ((m_18_11 & 0x07ffffff) << 27) +
                   (m_19_8 >> 27) + m_19_9 + ((m_19_10 & 0x07ffffff) << 27) +
                   c13;
-        println!("d14 = {:x}", d14);
         let c14 = d14 >> 54;
         let d15 = (m_10_19 >> 27) +
                   (m_11_18 >> 27) + m_11_19 +
@@ -1283,7 +1173,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                   (m_18_11 >> 27) + m_18_12 + ((m_18_13 & 0x07ffffff) << 27) +
                   (m_19_10 >> 27) + m_19_11 + ((m_19_12 & 0x07ffffff) << 27) +
                   c14;
-        println!("d15 = {:x}", d15);
         let c15 = d15 >> 54;
         let d16 = (m_12_19 >> 27) +
                   (m_13_18 >> 27) + m_13_19 +
@@ -1294,7 +1183,6 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                   (m_18_13 >> 27) + m_18_14 + ((m_18_15 & 0x07ffffff) << 27) +
                   (m_19_12 >> 27) + m_19_13 + ((m_19_14 & 0x07ffffff) << 27) +
                   c15;
-        println!("d16 = {:x}", d16);
         let c16 = d16 >> 54;
         let d17 = (m_14_19 >> 27) +
                   (m_15_18 >> 27) + m_15_19 +
@@ -1303,83 +1191,58 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
                   (m_18_15 >> 27) + m_18_16 + ((m_18_17 & 0x07ffffff) << 27) +
                   (m_19_14 >> 27) + m_19_15 + ((m_19_16 & 0x07ffffff) << 27) +
                   c16;
-        println!("d16 = {:x}", d16);
         let c17 = d17 >> 54;
         let d18 = (m_16_19 >> 27) +
                   (m_17_18 >> 27) + m_17_19 +
                   (m_18_17 >> 27) + m_18_18 + ((m_18_19 & 0x07ffffff) << 27) +
                   (m_19_16 >> 27) + m_19_17 + ((m_19_18 & 0x07ffffff) << 27) +
                   c17;
-        println!("d18 = {:x}", d18);
         let c18 = d18 >> 54;
         let d19 = (m_18_19 >> 27) +
                   (m_19_18 >> 27) + m_19_19 + c18;
-        println!("d19 = {:x}", d19);
 
         // Modular reduction by a pseudo-mersenne prime of the form 2^n - c.
 
         // These are the n low-order bits.
         let l0_0 = d0 & 0x003fffffffffffff;
-        println!("l0_0 = {:x}", l0_0);
         let l1_0 = d1 & 0x003fffffffffffff;
-        println!("l1_0 = {:x}", l1_0);
         let l2_0 = d2 & 0x003fffffffffffff;
-        println!("l2_0 = {:x}", l2_0);
         let l3_0 = d3 & 0x003fffffffffffff;
-        println!("l3_0 = {:x}", l3_0);
         let l4_0 = d4 & 0x003fffffffffffff;
-        println!("l4_0 = {:x}", l4_0);
         let l5_0 = d5 & 0x003fffffffffffff;
-        println!("l5_0 = {:x}", l5_0);
         let l6_0 = d6 & 0x003fffffffffffff;
-        println!("l6_0 = {:x}", l6_0);
         let l7_0 = d7 & 0x003fffffffffffff;
-        println!("l7_0 = {:x}", l7_0);
         let l8_0 = d8 & 0x003fffffffffffff;
-        println!("l8_0 = {:x}", l8_0);
         let l9_0 = d9 & 0x00000007ffffffff;
-        println!("l9_0 = {:x}", l9_0);
 
         // Shift the high bits down into another n-bit number.
         let h0_0 = ((d9 & 0x003fffffffffffff) >> 35) |
                    ((d10 & & 0x00000007ffffffff) << 19);
-        println!("h0_0 = {:x}", h0_0);
         let h1_0 = ((d10 & 0x003fffffffffffff) >> 35) |
                    ((d11 & 0x00000007ffffffff) << 19);
-        println!("h1_0 = {:x}", h1_0);
         let h2_0 = ((d11 & 0x003fffffffffffff) >> 35) |
                    ((d12 & 0x00000007ffffffff) << 19);
-        println!("h2_0 = {:x}", h2_0);
         let h3_0 = ((d12 & 0x003fffffffffffff) >> 35) |
                    ((d13 & 0x00000007ffffffff) << 19);
-        println!("h3_0 = {:x}", h3_0);
         let h4_0 = ((d13 & 0x003fffffffffffff) >> 35) |
                    ((d14 & 0x00000007ffffffff) << 19);
-        println!("h4_0 = {:x}", h4_0);
         let h5_0 = ((d14 & 0x003fffffffffffff) >> 35) |
                    ((d15 & 0x00000007ffffffff) << 19);
-        println!("h5_0 = {:x}", h5_0);
         let h6_0 = ((d15 & 0x003fffffffffffff) >> 35) |
                    ((d16 & 0x00000007ffffffff) << 19);
-        println!("h6_0 = {:x}", h6_0);
         let h7_0 = ((d16 & 0x003fffffffffffff) >> 35) |
                    ((d17 & 0x00000007ffffffff) << 19);
-        println!("h7_0 = {:x}", h7_0);
         let h8_0 = ((d17 & 0x003fffffffffffff) >> 35) |
                    ((d18 & 0x00000007ffffffff) << 19);
-        println!("h8_0 = {:x}", h8_0);
         let h9_0 = ((d18 & 0x003fffffffffffff) >> 35) |
-                   ((d19 & 0x000000000000ffff) << 19);
-        println!("h9_0: {:x} | {:x} = {:x}", ((d18 & 0x003fffffffffffff) >> 35),
-                 ((d19 & 0x07ffffff) << 19), h9_0);
-        println!("h9_0 = {:x}", h9_0);
+                   ((d19 & 0x000000000003ffff) << 19);
 
         // Normally, we multiply h by c, but since c = 1 here, we skip.
 
         // Add h and l.
 
         // Need kin_0
-        let kin_0 = h9_0 >> 54;
+        let kin_0 = h9_0 >> 35;
         let s0_0 = l0_0 + h0_0 + kin_0;
         let k0_0 = s0_0 >> 54;
         let s1_0 = l1_0 + h1_0 + k0_0;
@@ -1398,7 +1261,7 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
         let k7_0 = s7_0 >> 54;
         let s8_0 = l8_0 + h8_0 + k7_0;
         let k8_0 = s8_0 >> 54;
-        let s9_0 = l9_0 + h9_0 + k8_0;
+        let s9_0 = l9_0 + (h9_0 & 0x00000007ffffffff) + k8_0;
 
         self[0] = (s0_0 & 0x07ffffff) as u32;
         self[1] = ((s0_0 >> 27) & 0x07ffffff) as u32;
@@ -1433,8 +1296,900 @@ impl<'a, 'b> Mul<&'b Mod_e521_1> for &'a Mod_e521_1 {
     }
 }
 
+impl PrimeField for Mod_e521_1 {
+    fn zero() -> Mod_e521_1 {
+        return ZERO;
+    }
+
+    fn one() -> Mod_e521_1 {
+        return ONE;
+    }
+
+    fn m_one() -> Mod_e521_1 {
+        return M_ONE;
+    }
+
+    fn modulus() -> Mod_e521_1 {
+        return MODULUS;
+    }
+
+    fn square(&mut self) {
+        let a0: i64 = self[0] as i64;
+        let a1: i64 = self[1] as i64;
+        let a2: i64 = self[2] as i64;
+        let a3: i64 = self[3] as i64;
+        let a4: i64 = self[4] as i64;
+        let a5: i64 = self[5] as i64;
+        let a6: i64 = self[6] as i64;
+        let a7: i64 = self[7] as i64;
+        let a8: i64 = self[8] as i64;
+        let a9: i64 = self[9] as i64;
+        let a10: i64 = self[10] as i64;
+        let a11: i64 = self[11] as i64;
+        let a12: i64 = self[12] as i64;
+        let a13: i64 = self[13] as i64;
+        let a14: i64 = self[14] as i64;
+        let a15: i64 = self[15] as i64;
+        let a16: i64 = self[16] as i64;
+        let a17: i64 = self[17] as i64;
+        let a18: i64 = self[18] as i64;
+        let a19: i64 = self[19] as i64;
+
+        // Combined multiples
+        let m_0_0 = a0 * a0;
+        let m_0_1 = a0 * a1;
+        let m_0_2 = a0 * a2;
+        let m_0_3 = a0 * a3;
+        let m_0_4 = a0 * a4;
+        let m_0_5 = a0 * a5;
+        let m_0_6 = a0 * a6;
+        let m_0_7 = a0 * a7;
+        let m_0_8 = a0 * a8;
+        let m_0_9 = a0 * a9;
+        let m_0_10 = a0 * a10;
+        let m_0_11 = a0 * a11;
+        let m_0_12 = a0 * a12;
+        let m_0_13 = a0 * a13;
+        let m_0_14 = a0 * a14;
+        let m_0_15 = a0 * a15;
+        let m_0_16 = a0 * a16;
+        let m_0_17 = a0 * a17;
+        let m_0_18 = a0 * a18;
+        let m_0_19 = a0 * a19;
+        let m_1_0 = m_0_1;
+        let m_1_1 = a1 * a1;
+        let m_1_2 = a1 * a2;
+        let m_1_3 = a1 * a3;
+        let m_1_4 = a1 * a4;
+        let m_1_5 = a1 * a5;
+        let m_1_6 = a1 * a6;
+        let m_1_7 = a1 * a7;
+        let m_1_8 = a1 * a8;
+        let m_1_9 = a1 * a9;
+        let m_1_10 = a1 * a10;
+        let m_1_11 = a1 * a11;
+        let m_1_12 = a1 * a12;
+        let m_1_13 = a1 * a13;
+        let m_1_14 = a1 * a14;
+        let m_1_15 = a1 * a15;
+        let m_1_16 = a1 * a16;
+        let m_1_17 = a1 * a17;
+        let m_1_18 = a1 * a18;
+        let m_1_19 = a1 * a19;
+        let m_2_0 = m_0_2;
+        let m_2_1 = m_1_2;
+        let m_2_2 = a2 * a2;
+        let m_2_3 = a2 * a3;
+        let m_2_4 = a2 * a4;
+        let m_2_5 = a2 * a5;
+        let m_2_6 = a2 * a6;
+        let m_2_7 = a2 * a7;
+        let m_2_8 = a2 * a8;
+        let m_2_9 = a2 * a9;
+        let m_2_10 = a2 * a10;
+        let m_2_11 = a2 * a11;
+        let m_2_12 = a2 * a12;
+        let m_2_13 = a2 * a13;
+        let m_2_14 = a2 * a14;
+        let m_2_15 = a2 * a15;
+        let m_2_16 = a2 * a16;
+        let m_2_17 = a2 * a17;
+        let m_2_18 = a2 * a18;
+        let m_2_19 = a2 * a19;
+        let m_3_0 = m_0_3;
+        let m_3_1 = m_1_3;
+        let m_3_2 = m_2_3;
+        let m_3_3 = a3 * a3;
+        let m_3_4 = a3 * a4;
+        let m_3_5 = a3 * a5;
+        let m_3_6 = a3 * a6;
+        let m_3_7 = a3 * a7;
+        let m_3_8 = a3 * a8;
+        let m_3_9 = a3 * a9;
+        let m_3_10 = a3 * a10;
+        let m_3_11 = a3 * a11;
+        let m_3_12 = a3 * a12;
+        let m_3_13 = a3 * a13;
+        let m_3_14 = a3 * a14;
+        let m_3_15 = a3 * a15;
+        let m_3_16 = a3 * a16;
+        let m_3_17 = a3 * a17;
+        let m_3_18 = a3 * a18;
+        let m_3_19 = a3 * a19;
+        let m_4_0 = m_0_4;
+        let m_4_1 = m_1_4;
+        let m_4_2 = m_2_4;
+        let m_4_3 = m_3_4;
+        let m_4_4 = a4 * a4;
+        let m_4_5 = a4 * a5;
+        let m_4_6 = a4 * a6;
+        let m_4_7 = a4 * a7;
+        let m_4_8 = a4 * a8;
+        let m_4_9 = a4 * a9;
+        let m_4_10 = a4 * a10;
+        let m_4_11 = a4 * a11;
+        let m_4_12 = a4 * a12;
+        let m_4_13 = a4 * a13;
+        let m_4_14 = a4 * a14;
+        let m_4_15 = a4 * a15;
+        let m_4_16 = a4 * a16;
+        let m_4_17 = a4 * a17;
+        let m_4_18 = a4 * a18;
+        let m_4_19 = a4 * a19;
+        let m_5_0 = m_0_5;
+        let m_5_1 = m_1_5;
+        let m_5_2 = m_2_5;
+        let m_5_3 = m_3_5;
+        let m_5_4 = m_4_5;
+        let m_5_5 = a5 * a5;
+        let m_5_6 = a5 * a6;
+        let m_5_7 = a5 * a7;
+        let m_5_8 = a5 * a8;
+        let m_5_9 = a5 * a9;
+        let m_5_10 = a5 * a10;
+        let m_5_11 = a5 * a11;
+        let m_5_12 = a5 * a12;
+        let m_5_13 = a5 * a13;
+        let m_5_14 = a5 * a14;
+        let m_5_15 = a5 * a15;
+        let m_5_16 = a5 * a16;
+        let m_5_17 = a5 * a17;
+        let m_5_18 = a5 * a18;
+        let m_5_19 = a5 * a19;
+        let m_6_0 = m_0_6;
+        let m_6_1 = m_1_6;
+        let m_6_2 = m_2_6;
+        let m_6_3 = m_3_6;
+        let m_6_4 = m_4_6;
+        let m_6_5 = m_5_6;
+        let m_6_6 = a6 * a6;
+        let m_6_7 = a6 * a7;
+        let m_6_8 = a6 * a8;
+        let m_6_9 = a6 * a9;
+        let m_6_10 = a6 * a10;
+        let m_6_11 = a6 * a11;
+        let m_6_12 = a6 * a12;
+        let m_6_13 = a6 * a13;
+        let m_6_14 = a6 * a14;
+        let m_6_15 = a6 * a15;
+        let m_6_16 = a6 * a16;
+        let m_6_17 = a6 * a17;
+        let m_6_18 = a6 * a18;
+        let m_6_19 = a6 * a19;
+        let m_7_0 = m_0_7;
+        let m_7_1 = m_1_7;
+        let m_7_2 = m_2_7;
+        let m_7_3 = m_3_7;
+        let m_7_4 = m_4_7;
+        let m_7_5 = m_5_7;
+        let m_7_6 = m_6_7;
+        let m_7_7 = a7 * a7;
+        let m_7_8 = a7 * a8;
+        let m_7_9 = a7 * a9;
+        let m_7_10 = a7 * a10;
+        let m_7_11 = a7 * a11;
+        let m_7_12 = a7 * a12;
+        let m_7_13 = a7 * a13;
+        let m_7_14 = a7 * a14;
+        let m_7_15 = a7 * a15;
+        let m_7_16 = a7 * a16;
+        let m_7_17 = a7 * a17;
+        let m_7_18 = a7 * a18;
+        let m_7_19 = a7 * a19;
+        let m_8_0 = m_0_8;
+        let m_8_1 = m_1_8;
+        let m_8_2 = m_2_8;
+        let m_8_3 = m_3_8;
+        let m_8_4 = m_4_8;
+        let m_8_5 = m_5_8;
+        let m_8_6 = m_6_8;
+        let m_8_7 = m_7_8;
+        let m_8_8 = a8 * a8;
+        let m_8_9 = a8 * a9;
+        let m_8_10 = a8 * a10;
+        let m_8_11 = a8 * a11;
+        let m_8_12 = a8 * a12;
+        let m_8_13 = a8 * a13;
+        let m_8_14 = a8 * a14;
+        let m_8_15 = a8 * a15;
+        let m_8_16 = a8 * a16;
+        let m_8_17 = a8 * a17;
+        let m_8_18 = a8 * a18;
+        let m_8_19 = a8 * a19;
+        let m_9_0 = m_0_9;
+        let m_9_1 = m_1_9;
+        let m_9_2 = m_2_9;
+        let m_9_3 = m_3_9;
+        let m_9_4 = m_4_9;
+        let m_9_5 = m_5_9;
+        let m_9_6 = m_6_9;
+        let m_9_7 = m_7_9;
+        let m_9_8 = m_8_9;
+        let m_9_9 = a9 * a9;
+        let m_9_10 = a9 * a10;
+        let m_9_11 = a9 * a11;
+        let m_9_12 = a9 * a12;
+        let m_9_13 = a9 * a13;
+        let m_9_14 = a9 * a14;
+        let m_9_15 = a9 * a15;
+        let m_9_16 = a9 * a16;
+        let m_9_17 = a9 * a17;
+        let m_9_18 = a9 * a18;
+        let m_9_19 = a9 * a19;
+        let m_10_0 = m_0_10;
+        let m_10_1 = m_1_10;
+        let m_10_2 = m_2_10;
+        let m_10_3 = m_3_10;
+        let m_10_4 = m_4_10;
+        let m_10_5 = m_5_10;
+        let m_10_6 = m_6_10;
+        let m_10_7 = m_7_10;
+        let m_10_8 = m_8_10;
+        let m_10_9 = m_9_10;
+        let m_10_10 = a10 * a10;
+        let m_10_11 = a10 * a11;
+        let m_10_12 = a10 * a12;
+        let m_10_13 = a10 * a13;
+        let m_10_14 = a10 * a14;
+        let m_10_15 = a10 * a15;
+        let m_10_16 = a10 * a16;
+        let m_10_17 = a10 * a17;
+        let m_10_18 = a10 * a18;
+        let m_10_19 = a10 * a19;
+        let m_11_0 = m_0_11;
+        let m_11_1 = m_1_11;
+        let m_11_2 = m_2_11;
+        let m_11_3 = m_3_11;
+        let m_11_4 = m_4_11;
+        let m_11_5 = m_5_11;
+        let m_11_6 = m_6_11;
+        let m_11_7 = m_7_11;
+        let m_11_8 = m_8_11;
+        let m_11_9 = m_9_11;
+        let m_11_10 = m_10_11;
+        let m_11_11 = a11 * a11;
+        let m_11_12 = a11 * a12;
+        let m_11_13 = a11 * a13;
+        let m_11_14 = a11 * a14;
+        let m_11_15 = a11 * a15;
+        let m_11_16 = a11 * a16;
+        let m_11_17 = a11 * a17;
+        let m_11_18 = a11 * a18;
+        let m_11_19 = a11 * a19;
+        let m_12_0 = m_0_12;
+        let m_12_1 = m_1_12;
+        let m_12_2 = m_2_12;
+        let m_12_3 = m_3_12;
+        let m_12_4 = m_4_12;
+        let m_12_5 = m_5_12;
+        let m_12_6 = m_6_12;
+        let m_12_7 = m_7_12;
+        let m_12_8 = m_8_12;
+        let m_12_9 = m_9_12;
+        let m_12_10 = m_10_12;
+        let m_12_11 = m_11_12;
+        let m_12_12 = a12 * a12;
+        let m_12_13 = a12 * a13;
+        let m_12_14 = a12 * a14;
+        let m_12_15 = a12 * a15;
+        let m_12_16 = a12 * a16;
+        let m_12_17 = a12 * a17;
+        let m_12_18 = a12 * a18;
+        let m_12_19 = a12 * a19;
+        let m_13_0 = m_0_13;
+        let m_13_1 = m_1_13;
+        let m_13_2 = m_2_13;
+        let m_13_3 = m_3_13;
+        let m_13_4 = m_4_13;
+        let m_13_5 = m_5_13;
+        let m_13_6 = m_6_13;
+        let m_13_7 = m_7_13;
+        let m_13_8 = m_8_13;
+        let m_13_9 = m_9_13;
+        let m_13_10 = m_10_13;
+        let m_13_11 = m_11_13;
+        let m_13_12 = m_12_13;
+        let m_13_13 = a13 * a13;
+        let m_13_14 = a13 * a14;
+        let m_13_15 = a13 * a15;
+        let m_13_16 = a13 * a16;
+        let m_13_17 = a13 * a17;
+        let m_13_18 = a13 * a18;
+        let m_13_19 = a13 * a19;
+        let m_14_0 = m_0_14;
+        let m_14_1 = m_1_14;
+        let m_14_2 = m_2_14;
+        let m_14_3 = m_3_14;
+        let m_14_4 = m_4_14;
+        let m_14_5 = m_5_14;
+        let m_14_6 = m_6_14;
+        let m_14_7 = m_7_14;
+        let m_14_8 = m_8_14;
+        let m_14_9 = m_9_14;
+        let m_14_10 = m_10_14;
+        let m_14_11 = m_11_14;
+        let m_14_12 = m_12_14;
+        let m_14_13 = m_13_14;
+        let m_14_14 = a14 * a14;
+        let m_14_15 = a14 * a15;
+        let m_14_16 = a14 * a16;
+        let m_14_17 = a14 * a17;
+        let m_14_18 = a14 * a18;
+        let m_14_19 = a14 * a19;
+        let m_15_0 = m_0_15;
+        let m_15_1 = m_1_15;
+        let m_15_2 = m_2_15;
+        let m_15_3 = m_3_15;
+        let m_15_4 = m_4_15;
+        let m_15_5 = m_5_15;
+        let m_15_6 = m_6_15;
+        let m_15_7 = m_7_15;
+        let m_15_8 = m_8_15;
+        let m_15_9 = m_9_15;
+        let m_15_10 = m_10_15;
+        let m_15_11 = m_11_15;
+        let m_15_12 = m_12_15;
+        let m_15_13 = m_13_15;
+        let m_15_14 = m_14_15;
+        let m_15_15 = a15 * a15;
+        let m_15_16 = a15 * a16;
+        let m_15_17 = a15 * a17;
+        let m_15_18 = a15 * a18;
+        let m_15_19 = a15 * a19;
+        let m_16_0 = m_0_16;
+        let m_16_1 = m_1_16;
+        let m_16_2 = m_2_16;
+        let m_16_3 = m_3_16;
+        let m_16_4 = m_4_16;
+        let m_16_5 = m_5_16;
+        let m_16_6 = m_6_16;
+        let m_16_7 = m_7_16;
+        let m_16_8 = m_8_16;
+        let m_16_9 = m_9_16;
+        let m_16_10 = m_10_16;
+        let m_16_11 = m_11_16;
+        let m_16_12 = m_12_16;
+        let m_16_13 = m_13_16;
+        let m_16_14 = m_14_16;
+        let m_16_15 = m_15_16;
+        let m_16_16 = a16 * a16;
+        let m_16_17 = a16 * a17;
+        let m_16_18 = a16 * a18;
+        let m_16_19 = a16 * a19;
+        let m_17_0 = m_0_17;
+        let m_17_1 = m_1_17;
+        let m_17_2 = m_2_17;
+        let m_17_3 = m_3_17;
+        let m_17_4 = m_4_17;
+        let m_17_5 = m_5_17;
+        let m_17_6 = m_6_17;
+        let m_17_7 = m_7_17;
+        let m_17_8 = m_8_17;
+        let m_17_9 = m_9_17;
+        let m_17_10 = m_10_17;
+        let m_17_11 = m_11_17;
+        let m_17_12 = m_12_17;
+        let m_17_13 = m_13_17;
+        let m_17_14 = m_14_17;
+        let m_17_15 = m_15_17;
+        let m_17_16 = m_16_17;
+        let m_17_17 = a17 * a17;
+        let m_17_18 = a17 * a18;
+        let m_17_19 = a17 * a19;
+        let m_18_0 = m_0_18;
+        let m_18_1 = m_1_18;
+        let m_18_2 = m_2_18;
+        let m_18_3 = m_3_18;
+        let m_18_4 = m_4_18;
+        let m_18_5 = m_5_18;
+        let m_18_6 = m_6_18;
+        let m_18_7 = m_7_18;
+        let m_18_8 = m_8_18;
+        let m_18_9 = m_9_18;
+        let m_18_10 = m_10_18;
+        let m_18_11 = m_11_18;
+        let m_18_12 = m_12_18;
+        let m_18_13 = m_13_18;
+        let m_18_14 = m_14_18;
+        let m_18_15 = m_15_18;
+        let m_18_16 = m_16_18;
+        let m_18_17 = m_17_18;
+        let m_18_18 = a18 * a18;
+        let m_18_19 = a18 * a19;
+        let m_19_0 = m_0_19;
+        let m_19_1 = m_1_19;
+        let m_19_2 = m_2_19;
+        let m_19_3 = m_3_19;
+        let m_19_4 = m_4_19;
+        let m_19_5 = m_5_19;
+        let m_19_6 = m_6_19;
+        let m_19_7 = m_7_19;
+        let m_19_8 = m_8_19;
+        let m_19_9 = m_9_19;
+        let m_19_10 = m_10_19;
+        let m_19_11 = m_11_19;
+        let m_19_12 = m_12_19;
+        let m_19_13 = m_13_19;
+        let m_19_14 = m_14_19;
+        let m_19_15 = m_15_19;
+        let m_19_16 = m_16_19;
+        let m_19_17 = m_17_19;
+        let m_19_18 = m_18_19;
+        let m_19_19 = a19 * a19;
+
+        // Compute the 40-digit combined product using 64-bit operations.
+        let d0 = m_0_0 + ((m_0_1 & 0x07ffffff) << 27) +
+                 ((m_1_0 & 0x07ffffff) << 27);
+        let c0 = d0 >> 54;
+        let d1 = (m_0_1 >> 27) + m_0_2 + ((m_0_3 & 0x07ffffff) << 27) +
+                 (m_1_0 >> 27) + m_1_1 + ((m_1_2 & 0x07ffffff) << 27) +
+                 m_2_0 + ((m_2_1 & 0x07ffffff) << 27) +
+                 ((m_3_0 & 0x07ffffff) << 27) + c0;
+        let c1 = d1 >> 54;
+        let d2 = (m_0_3 >> 27) + m_0_4 + ((m_0_5 & 0x07ffffff) << 27) +
+                 (m_1_2 >> 27) + m_1_3 + ((m_1_4 & 0x07ffffff) << 27) +
+                 (m_2_1 >> 27) + m_2_2 + ((m_2_3 & 0x07ffffff) << 27) +
+                 (m_3_0 >> 27) + m_3_1 + ((m_3_2 & 0x07ffffff) << 27) +
+                 m_4_0 + ((m_4_1 & 0x07ffffff) << 27) +
+                 ((m_5_0 & 0x07ffffff) << 27) + c1;
+        let c2 = d2 >> 54;
+        let d3 = (m_0_5 >> 27) + m_0_6 + ((m_0_7 & 0x07ffffff) << 27) +
+                 (m_1_4 >> 27) + m_1_5 + ((m_1_6 & 0x07ffffff) << 27) +
+                 (m_2_3 >> 27) + m_2_4 + ((m_2_5 & 0x07ffffff) << 27) +
+                 (m_3_2 >> 27) + m_3_3 + ((m_3_4 & 0x07ffffff) << 27) +
+                 (m_4_1 >> 27) + m_4_2 + ((m_4_3 & 0x07ffffff) << 27) +
+                 (m_5_0 >> 27) + m_5_1 + ((m_5_2 & 0x07ffffff) << 27) +
+                 m_6_0 + ((m_6_1 & 0x07ffffff) << 27) +
+                 ((m_7_0 & 0x07ffffff) << 27) + c2;
+        let c3 = d3 >> 54;
+        let d4 = (m_0_7 >> 27) + m_0_8 + ((m_0_9 & 0x07ffffff) << 27) +
+                 (m_1_6 >> 27) + m_1_7 + ((m_1_8 & 0x07ffffff) << 27) +
+                 (m_2_5 >> 27) + m_2_6 + ((m_2_7 & 0x07ffffff) << 27) +
+                 (m_3_4 >> 27) + m_3_5 + ((m_3_6 & 0x07ffffff) << 27) +
+                 (m_4_3 >> 27) + m_4_4 + ((m_4_5 & 0x07ffffff) << 27) +
+                 (m_5_2 >> 27) + m_5_3 + ((m_5_4 & 0x07ffffff) << 27) +
+                 (m_6_1 >> 27) + m_6_2 + ((m_6_3 & 0x07ffffff) << 27) +
+                 (m_7_0 >> 27) + m_7_1 + ((m_7_2 & 0x07ffffff) << 27) +
+                 m_8_0 + ((m_8_1 & 0x07ffffff) << 27) +
+                 ((m_9_0 & 0x07ffffff) << 27) + c3;
+        let c4 = d4 >> 54;
+        let d5 = (m_0_9 >> 27) + m_0_10 + ((m_0_11 & 0x07ffffff) << 27) +
+                 (m_1_8 >> 27) + m_1_9 + ((m_1_10 & 0x07ffffff) << 27) +
+                 (m_2_7 >> 27) + m_2_8 + ((m_2_9 & 0x07ffffff) << 27) +
+                 (m_3_6 >> 27) + m_3_7 + ((m_3_8 & 0x07ffffff) << 27) +
+                 (m_4_5 >> 27) + m_4_6 + ((m_4_7 & 0x07ffffff) << 27) +
+                 (m_5_4 >> 27) + m_5_5 + ((m_5_6 & 0x07ffffff) << 27) +
+                 (m_6_3 >> 27) + m_6_4 + ((m_6_5 & 0x07ffffff) << 27) +
+                 (m_7_2 >> 27) + m_7_3 + ((m_7_4 & 0x07ffffff) << 27) +
+                 (m_8_1 >> 27) + m_8_2 + ((m_8_3 & 0x07ffffff) << 27) +
+                 (m_9_0 >> 27) + m_9_1 + ((m_9_2 & 0x07ffffff) << 27) +
+                 m_10_0 + ((m_10_1 & 0x07ffffff) << 27) +
+                 ((m_11_0 & 0x07ffffff) << 27) + c4;
+        let c5 = d5 >> 54;
+        let d6 = (m_0_11 >> 27) + m_0_12 + ((m_0_13 & 0x07ffffff) << 27) +
+                 (m_1_10 >> 27) + m_1_11 + ((m_1_12 & 0x07ffffff) << 27) +
+                 (m_2_9 >> 27) + m_2_10 + ((m_2_11 & 0x07ffffff) << 27) +
+                 (m_3_8 >> 27) + m_3_9 + ((m_3_10 & 0x07ffffff) << 27) +
+                 (m_4_7 >> 27) + m_4_8 + ((m_4_9 & 0x07ffffff) << 27) +
+                 (m_5_6 >> 27) + m_5_7 + ((m_5_8 & 0x07ffffff) << 27) +
+                 (m_6_5 >> 27) + m_6_6 + ((m_6_7 & 0x07ffffff) << 27) +
+                 (m_7_4 >> 27) + m_7_5 + ((m_7_6 & 0x07ffffff) << 27) +
+                 (m_8_3 >> 27) + m_8_4 + ((m_8_5 & 0x07ffffff) << 27) +
+                 (m_9_2 >> 27) + m_9_3 + ((m_9_4 & 0x07ffffff) << 27) +
+                 (m_10_1 >> 27) + m_10_2 + ((m_10_3 & 0x07ffffff) << 27) +
+                 (m_11_0 >> 27) + m_11_1 + ((m_11_2 & 0x07ffffff) << 27) +
+                 m_12_0 + ((m_12_1 & 0x07ffffff) << 27) +
+                 ((m_13_0 & 0x07ffffff) << 27) + c5;
+        let c6 = d6 >> 54;
+        let d7 = (m_0_13 >> 27) + m_0_14 + ((m_0_15 & 0x07ffffff) << 27) +
+                 (m_1_12 >> 27) + m_1_13 + ((m_1_14 & 0x07ffffff) << 27) +
+                 (m_2_11 >> 27) + m_2_12 + ((m_2_13 & 0x07ffffff) << 27) +
+                 (m_3_10 >> 27) + m_3_11 + ((m_3_12 & 0x07ffffff) << 27) +
+                 (m_4_9 >> 27) + m_4_10 + ((m_4_11 & 0x07ffffff) << 27) +
+                 (m_5_8 >> 27) + m_5_9 + ((m_5_10 & 0x07ffffff) << 27) +
+                 (m_6_7 >> 27) + m_6_8 + ((m_6_9 & 0x07ffffff) << 27) +
+                 (m_7_6 >> 27) + m_7_7 + ((m_7_8 & 0x07ffffff) << 27) +
+                 (m_8_5 >> 27) + m_8_6 + ((m_8_7 & 0x07ffffff) << 27) +
+                 (m_9_4 >> 27) + m_9_5 + ((m_9_6 & 0x07ffffff) << 27) +
+                 (m_10_3 >> 27) + m_10_4 + ((m_10_5 & 0x07ffffff) << 27) +
+                 (m_11_2 >> 27) + m_11_3 + ((m_11_4 & 0x07ffffff) << 27) +
+                 (m_12_1 >> 27) + m_12_2 + ((m_12_3 & 0x07ffffff) << 27) +
+                 (m_13_0 >> 27) + m_13_1 + ((m_13_2 & 0x07ffffff) << 27) +
+                 m_14_0 + ((m_14_1 & 0x07ffffff) << 27) +
+                 ((m_15_0 & 0x07ffffff) << 27) + c6;
+        let c7 = d7 >> 54;
+        let d8 = (m_0_15 >> 27) + m_0_16 + ((m_0_17 & 0x07ffffff) << 27) +
+                 (m_1_14 >> 27) + m_1_15 + ((m_1_16 & 0x07ffffff) << 27) +
+                 (m_2_13 >> 27) + m_2_14 + ((m_2_15 & 0x07ffffff) << 27) +
+                 (m_3_12 >> 27) + m_3_13 + ((m_3_14 & 0x07ffffff) << 27) +
+                 (m_4_11 >> 27) + m_4_12 + ((m_4_13 & 0x07ffffff) << 27) +
+                 (m_5_10 >> 27) + m_5_11 + ((m_5_12 & 0x07ffffff) << 27) +
+                 (m_6_9 >> 27) + m_6_10 + ((m_6_11 & 0x07ffffff) << 27) +
+                 (m_7_8 >> 27) + m_7_9 + ((m_7_10 & 0x07ffffff) << 27) +
+                 (m_8_7 >> 27) + m_8_8 + ((m_8_9 & 0x07ffffff) << 27) +
+                 (m_9_6 >> 27) + m_9_7 + ((m_9_8 & 0x07ffffff) << 27) +
+                 (m_10_5 >> 27) + m_10_6 + ((m_10_7 & 0x07ffffff) << 27) +
+                 (m_11_4 >> 27) + m_11_5 + ((m_11_6 & 0x07ffffff) << 27) +
+                 (m_12_3 >> 27) + m_12_4 + ((m_12_5 & 0x07ffffff) << 27) +
+                 (m_13_2 >> 27) + m_13_3 + ((m_13_4 & 0x07ffffff) << 27) +
+                 (m_14_1 >> 27) + m_14_2 + ((m_14_3 & 0x07ffffff) << 27) +
+                 (m_15_0 >> 27) + m_15_1 + ((m_15_2 & 0x07ffffff) << 27) +
+                 m_16_0 + ((m_16_1 & 0x07ffffff) << 27) +
+                 ((m_17_0 & 0x07ffffff) << 27) + c7;
+        let c8 = d8 >> 54;
+        let d9 = (m_0_17 >> 27) + m_0_18 + ((m_0_19 & 0x07ffffff) << 27) +
+                 (m_1_16 >> 27) + m_1_17 + ((m_1_18 & 0x07ffffff) << 27) +
+                 (m_2_15 >> 27) + m_2_16 + ((m_2_17 & 0x07ffffff) << 27) +
+                 (m_3_14 >> 27) + m_3_15 + ((m_3_16 & 0x07ffffff) << 27) +
+                 (m_4_13 >> 27) + m_4_14 + ((m_4_15 & 0x07ffffff) << 27) +
+                 (m_5_12 >> 27) + m_5_13 + ((m_5_14 & 0x07ffffff) << 27) +
+                 (m_6_11 >> 27) + m_6_12 + ((m_6_13 & 0x07ffffff) << 27) +
+                 (m_7_10 >> 27) + m_7_11 + ((m_7_12 & 0x07ffffff) << 27) +
+                 (m_8_9 >> 27) + m_8_10 + ((m_8_11 & 0x07ffffff) << 27) +
+                 (m_9_8 >> 27) + m_9_9 + ((m_9_10 & 0x07ffffff) << 27) +
+                 (m_10_7 >> 27) + m_10_8 + ((m_10_9 & 0x07ffffff) << 27) +
+                 (m_11_6 >> 27) + m_11_7 + ((m_11_8 & 0x07ffffff) << 27) +
+                 (m_12_5 >> 27) + m_12_6 + ((m_12_7 & 0x07ffffff) << 27) +
+                 (m_13_4 >> 27) + m_13_5 + ((m_13_6 & 0x07ffffff) << 27) +
+                 (m_14_3 >> 27) + m_14_4 + ((m_14_5 & 0x07ffffff) << 27) +
+                 (m_15_2 >> 27) + m_15_3 + ((m_15_4 & 0x07ffffff) << 27) +
+                 (m_16_1 >> 27) + m_16_2 + ((m_16_3 & 0x07ffffff) << 27) +
+                 (m_17_0 >> 27) + m_17_1 + ((m_17_2 & 0x07ffffff) << 27) +
+                 m_18_0 + ((m_18_1 & 0x07ffffff) << 27) +
+                 ((m_19_0 & 0x07ffffff) << 27) + c8;
+        let c9 = d9 >> 54;
+        let d10 = (m_0_19 >> 27) +
+                  (m_1_18 >> 27) + m_1_19 +
+                  (m_2_17 >> 27) + m_2_18 + ((m_2_19 & 0x07ffffff) << 27) +
+                  (m_3_16 >> 27) + m_3_17 + ((m_3_18 & 0x07ffffff) << 27) +
+                  (m_4_15 >> 27) + m_4_16 + ((m_4_17 & 0x07ffffff) << 27) +
+                  (m_5_14 >> 27) + m_5_15 + ((m_5_16 & 0x07ffffff) << 27) +
+                  (m_6_13 >> 27) + m_6_14 + ((m_6_15 & 0x07ffffff) << 27) +
+                  (m_7_12 >> 27) + m_7_13 + ((m_7_14 & 0x07ffffff) << 27) +
+                  (m_8_11 >> 27) + m_8_12 + ((m_8_13 & 0x07ffffff) << 27) +
+                  (m_9_10 >> 27) + m_9_11 + ((m_9_12 & 0x07ffffff) << 27) +
+                  (m_10_9 >> 27) + m_10_10 + ((m_10_11 & 0x07ffffff) << 27) +
+                  (m_11_8 >> 27) + m_11_9 + ((m_11_10 & 0x07ffffff) << 27) +
+                  (m_12_7 >> 27) + m_12_8 + ((m_12_9 & 0x07ffffff) << 27) +
+                  (m_13_6 >> 27) + m_13_7 + ((m_13_8 & 0x07ffffff) << 27) +
+                  (m_14_5 >> 27) + m_14_6 + ((m_14_7 & 0x07ffffff) << 27) +
+                  (m_15_4 >> 27) + m_15_5 + ((m_15_6 & 0x07ffffff) << 27) +
+                  (m_16_3 >> 27) + m_16_4 + ((m_16_5 & 0x07ffffff) << 27) +
+                  (m_17_2 >> 27) + m_17_3 + ((m_17_4 & 0x07ffffff) << 27) +
+                  (m_18_1 >> 27) + m_18_2 + ((m_18_3 & 0x07ffffff) << 27) +
+                  (m_19_0 >> 27) + m_19_1 + ((m_19_2 & 0x07ffffff) << 27) + c9;
+        let c10 = d10 >> 54;
+        let d11 = (m_2_19 >> 27) +
+                  (m_3_18 >> 27) + m_3_19 +
+                  (m_4_17 >> 27) + m_4_18 + ((m_4_19 & 0x07ffffff) << 27) +
+                  (m_5_16 >> 27) + m_5_17 + ((m_5_18 & 0x07ffffff) << 27) +
+                  (m_6_15 >> 27) + m_6_16 + ((m_6_17 & 0x07ffffff) << 27) +
+                  (m_7_14 >> 27) + m_7_15 + ((m_7_16 & 0x07ffffff) << 27) +
+                  (m_8_13 >> 27) + m_8_14 + ((m_8_15 & 0x07ffffff) << 27) +
+                  (m_9_12 >> 27) + m_9_13 + ((m_9_14 & 0x07ffffff) << 27) +
+                  (m_10_11 >> 27) + m_10_12 + ((m_10_13 & 0x07ffffff) << 27) +
+                  (m_11_10 >> 27) + m_11_11 + ((m_11_12 & 0x07ffffff) << 27) +
+                  (m_12_9 >> 27) + m_12_10 + ((m_12_11 & 0x07ffffff) << 27) +
+                  (m_13_8 >> 27) + m_13_9 + ((m_13_10 & 0x07ffffff) << 27) +
+                  (m_14_7 >> 27) + m_14_8 + ((m_14_9 & 0x07ffffff) << 27) +
+                  (m_15_6 >> 27) + m_15_7 + ((m_15_8 & 0x07ffffff) << 27) +
+                  (m_16_5 >> 27) + m_16_6 + ((m_16_7 & 0x07ffffff) << 27) +
+                  (m_17_4 >> 27) + m_17_5 + ((m_17_6 & 0x07ffffff) << 27) +
+                  (m_18_3 >> 27) + m_18_4 + ((m_18_5 & 0x07ffffff) << 27) +
+                  (m_19_2 >> 27) + m_19_3 + ((m_19_4 & 0x07ffffff) << 27) + c10;
+        let c11 = d11 >> 54;
+        let d12 = (m_4_19 >> 27) +
+                  (m_5_18 >> 27) + m_5_19 +
+                  (m_6_17 >> 27) + m_6_18 + ((m_6_19 & 0x07ffffff) << 27) +
+                  (m_7_16 >> 27) + m_7_17 + ((m_7_18 & 0x07ffffff) << 27) +
+                  (m_8_15 >> 27) + m_8_16 + ((m_8_17 & 0x07ffffff) << 27) +
+                  (m_9_14 >> 27) + m_9_15 + ((m_9_16 & 0x07ffffff) << 27) +
+                  (m_10_13 >> 27) + m_10_14 + ((m_10_15 & 0x07ffffff) << 27) +
+                  (m_11_12 >> 27) + m_11_13 + ((m_11_14 & 0x07ffffff) << 27) +
+                  (m_12_11 >> 27) + m_12_12 + ((m_12_13 & 0x07ffffff) << 27) +
+                  (m_13_10 >> 27) + m_13_11 + ((m_13_12 & 0x07ffffff) << 27) +
+                  (m_14_9 >> 27) + m_14_10 + ((m_14_11 & 0x07ffffff) << 27) +
+                  (m_15_8 >> 27) + m_15_9 + ((m_15_10 & 0x07ffffff) << 27) +
+                  (m_16_7 >> 27) + m_16_8 + ((m_16_9 & 0x07ffffff) << 27) +
+                  (m_17_6 >> 27) + m_17_7 + ((m_17_8 & 0x07ffffff) << 27) +
+                  (m_18_5 >> 27) + m_18_6 + ((m_18_7 & 0x07ffffff) << 27) +
+                  (m_19_4 >> 27) + m_19_5 + ((m_19_6 & 0x07ffffff) << 27) + c11;
+        let c12 = d12 >> 54;
+        let d13 = (m_6_19 >> 27) +
+                  (m_7_18 >> 27) + m_7_19 +
+                  (m_8_17 >> 27) + m_8_18 + ((m_8_19 & 0x07ffffff) << 27) +
+                  (m_9_16 >> 27) + m_9_17 + ((m_9_18 & 0x07ffffff) << 27) +
+                  (m_10_15 >> 27) + m_10_16 + ((m_10_17 & 0x07ffffff) << 27) +
+                  (m_11_14 >> 27) + m_11_15 + ((m_11_16 & 0x07ffffff) << 27) +
+                  (m_12_13 >> 27) + m_12_14 + ((m_12_15 & 0x07ffffff) << 27) +
+                  (m_13_12 >> 27) + m_13_13 + ((m_13_14 & 0x07ffffff) << 27) +
+                  (m_14_11 >> 27) + m_14_12 + ((m_14_13 & 0x07ffffff) << 27) +
+                  (m_15_10 >> 27) + m_15_11 + ((m_15_12 & 0x07ffffff) << 27) +
+                  (m_16_9 >> 27) + m_16_10 + ((m_16_11 & 0x07ffffff) << 27) +
+                  (m_17_8 >> 27) + m_17_9 + ((m_17_10 & 0x07ffffff) << 27) +
+                  (m_18_7 >> 27) + m_18_8 + ((m_18_9 & 0x07ffffff) << 27) +
+                  (m_19_6 >> 27) + m_19_7 + ((m_19_8 & 0x07ffffff) << 27) + c12;
+        let c13 = d13 >> 54;
+        let d14 = (m_8_19 >> 27) +
+                  (m_9_18 >> 27) + m_9_19 +
+                  (m_10_17 >> 27) + m_10_18 + ((m_10_19 & 0x07ffffff) << 27) +
+                  (m_11_16 >> 27) + m_11_17 + ((m_11_18 & 0x07ffffff) << 27) +
+                  (m_12_15 >> 27) + m_12_16 + ((m_12_17 & 0x07ffffff) << 27) +
+                  (m_13_14 >> 27) + m_13_15 + ((m_13_16 & 0x07ffffff) << 27) +
+                  (m_14_13 >> 27) + m_14_14 + ((m_14_15 & 0x07ffffff) << 27) +
+                  (m_15_12 >> 27) + m_15_13 + ((m_15_14 & 0x07ffffff) << 27) +
+                  (m_16_11 >> 27) + m_16_12 + ((m_16_13 & 0x07ffffff) << 27) +
+                  (m_17_10 >> 27) + m_17_11 + ((m_17_12 & 0x07ffffff) << 27) +
+                  (m_18_9 >> 27) + m_18_10 + ((m_18_11 & 0x07ffffff) << 27) +
+                  (m_19_8 >> 27) + m_19_9 + ((m_19_10 & 0x07ffffff) << 27) +
+                  c13;
+        let c14 = d14 >> 54;
+        let d15 = (m_10_19 >> 27) +
+                  (m_11_18 >> 27) + m_11_19 +
+                  (m_12_17 >> 27) + m_12_18 + ((m_12_19 & 0x07ffffff) << 27) +
+                  (m_13_16 >> 27) + m_13_17 + ((m_13_18 & 0x07ffffff) << 27) +
+                  (m_14_15 >> 27) + m_14_16 + ((m_14_17 & 0x07ffffff) << 27) +
+                  (m_15_14 >> 27) + m_15_15 + ((m_15_16 & 0x07ffffff) << 27) +
+                  (m_16_13 >> 27) + m_16_14 + ((m_16_15 & 0x07ffffff) << 27) +
+                  (m_17_12 >> 27) + m_17_13 + ((m_17_14 & 0x07ffffff) << 27) +
+                  (m_18_11 >> 27) + m_18_12 + ((m_18_13 & 0x07ffffff) << 27) +
+                  (m_19_10 >> 27) + m_19_11 + ((m_19_12 & 0x07ffffff) << 27) +
+                  c14;
+        let c15 = d15 >> 54;
+        let d16 = (m_12_19 >> 27) +
+                  (m_13_18 >> 27) + m_13_19 +
+                  (m_14_17 >> 27) + m_14_18 + ((m_14_19 & 0x07ffffff) << 27) +
+                  (m_15_16 >> 27) + m_15_17 + ((m_15_18 & 0x07ffffff) << 27) +
+                  (m_16_15 >> 27) + m_16_16 + ((m_16_17 & 0x07ffffff) << 27) +
+                  (m_17_14 >> 27) + m_17_15 + ((m_17_16 & 0x07ffffff) << 27) +
+                  (m_18_13 >> 27) + m_18_14 + ((m_18_15 & 0x07ffffff) << 27) +
+                  (m_19_12 >> 27) + m_19_13 + ((m_19_14 & 0x07ffffff) << 27) +
+                  c15;
+        let c16 = d16 >> 54;
+        let d17 = (m_14_19 >> 27) +
+                  (m_15_18 >> 27) + m_15_19 +
+                  (m_16_17 >> 27) + m_16_18 + ((m_16_19 & 0x07ffffff) << 27) +
+                  (m_17_16 >> 27) + m_17_17 + ((m_17_18 & 0x07ffffff) << 27) +
+                  (m_18_15 >> 27) + m_18_16 + ((m_18_17 & 0x07ffffff) << 27) +
+                  (m_19_14 >> 27) + m_19_15 + ((m_19_16 & 0x07ffffff) << 27) +
+                  c16;
+        let c17 = d17 >> 54;
+        let d18 = (m_16_19 >> 27) +
+                  (m_17_18 >> 27) + m_17_19 +
+                  (m_18_17 >> 27) + m_18_18 + ((m_18_19 & 0x07ffffff) << 27) +
+                  (m_19_16 >> 27) + m_19_17 + ((m_19_18 & 0x07ffffff) << 27) +
+                  c17;
+        let c18 = d18 >> 54;
+        let d19 = (m_18_19 >> 27) +
+                  (m_19_18 >> 27) + m_19_19 + c18;
+
+        // Modular reduction by a pseudo-mersenne prime of the form 2^n - c.
+
+        // These are the n low-order bits.
+        let l0_0 = d0 & 0x003fffffffffffff;
+        let l1_0 = d1 & 0x003fffffffffffff;
+        let l2_0 = d2 & 0x003fffffffffffff;
+        let l3_0 = d3 & 0x003fffffffffffff;
+        let l4_0 = d4 & 0x003fffffffffffff;
+        let l5_0 = d5 & 0x003fffffffffffff;
+        let l6_0 = d6 & 0x003fffffffffffff;
+        let l7_0 = d7 & 0x003fffffffffffff;
+        let l8_0 = d8 & 0x003fffffffffffff;
+        let l9_0 = d9 & 0x00000007ffffffff;
+
+        // Shift the high bits down into another n-bit number.
+        let h0_0 = ((d9 & 0x003fffffffffffff) >> 35) |
+                   ((d10 & & 0x00000007ffffffff) << 19);
+        let h1_0 = ((d10 & 0x003fffffffffffff) >> 35) |
+                   ((d11 & 0x00000007ffffffff) << 19);
+        let h2_0 = ((d11 & 0x003fffffffffffff) >> 35) |
+                   ((d12 & 0x00000007ffffffff) << 19);
+        let h3_0 = ((d12 & 0x003fffffffffffff) >> 35) |
+                   ((d13 & 0x00000007ffffffff) << 19);
+        let h4_0 = ((d13 & 0x003fffffffffffff) >> 35) |
+                   ((d14 & 0x00000007ffffffff) << 19);
+        let h5_0 = ((d14 & 0x003fffffffffffff) >> 35) |
+                   ((d15 & 0x00000007ffffffff) << 19);
+        let h6_0 = ((d15 & 0x003fffffffffffff) >> 35) |
+                   ((d16 & 0x00000007ffffffff) << 19);
+        let h7_0 = ((d16 & 0x003fffffffffffff) >> 35) |
+                   ((d17 & 0x00000007ffffffff) << 19);
+        let h8_0 = ((d17 & 0x003fffffffffffff) >> 35) |
+                   ((d18 & 0x00000007ffffffff) << 19);
+        let h9_0 = ((d18 & 0x003fffffffffffff) >> 35) |
+                   ((d19 & 0x000000000003ffff) << 19);
+
+        // Normally, we multiply h by c, but since c = 1 here, we skip.
+
+        // Add h and l.
+
+        // Need kin_0
+        let kin_0 = h9_0 >> 35;
+        let s0_0 = l0_0 + h0_0 + kin_0;
+        let k0_0 = s0_0 >> 54;
+        let s1_0 = l1_0 + h1_0 + k0_0;
+        let k1_0 = s1_0 >> 54;
+        let s2_0 = l2_0 + h2_0 + k1_0;
+        let k2_0 = s2_0 >> 54;
+        let s3_0 = l3_0 + h3_0 + k2_0;
+        let k3_0 = s3_0 >> 54;
+        let s4_0 = l4_0 + h4_0 + k3_0;
+        let k4_0 = s4_0 >> 54;
+        let s5_0 = l5_0 + h5_0 + k4_0;
+        let k5_0 = s5_0 >> 54;
+        let s6_0 = l6_0 + h6_0 + k5_0;
+        let k6_0 = s6_0 >> 54;
+        let s7_0 = l7_0 + h7_0 + k6_0;
+        let k7_0 = s7_0 >> 54;
+        let s8_0 = l8_0 + h8_0 + k7_0;
+        let k8_0 = s8_0 >> 54;
+        let s9_0 = l9_0 + (h9_0 & 0x00000007ffffffff) + k8_0;
+
+        self[0] = (s0_0 & 0x07ffffff) as u32;
+        self[1] = ((s0_0 >> 27) & 0x07ffffff) as u32;
+        self[2] = (s1_0 & 0x07ffffff) as u32;
+        self[3] = ((s1_0 >> 27) & 0x07ffffff) as u32;
+        self[4] = (s2_0 & 0x07ffffff) as u32;
+        self[5] = ((s2_0 >> 27) & 0x07ffffff) as u32;
+        self[6] = (s3_0 & 0x07ffffff) as u32;
+        self[7] = ((s3_0 >> 27) & 0x07ffffff) as u32;
+        self[8] = (s4_0 & 0x07ffffff) as u32;
+        self[9] = ((s4_0 >> 27) & 0x07ffffff) as u32;
+        self[10] = (s5_0 & 0x07ffffff) as u32;
+        self[11] = ((s5_0 >> 27) & 0x07ffffff) as u32;
+        self[12] = (s6_0 & 0x07ffffff) as u32;
+        self[13] = ((s6_0 >> 27) & 0x07ffffff) as u32;
+        self[14] = (s7_0 & 0x07ffffff) as u32;
+        self[15] = ((s7_0 >> 27) & 0x07ffffff) as u32;
+        self[16] = (s8_0 & 0x07ffffff) as u32;
+        self[17] = ((s8_0 >> 27) & 0x07ffffff) as u32;
+        self[18] = (s9_0 & 0x07ffffff) as u32;
+        self[19] = (s9_0 >> 27) as u32;
+    }
+
+    fn squared(&self) -> Self {
+        let mut out = self.clone();
+
+        out.square();
+
+        out
+    }
+
+    fn invert(&mut self) {
+        let mut sqval = self.clone();
+
+        // Skip second digit (which is a 0).
+        sqval.square();
+
+        // All the remaining digits are 0.
+        for _ in 2..521 {
+            sqval.square();
+            *self *= &sqval;
+        }
+    }
+
+    fn inverted(&self) -> Self {
+        let mut out = self.clone();
+
+        out.invert();
+
+        out
+    }
+
+    fn small_mult(self, b: i64) -> Mod_e521_1 {
+        let mut out = self.clone();
+
+        let cin: i64 = self.carry_out();
+        let a0: i64 = self[0] as i64;
+        let a1: i64 = self[1] as i64;
+        let a2: i64 = self[2] as i64;
+        let a3: i64 = self[3] as i64;
+        let a4: i64 = self[4] as i64;
+        let a5: i64 = self[5] as i64;
+        let a6: i64 = self[6] as i64;
+        let a7: i64 = self[7] as i64;
+        let a8: i64 = self[8] as i64;
+        let a9: i64 = self[9] as i64;
+        let a10: i64 = self[10] as i64;
+        let a11: i64 = self[11] as i64;
+        let a12: i64 = self[12] as i64;
+        let a13: i64 = self[13] as i64;
+        let a14: i64 = self[14] as i64;
+        let a15: i64 = self[15] as i64;
+        let a16: i64 = self[16] as i64;
+        let a17: i64 = self[17] as i64;
+        let a18: i64 = self[18] as i64;
+        let a19: i64 = self[19] as i64;
+
+        let m0: i64 = a0 * b;
+        let m1: i64 = a1 * b;
+        let m2: i64 = a2 * b;
+        let m3: i64 = a3 * b;
+        let m4: i64 = a4 * b;
+        let m5: i64 = a5 * b;
+        let m6: i64 = a6 * b;
+        let m7: i64 = a7 * b;
+        let m8: i64 = a8 * b;
+        let m9: i64 = a9 * b;
+        let m10: i64 = a10 * b;
+        let m11: i64 = a11 * b;
+        let m12: i64 = a12 * b;
+        let m13: i64 = a13 * b;
+        let m14: i64 = a14 * b;
+        let m15: i64 = a15 * b;
+        let m16: i64 = a16 * b;
+        let m17: i64 = a17 * b;
+        let m18: i64 = a18 * b;
+        let m19: i64 = a19 * b;
+
+        let d0 = m0 + ((m1 & 0x07ffffff) << 27) + cin;
+        let c0 = d0 >> 54;
+        let d1 = (m1 >> 27) + m2 + ((m3 & 0x07ffffff) << 27) + c0;
+        let c1 = d1 >> 54;
+        let d2 = (m3 >> 27) + m4 + ((m5 & 0x07ffffff) << 27) + c1;
+        let c2 = d2 >> 54;
+        let d3 = (m5 >> 27) + m6 + ((m7 & 0x07ffffff) << 27) + c2;
+        let c3 = d3 >> 54;
+        let d4 = (m7 >> 27) + m8 + ((m9 & 0x07ffffff) << 27) + c3;
+        let c4 = d4 >> 54;
+        let d5 = (m9 >> 27) + m10 + ((m11 & 0x07ffffff) << 27) + c4;
+        let c5 = d5 >> 54;
+        let d6 = (m11 >> 27) + m12 + ((m13 & 0x07ffffff) << 27) + c5;
+        let c6 = d5 >> 54;
+        let d7 = (m13 >> 27) + m14 + ((m15 & 0x07ffffff) << 27) + c6;
+        let c7 = d6 >> 54;
+        let d8 = (m15 >> 27) + m16 + ((m17 & 0x07ffffff) << 27) + c7;
+        let c8 = d7 >> 54;
+        let d9 = (m17 >> 27) + m18 + ((m19 & 0x07ffffff) << 27) + c8;
+
+        out[0] = (d0 & 0x07ffffff) as u32;
+        out[1] = ((d0 >> 27) & 0x07ffffff) as u32;
+        out[2] = (d1 & 0x07ffffff) as u32;
+        out[3] = ((d1 >> 27) & 0x07ffffff) as u32;
+        out[4] = (d2 & 0x07ffffff) as u32;
+        out[5] = ((d2 >> 27) & 0x07ffffff) as u32;
+        out[6] = (d3 & 0x07ffffff) as u32;
+        out[7] = ((d3 >> 27) & 0x07ffffff) as u32;
+        out[8] = (d4 & 0x07ffffff) as u32;
+        out[9] = ((d4 >> 27) & 0x07ffffff) as u32;
+        out[10] = (d5 & 0x07ffffff) as u32;
+        out[11] = ((d5 >> 27) & 0x07ffffff) as u32;
+        out[12] = (d6 & 0x07ffffff) as u32;
+        out[13] = ((d6 >> 27) & 0x07ffffff) as u32;
+        out[14] = (d7 & 0x07ffffff) as u32;
+        out[15] = ((d7 >> 27) & 0x07ffffff) as u32;
+        out[16] = (d8 & 0x07ffffff) as u32;
+        out[17] = ((d8 >> 27) & 0x07ffffff) as u32;
+        out[18] = (d9 & 0x07ffffff) as u32;
+        out[19] = ((d9 >> 27) & 0x07ffffff) as u32;
+
+        out
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use fields::prime_field::*;
     use fields::mod_e521_1::*;
 
     const TWO: Mod_e521_1 = Mod_e521_1([ 2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1442,6 +2197,16 @@ mod tests {
 
     const M_TWO: Mod_e521_1 =
         Mod_e521_1([ 0x07fffffd, 0x07ffffff, 0x07ffffff, 0x07ffffff,
+                     0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
+                     0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
+                     0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
+                     0x07ffffff, 0x07ffffff, 0x07ffffff, 0x000000ff ]);
+
+    const THREE: Mod_e521_1 = Mod_e521_1([ 3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const M_THREE: Mod_e521_1 =
+        Mod_e521_1([ 0x07fffffc, 0x07ffffff, 0x07ffffff, 0x07ffffff,
                      0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
                      0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
                      0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
@@ -1456,6 +2221,12 @@ mod tests {
                      0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
                      0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
                      0x07ffffff, 0x07ffffff, 0x07ffffff, 0x000000ff ]);
+
+    const NINE: Mod_e521_1 = Mod_e521_1([ 9, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const SIXTEEN: Mod_e521_1 = Mod_e521_1([ 16, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
     fn test_pack_unpack(expected: &[u8; 66]) {
         let mut unpacked = Mod_e521_1::unpack(expected);
@@ -2343,6 +3114,161 @@ mod tests {
 
                 assert!(M_FOUR.normalize_eq(&mut val));
             }
+        }
+    }
+
+    #[test]
+    fn test_square() {
+        let l1_zeros: [&mut Mod_e521_1; 10] = [ &mut (&ZERO * &ZERO),
+                                                &mut (&ONE * &ZERO),
+                                                &mut (&TWO * &ZERO),
+                                                &mut (&M_ONE * &ZERO),
+                                                &mut (&M_TWO * &ZERO),
+                                                &mut (&ZERO * &ONE),
+                                                &mut (&ZERO * &TWO),
+                                                &mut (&ZERO * &M_ONE),
+                                                &mut (&ZERO * &M_TWO),
+                                                &mut ZERO.squared() ];
+
+        let l1_ones: [&mut Mod_e521_1; 4] = [ &mut (&ONE * &ONE),
+                                              &mut (&M_ONE * &M_ONE),
+                                              &mut ONE.squared(),
+                                              &mut M_ONE.squared() ];
+
+        let l1_twos: [&mut Mod_e521_1; 4] = [ &mut (&ONE * &TWO),
+                                              &mut (&TWO * &ONE),
+                                              &mut (&M_ONE * &M_TWO),
+                                              &mut (&M_TWO * &M_ONE) ];
+
+        let l1_threes: [&mut Mod_e521_1; 4] = [ &mut (&ONE * &THREE),
+                                                &mut (&THREE * &ONE),
+                                                &mut (&M_ONE * &M_THREE),
+                                                &mut (&M_THREE * &M_ONE) ];
+
+        let l1_fours: [&mut Mod_e521_1; 4] = [ &mut (&TWO * &TWO),
+                                               &mut (&M_TWO * &M_TWO),
+                                               &mut TWO.squared(),
+                                               &mut M_TWO.squared() ];
+
+        for i in 0..10 {
+            let mut val = l1_zeros[i].squared();
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_ones[i].squared();
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_twos[i].squared();
+
+            assert!(FOUR.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_threes[i].squared();
+
+            assert!(NINE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_fours[i].squared();
+
+            assert!(SIXTEEN.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_inv() {
+        let l1_ones: [&mut Mod_e521_1; 2] = [ &mut (&ONE * &ONE),
+                                              &mut (&M_ONE * &M_ONE) ];
+
+        let l1_twos: [&mut Mod_e521_1; 4] = [ &mut (&ONE * &TWO),
+                                              &mut (&TWO * &ONE),
+                                              &mut (&M_ONE * &M_TWO),
+                                              &mut (&M_TWO * &M_ONE) ];
+
+        let l1_threes: [&mut Mod_e521_1; 4] = [ &mut (&ONE * &THREE),
+                                                &mut (&THREE * &ONE),
+                                                &mut (&M_ONE * &M_THREE),
+                                                &mut (&M_THREE * &M_ONE) ];
+
+        let l1_fours: [&mut Mod_e521_1; 2] = [ &mut (&TWO * &TWO),
+                                               &mut (&M_TWO * &M_TWO) ];
+
+        let l1_mones: [&mut Mod_e521_1; 2] = [ &mut (&ONE * &M_ONE),
+                                               &mut (&M_ONE * &ONE) ];
+
+        let l1_mtwos: [&mut Mod_e521_1; 4] = [ &mut (&ONE * &M_TWO),
+                                               &mut (&TWO * &M_ONE),
+                                               &mut (&M_ONE * &TWO),
+                                               &mut (&M_TWO * &ONE) ];
+
+        let l1_mthrees: [&mut Mod_e521_1; 4] = [ &mut (&ONE * &M_THREE),
+                                                 &mut (&THREE * &M_ONE),
+                                                 &mut (&M_ONE * &THREE),
+                                                 &mut (&M_THREE * &ONE) ];
+
+        let l1_mfours: [&mut Mod_e521_1; 2] = [ &mut (&TWO * &M_TWO),
+                                                &mut (&M_TWO * &TWO) ];
+
+        for i in 0..2 {
+            let inv = l1_ones[i].inverted();
+            let mut val = &*l1_ones[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let inv = l1_twos[i].inverted();
+            let mut val = &*l1_twos[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let inv = l1_threes[i].inverted();
+            let mut val = &*l1_threes[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let inv = l1_fours[i].inverted();
+            let mut val = &*l1_fours[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let inv = l1_mones[i].inverted();
+            let mut val = &*l1_mones[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let inv = l1_mtwos[i].inverted();
+            let mut val = &*l1_mtwos[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let inv = l1_mthrees[i].inverted();
+            let mut val = &*l1_mthrees[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let inv = l1_mfours[i].inverted();
+            let mut val = &*l1_mfours[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
         }
     }
 }

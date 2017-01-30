@@ -46,8 +46,24 @@ pub const NBITS : [u64; 32] = [0x1 * 32,
                                0x80000000 * 1];
 
 pub trait PrimeField {
+    /// Get the representation of the value 0.
     fn zero() -> Self;
+
+    /// Get the representation of the value 1.
     fn one() -> Self;
+
+    /// Get the representation of the value -1.
     fn m_one() -> Self;
+
+    /// Get the representation of the modulus.
     fn modulus() -> Self;
+
+    fn square(&mut self);
+    fn squared(&self) -> Self;
+    fn invert(&mut self);
+    fn inverted(&self) -> Self;
+
+    /// Multiply by a small number (an i64 that really contains an
+    /// i32-representable value).
+    fn small_mult(self, b: i64) -> Self;
 }
