@@ -114,7 +114,7 @@ impl Mod_e521_1 {
     /// carry_out(n + c), thus, we can normalize the number by doing
     /// n - (carry_out(n + c) * (2^m - c))
     pub fn normalize(&mut self) {
-        let plusone = &(self.clone()) + &ONE;
+        let plusone = self.clone().small_add(C_VAL as i32);
         let offset = MODULUS.small_mul(plusone.carry_out() as i32);
         *self -= &offset;
     }
@@ -2022,8 +2022,6 @@ impl PrimeField for Mod_e521_1 {
         // Normally, we multiply h by c, but since c = 1 here, we skip.
 
         // Add h and l.
-
-        // Need kin_0
         let kin_0 = h9_0 >> 35;
         let s0_0 = l0_0 + h0_0 + kin_0;
         let k0_0 = s0_0 >> 54;
@@ -2080,6 +2078,9 @@ impl PrimeField for Mod_e521_1 {
 
         // Skip second digit (which is a 0).
         sqval.square();
+
+        println!("round 1 {:?}", self);
+        println!("sqval {:?}", sqval);
 
         // All the remaining digits are 0.
         for _ in 2..521 {
