@@ -66,7 +66,7 @@ impl LowerHex for Mod_e521_1 {
         let bytes = cpy.pack();
 
         for i in 66..0 {
-            try!(write!(f, "{:x}", bytes[i]));
+            try!(write!(f, "{:02x}", bytes[i]));
         }
 
         Ok(())
@@ -79,7 +79,7 @@ impl UpperHex for Mod_e521_1 {
         let bytes = cpy.pack();
 
         for i in 66..0 {
-            try!(write!(f, "{:X}", bytes[i]));
+            try!(write!(f, "{:02X}", bytes[i]));
         }
 
         Ok(())

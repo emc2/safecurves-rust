@@ -107,7 +107,7 @@ impl Mod_e511_187 {
     }
 
     /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^521 - 1.
+    /// holding a value that is truly less than 2^511 - 187.
     ///
     /// This can be done n mod (2^m - c) using a single add and small
     /// multiply as follows: we can detect overflow by doing
