@@ -218,7 +218,6 @@ impl Mod_e521_1 {
                  (((bytes[4] as i64) << 32) & 0x000000ff00000000) |
                  (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
                  (((bytes[6] as i64) << 48) & 0x003f000000000000);
-
         out[1] = (((bytes[6] as i64) >> 6) & 0x0000000000000003) |
                  (((bytes[7] as i64) << 2) & 0x00000000000003fc) |
                  (((bytes[8] as i64) << 10) & 0x000000000003fc00) |
@@ -2352,7 +2351,6 @@ mod tests {
                            0x00, 0xff, 0x00, 0xff,
                            0x00, 0xff, 0x00, 0xff,
                            0x00, 0x01]);
-        /*
         test_pack_unpack(&[0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
@@ -2455,7 +2453,6 @@ mod tests {
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x01]);
-*/
     }
 
     #[test]

@@ -20,39 +20,37 @@ use std::ops::Neg;
 /// digit having 8 bits.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e511_187(pub [u32; 19]);
+pub struct Mod_e511_187(pub [i64; 10]);
 
 pub const C_VAL: i64 = 187;
 
 /// The normalized representation of the value 0.
-pub const ZERO: Mod_e511_187 = Mod_e511_187([ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                              0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+pub const ZERO: Mod_e511_187 = Mod_e511_187([ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
 /// The normalized representation of the value 1.
-pub const ONE: Mod_e511_187 = Mod_e511_187([ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                             0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+pub const ONE: Mod_e511_187 = Mod_e511_187([ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
 /// The normalized representation of the value -1.
 pub const M_ONE: Mod_e511_187 =
-    Mod_e511_187([ 0x07ffff44, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                   0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                   0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                   0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                   0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+    Mod_e511_187([ 0x003fffffffffff44, 0x003fffffffffffff,
+                   0x003fffffffffffff, 0x003fffffffffffff,
+                   0x003fffffffffffff, 0x003fffffffffffff,
+                   0x003fffffffffffff, 0x003fffffffffffff,
+                   0x003fffffffffffff, 0x0000000001ffffff ]);
 
 /// The normalized representation of the modulus 2^511 - 187.
 pub const MODULUS: Mod_e511_187 =
-    Mod_e511_187([ 0x07ffff45, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                   0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                   0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                   0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                   0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+    Mod_e511_187([ 0x003fffffffffff45, 0x003fffffffffffff,
+                   0x003fffffffffffff, 0x003fffffffffffff,
+                   0x003fffffffffffff, 0x003fffffffffffff,
+                   0x003fffffffffffff, 0x003fffffffffffff,
+                   0x003fffffffffffff, 0x0000000001ffffff ]);
 
 impl Debug for Mod_e511_187 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e511_187: [ {:x}", &self[0]));
 
-        for i in 1..19 {
+        for i in 1..10 {
             try!(write!(f, ", {:x}", &self[i]));
         }
 
@@ -103,7 +101,7 @@ impl Mod_e511_187 {
     /// stash the carry-out value of each operation, and feed that
     /// back into the next one.
     fn carry_out(&self) -> i64 {
-        i64::from((self[18] as i32) >> 25)
+        self[9] >> 25
     }
 
     /// Normalize the representation, resulting in the internal digits
@@ -134,189 +132,170 @@ impl Mod_e511_187 {
         bytes[0] = (self[0] & 0b11111111) as u8;
         bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
         bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
-        bytes[3] = (((self[0] >> 24) & 0b00000111) |
-                    ((self[1] << 3) & 0b11111000)) as u8;
-        bytes[4] = ((self[1] >> 5) & 0b11111111) as u8;
-        bytes[5] = ((self[1] >> 13) & 0b11111111) as u8;
-        bytes[6] = (((self[1] >> 21) & 0b00111111) |
-                    ((self[2] << 6) & 0b11000000)) as u8;
-        bytes[7] = ((self[2] >> 2) & 0b11111111) as u8;
-        bytes[8] = ((self[2] >> 10) & 0b11111111) as u8;
-        bytes[9] = ((self[2] >> 18) & 0b11111111) as u8;
-        bytes[10] = (((self[2] >> 26) & 0b00000001) |
-                     ((self[3] << 1) & 0b11111110)) as u8;
-        bytes[11] = ((self[3] >> 7) & 0b11111111) as u8;
-        bytes[12] = ((self[3] >> 15) & 0b11111111) as u8;
-        bytes[13] = (((self[3] >> 23) & 0b00001111) |
-                     ((self[4] << 4) & 0b11110000)) as u8;
-        bytes[14] = ((self[4] >> 4) & 0b11111111) as u8;
-        bytes[15] = ((self[4] >> 12) & 0b11111111) as u8;
-        bytes[16] = (((self[4] >> 20) & 0b01111111) |
-                     ((self[5] << 7) & 0b10000000)) as u8;
-        bytes[17] = ((self[5] >> 1) & 0b11111111) as u8;
-        bytes[18] = ((self[5] >> 9) & 0b11111111) as u8;
-        bytes[19] = ((self[5] >> 17) & 0b11111111) as u8;
-        bytes[20] = (((self[5] >> 25) & 0b00000011) |
-                     ((self[6] << 2) & 0b11111100)) as u8;
-        bytes[21] = ((self[6] >> 6) & 0b11111111) as u8;
-        bytes[22] = ((self[6] >> 14) & 0b11111111) as u8;
-        bytes[23] = (((self[6] >> 22) & 0b00011111) |
-                     ((self[7] << 5) & 0b11100000)) as u8;
-        bytes[24] = ((self[7] >> 3) & 0b11111111) as u8;
-        bytes[25] = ((self[7] >> 11) & 0b11111111) as u8;
-        bytes[26] = ((self[7] >> 19) & 0b11111111) as u8;
-        bytes[27] = (self[8] & 0b11111111) as u8;
-        bytes[28] = ((self[8] >> 8) & 0b11111111) as u8;
-        bytes[29] = ((self[8] >> 16) & 0b11111111) as u8;
-        bytes[30] = (((self[8] >> 24) & 0b00000111) |
-                     ((self[9] << 3) & 0b11111000)) as u8;
-        bytes[31] = ((self[9] >> 5) & 0b11111111) as u8;
-        bytes[32] = ((self[9] >> 13) & 0b11111111) as u8;
-        bytes[33] = (((self[9] >> 21) & 0b00111111) |
-                     ((self[10] << 6) & 0b11000000)) as u8;
-        bytes[34] = ((self[10] >> 2) & 0b11111111) as u8;
-        bytes[35] = ((self[10] >> 10) & 0b11111111) as u8;
-        bytes[36] = ((self[10] >> 18) & 0b11111111) as u8;
-        bytes[37] = (((self[10] >> 26) & 0b00000001) |
-                     ((self[11] << 1) & 0b11111110)) as u8;
-        bytes[38] = ((self[11] >> 7) & 0b11111111) as u8;
-        bytes[39] = ((self[11] >> 15) & 0b11111111) as u8;
-        bytes[40] = (((self[11] >> 23) & 0b00001111) |
-                     ((self[12] << 4) & 0b11110000)) as u8;
-        bytes[41] = ((self[12] >> 4) & 0b11111111) as u8;
-        bytes[42] = ((self[12] >> 12) & 0b11111111) as u8;
-        bytes[43] = (((self[12] >> 20) & 0b01111111) |
-                     ((self[13] << 7) & 0b10000000)) as u8;
-        bytes[44] = ((self[13] >> 1) & 0b11111111) as u8;
-        bytes[45] = ((self[13] >> 9) & 0b11111111) as u8;
-        bytes[46] = ((self[13] >> 17) & 0b11111111) as u8;
-        bytes[47] = (((self[13] >> 25) & 0b00000011) |
-                     ((self[14] << 2) & 0b11111100)) as u8;
-        bytes[48] = ((self[14] >> 6) & 0b11111111) as u8;
-        bytes[49] = ((self[14] >> 14) & 0b11111111) as u8;
-        bytes[50] = (((self[14] >> 22) & 0b00011111) |
-                     ((self[15] << 5) & 0b11100000)) as u8;
-        bytes[51] = ((self[15] >> 3) & 0b11111111) as u8;
-        bytes[52] = ((self[15] >> 11) & 0b11111111) as u8;
-        bytes[53] = ((self[15] >> 19) & 0b11111111) as u8;
-        bytes[54] = (self[16] & 0b11111111) as u8;
-        bytes[55] = ((self[16] >> 8) & 0b11111111) as u8;
-        bytes[56] = ((self[16] >> 16) & 0b11111111) as u8;
-        bytes[57] = (((self[16] >> 24) & 0b00000111) |
-                     ((self[17] << 3) & 0b11111000)) as u8;
-        bytes[58] = ((self[17] >> 5) & 0b11111111) as u8;
-        bytes[59] = ((self[17] >> 13) & 0b11111111) as u8;
-        bytes[60] = (((self[17] >> 21) & 0b00111111) |
-                     ((self[18] << 6) & 0b11000000)) as u8;
-        bytes[61] = ((self[18] >> 2) & 0b11111111) as u8;
-        bytes[62] = ((self[18] >> 10) & 0b11111111) as u8;
-        bytes[63] = ((self[18] >> 18) & 0b11111111) as u8;
+        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
+        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
+        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
+        bytes[6] = (((self[0] >> 48) & 0b00111111) |
+                    ((self[1] << 6) & 0b11000000)) as u8;
+        bytes[7] = ((self[1] >> 2) & 0b11111111) as u8;
+        bytes[8] = ((self[1] >> 10) & 0b11111111) as u8;
+        bytes[9] = ((self[1] >> 18) & 0b11111111) as u8;
+        bytes[10] = ((self[1] >> 26) & 0b11111111) as u8;
+        bytes[11] = ((self[1] >> 34) & 0b11111111) as u8;
+        bytes[12] = ((self[1] >> 42) & 0b11111111) as u8;
+        bytes[13] = (((self[1] >> 50) & 0b00001111) |
+                     ((self[2] << 4) & 0b11110000)) as u8;
+        bytes[14] = ((self[2] >> 4) & 0b11111111) as u8;
+        bytes[15] = ((self[2] >> 12) & 0b11111111) as u8;
+        bytes[16] = ((self[2] >> 20) & 0b11111111) as u8;
+        bytes[17] = ((self[2] >> 28) & 0b11111111) as u8;
+        bytes[18] = ((self[2] >> 36) & 0b11111111) as u8;
+        bytes[19] = ((self[2] >> 44) & 0b11111111) as u8;
+        bytes[20] = (((self[2] >> 52) & 0b00000011) |
+                     ((self[3] << 2) & 0b11111100)) as u8;
+        bytes[21] = ((self[3] >> 6) & 0b11111111) as u8;
+        bytes[22] = ((self[3] >> 14) & 0b11111111) as u8;
+        bytes[23] = ((self[3] >> 22) & 0b11111111) as u8;
+        bytes[24] = ((self[3] >> 30) & 0b11111111) as u8;
+        bytes[25] = ((self[3] >> 38) & 0b11111111) as u8;
+        bytes[26] = ((self[3] >> 46) & 0b11111111) as u8;
+        bytes[27] = (self[4] & 0b11111111) as u8;
+        bytes[28] = ((self[4] >> 8) & 0b11111111) as u8;
+        bytes[29] = ((self[4] >> 16) & 0b11111111) as u8;
+        bytes[30] = ((self[4] >> 24) & 0b11111111) as u8;
+        bytes[31] = ((self[4] >> 32) & 0b11111111) as u8;
+        bytes[32] = ((self[4] >> 40) & 0b11111111) as u8;
+        bytes[33] = (((self[4] >> 48) & 0b00111111) |
+                     ((self[5] << 6) & 0b11000000)) as u8;
+        bytes[34] = ((self[5] >> 2) & 0b11111111) as u8;
+        bytes[35] = ((self[5] >> 10) & 0b11111111) as u8;
+        bytes[36] = ((self[5] >> 18) & 0b11111111) as u8;
+        bytes[37] = ((self[5] >> 26) & 0b11111111) as u8;
+        bytes[38] = ((self[5] >> 34) & 0b11111111) as u8;
+        bytes[39] = ((self[5] >> 42) & 0b11111111) as u8;
+        bytes[40] = (((self[5] >> 50) & 0b00001111) |
+                     ((self[6] << 4) & 0b11110000)) as u8;
+        bytes[41] = ((self[6] >> 4) & 0b11111111) as u8;
+        bytes[42] = ((self[6] >> 12) & 0b11111111) as u8;
+        bytes[43] = ((self[6] >> 20) & 0b11111111) as u8;
+        bytes[44] = ((self[6] >> 28) & 0b11111111) as u8;
+        bytes[45] = ((self[6] >> 36) & 0b11111111) as u8;
+        bytes[46] = ((self[6] >> 44) & 0b11111111) as u8;
+        bytes[47] = (((self[6] >> 52) & 0b00000011) |
+                     ((self[7] << 2) & 0b11111100)) as u8;
+        bytes[48] = ((self[7] >> 6) & 0b11111111) as u8;
+        bytes[49] = ((self[7] >> 14) & 0b11111111) as u8;
+        bytes[50] = ((self[7] >> 22) & 0b11111111) as u8;
+        bytes[51] = ((self[7] >> 30) & 0b11111111) as u8;
+        bytes[52] = ((self[7] >> 38) & 0b11111111) as u8;
+        bytes[53] = ((self[7] >> 46) & 0b11111111) as u8;
+        bytes[54] = (self[8] & 0b11111111) as u8;
+        bytes[55] = ((self[8] >> 8) & 0b11111111) as u8;
+        bytes[56] = ((self[8] >> 16) & 0b11111111) as u8;
+        bytes[57] = ((self[8] >> 24) & 0b11111111) as u8;
+        bytes[58] = ((self[8] >> 32) & 0b11111111) as u8;
+        bytes[59] = ((self[8] >> 40) & 0b11111111) as u8;
+        bytes[60] = (((self[8] >> 48) & 0b00111111) |
+                     ((self[9] << 6) & 0b11000000)) as u8;
+        bytes[61] = ((self[9] >> 2) & 0b11111111) as u8;
+        bytes[62] = ((self[9] >> 10) & 0b11111111) as u8;
+        bytes[63] = ((self[9] >> 18) & 0b11111111) as u8;
 
         bytes
     }
 
     /// Deserialize a little-endian byte array into a value.  The byte
     /// array must contain a number less than the modulus 2^521 - 1.
-    pub fn unpack(bytes : &[u8; 64]) -> Mod_e511_187 {
-        let mut out = Mod_e511_187([0u32; 19]);
+    pub fn unpack(bytes: &[u8; 64]) -> Mod_e511_187 {
+        let mut out = Mod_e511_187([0i64; 10]);
 
-        out[0] = ((bytes[0] as u32) & 0x000000ff) |
-                 (((bytes[1] as u32) << 8) & 0x0000ff00) |
-                 (((bytes[2] as u32) << 16) & 0x00ff0000) |
-                 (((bytes[3] as u32) << 24) & 0x07000000);
-        out[1] = (((bytes[3] as u32) >> 3) & 0x0000001f) |
-                 (((bytes[4] as u32) << 5) & 0x00001fe0) |
-                 (((bytes[5] as u32) << 13) & 0x001fe000) |
-                 (((bytes[6] as u32) << 21) & 0x07e00000);
-        out[2] = (((bytes[6] as u32) >> 6) & 0x00000003) |
-                 (((bytes[7] as u32) << 2) & 0x000003fc) |
-                 (((bytes[8] as u32) << 10) & 0x0003fc00) |
-                 (((bytes[9] as u32) << 18) & 0x03fc0000) |
-                 (((bytes[10] as u32) << 26) & 0x04000000);
-        out[3] = (((bytes[10] as u32) >> 1) & 0x0000007f) |
-                 (((bytes[11] as u32) << 7) & 0x00007f80) |
-                 (((bytes[12] as u32) << 15) & 0x007f8000) |
-                 (((bytes[13] as u32) << 23) & 0x07800000);
-        out[4] = (((bytes[13] as u32) >> 4) & 0x0000000f) |
-                 (((bytes[14] as u32) << 4) & 0x00000ff0) |
-                 (((bytes[15] as u32) << 12) & 0x000ff000) |
-                 (((bytes[16] as u32) << 20) & 0x07f00000);
-        out[5] = (((bytes[16] as u32) >> 7) & 0x00000001) |
-                 (((bytes[17] as u32) << 1) & 0x000001fe) |
-                 (((bytes[18] as u32) << 9) & 0x0001fe00) |
-                 (((bytes[19] as u32) << 17) & 0x01fe0000) |
-                 (((bytes[20] as u32) << 25) & 0x06000000);
-        out[6] = (((bytes[20] as u32) >> 2) & 0x0000003f) |
-                 (((bytes[21] as u32) << 6) & 0x00003fc0) |
-                 (((bytes[22] as u32) << 14) & 0x003fc000) |
-                 (((bytes[23] as u32) << 22) & 0x07c00000);
-        out[7] = (((bytes[23] as u32) >> 5) & 0x00000007) |
-                 (((bytes[24] as u32) << 3) & 0x000007f8) |
-                 (((bytes[25] as u32) << 11) & 0x0007f800) |
-                 (((bytes[26] as u32) << 19) & 0x07f80000);
-        out[8] = ((bytes[27] as u32) & 0x000000ff) |
-                 (((bytes[28] as u32) << 8) & 0x0000ff00) |
-                 (((bytes[29] as u32) << 16) & 0x00ff0000) |
-                 (((bytes[30] as u32) << 24) & 0x07000000);
-        out[9] = (((bytes[30] as u32) >> 3) & 0x0000001f) |
-                 (((bytes[31] as u32) << 5) & 0x00001fe0) |
-                 (((bytes[32] as u32) << 13) & 0x001fe000) |
-                 (((bytes[33] as u32) << 21) & 0x07e00000);
-        out[10] = (((bytes[33] as u32) >> 6) & 0x00000003) |
-                  (((bytes[34] as u32) << 2) & 0x000003fc) |
-                  (((bytes[35] as u32) << 10) & 0x0003fc00) |
-                  (((bytes[36] as u32) << 18) & 0x03fc0000) |
-                  (((bytes[37] as u32) << 26) & 0x04000000);
-        out[11] = (((bytes[37] as u32) >> 1) & 0x0000007f) |
-                  (((bytes[38] as u32) << 7) & 0x00007f80) |
-                  (((bytes[39] as u32) << 15) & 0x007f8000) |
-                  (((bytes[40] as u32) << 23) & 0x07800000);
-        out[12] = (((bytes[40] as u32) >> 4) & 0x0000000f) |
-                  (((bytes[41] as u32) << 4) & 0x00000ff0) |
-                  (((bytes[42] as u32) << 12) & 0x000ff000) |
-                  (((bytes[43] as u32) << 20) & 0x07f00000);
-        out[13] = (((bytes[43] as u32) >> 7) & 0x00000001) |
-                  (((bytes[44] as u32) << 1) & 0x000001fe) |
-                  (((bytes[45] as u32) << 9) & 0x0001fe00) |
-                  (((bytes[46] as u32) << 17) & 0x01fe0000) |
-                  (((bytes[47] as u32) << 25) & 0x06000000);
-        out[14] = (((bytes[47] as u32) >> 2) & 0x0000003f) |
-                  (((bytes[48] as u32) << 6) & 0x00003fc0) |
-                  (((bytes[49] as u32) << 14) & 0x003fc000) |
-                  (((bytes[50] as u32) << 22) & 0x07c00000);
-        out[15] = (((bytes[50] as u32) >> 5) & 0x00000007) |
-                  (((bytes[51] as u32) << 3) & 0x000007f8) |
-                  (((bytes[52] as u32) << 11) & 0x0007f800) |
-                  (((bytes[53] as u32) << 19) & 0x07f80000);
-        out[16] = ((bytes[54] as u32) & 0x000000ff) |
-                  (((bytes[55] as u32) << 8) & 0x0000ff00) |
-                  (((bytes[56] as u32) << 16) & 0x00ff0000) |
-                  (((bytes[57] as u32) << 24) & 0x07000000);
-        out[17] = (((bytes[57] as u32) >> 3) & 0x0000001f) |
-                  (((bytes[58] as u32) << 5) & 0x00001fe0) |
-                  (((bytes[59] as u32) << 13) & 0x001fe000) |
-                  (((bytes[60] as u32) << 21) & 0x07e00000);
-        out[18] = (((bytes[60] as u32) >> 6) & 0x00000003) |
-                  (((bytes[61] as u32) << 2) & 0x000003fc) |
-                  (((bytes[62] as u32) << 10) & 0x0003fc00) |
-                  (((bytes[63] as u32) << 18) & 0x03fc0000);
-
+        out[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
+                 (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[2] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[3] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[4] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[6] as i64) << 48) & 0x003f000000000000);
+        out[1] = (((bytes[6] as i64) >> 6) & 0x0000000000000003) |
+                 (((bytes[7] as i64) << 2) & 0x00000000000003fc) |
+                 (((bytes[8] as i64) << 10) & 0x000000000003fc00) |
+                 (((bytes[9] as i64) << 18) & 0x0000000003fc0000) |
+                 (((bytes[10] as i64) << 26) & 0x00000003fc000000) |
+                 (((bytes[11] as i64) << 34) & 0x000003fc00000000) |
+                 (((bytes[12] as i64) << 42) & 0x0003fc0000000000) |
+                 (((bytes[13] as i64) << 50) & 0x003c000000000000);
+        out[2] = (((bytes[13] as i64) >> 4) & 0x000000000000000f) |
+                 (((bytes[14] as i64) << 4) & 0x0000000000000ff0) |
+                 (((bytes[15] as i64) << 12) & 0x00000000000ff000) |
+                 (((bytes[16] as i64) << 20) & 0x000000000ff00000) |
+                 (((bytes[17] as i64) << 28) & 0x0000000ff0000000) |
+                 (((bytes[18] as i64) << 36) & 0x00000ff000000000) |
+                 (((bytes[19] as i64) << 44) & 0x000ff00000000000) |
+                 (((bytes[20] as i64) << 52) & 0x0030000000000000);
+        out[3] = (((bytes[20] as i64) >> 2) & 0x000000000000003f) |
+                 (((bytes[21] as i64) << 6) & 0x0000000000003fc0) |
+                 (((bytes[22] as i64) << 14) & 0x00000000003fc000) |
+                 (((bytes[23] as i64) << 22) & 0x000000003fc00000) |
+                 (((bytes[24] as i64) << 30) & 0x0000003fc0000000) |
+                 (((bytes[25] as i64) << 38) & 0x00003fc000000000) |
+                 (((bytes[26] as i64) << 46) & 0x003fc00000000000);
+        out[4] = ((bytes[27] as i64) & 0x00000000000000ff) |
+                 (((bytes[28] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[29] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[30] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[31] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[32] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[33] as i64) << 48) & 0x003f000000000000);
+        out[5] = (((bytes[33] as i64) >> 6) & 0x0000000000000003) |
+                 (((bytes[34] as i64) << 2) & 0x00000000000003fc) |
+                 (((bytes[35] as i64) << 10) & 0x000000000003fc00) |
+                 (((bytes[36] as i64) << 18) & 0x0000000003fc0000) |
+                 (((bytes[37] as i64) << 26) & 0x00000003fc000000) |
+                 (((bytes[38] as i64) << 34) & 0x000003fc00000000) |
+                 (((bytes[39] as i64) << 42) & 0x0003fc0000000000) |
+                 (((bytes[40] as i64) << 50) & 0x003c000000000000);
+        out[6] = (((bytes[40] as i64) >> 4) & 0x000000000000000f) |
+                 (((bytes[41] as i64) << 4) & 0x0000000000000ff0) |
+                 (((bytes[42] as i64) << 12) & 0x00000000000ff000) |
+                 (((bytes[43] as i64) << 20) & 0x000000000ff00000) |
+                 (((bytes[44] as i64) << 28) & 0x0000000ff0000000) |
+                 (((bytes[45] as i64) << 36) & 0x00000ff000000000) |
+                 (((bytes[46] as i64) << 44) & 0x000ff00000000000) |
+                 (((bytes[47] as i64) << 52) & 0x0030000000000000);
+        out[7] = (((bytes[47] as i64) >> 2) & 0x000000000000003f) |
+                 (((bytes[48] as i64) << 6) & 0x0000000000003fc0) |
+                 (((bytes[49] as i64) << 14) & 0x00000000003fc000) |
+                 (((bytes[50] as i64) << 22) & 0x000000003fc00000) |
+                 (((bytes[51] as i64) << 30) & 0x0000003fc0000000) |
+                 (((bytes[52] as i64) << 38) & 0x00003fc000000000) |
+                 (((bytes[53] as i64) << 46) & 0x003fc00000000000);
+        out[8] = ((bytes[54] as i64) & 0x00000000000000ff) |
+                 (((bytes[55] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[56] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[57] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[58] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[59] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[60] as i64) << 48) & 0x003f000000000000);
+        out[9] = (((bytes[60] as i64) >> 6) & 0x0000000000000003) |
+                 (((bytes[61] as i64) << 2) & 0x00000000000003fc) |
+                 (((bytes[62] as i64) << 10) & 0x000000000003fc00) |
+                 (((bytes[63] as i64) << 18) & 0x0000000003fc0000);
         out
     }
 }
 
 impl IndexMut<usize> for Mod_e511_187 {
-    fn index_mut<'a>(&'a mut self, idx : usize) -> &'a mut u32 {
-        let ret : &'a mut u32 = &mut(self.0[idx]);
+    fn index_mut<'a>(&'a mut self, idx : usize) -> &'a mut i64 {
+        let ret : &'a mut i64 = &mut(self.0[idx]);
         ret
     }
 }
 
 impl Index<usize> for Mod_e511_187 {
-    type Output = u32;
+    type Output = i64;
 
-    fn index<'a>(&'a self, idx : usize) -> &'a u32 {
-        let ret : &'a u32 = &(self.0[idx]);
+    fn index<'a>(&'a self, idx : usize) -> &'a i64 {
+        let ret : &'a i64 = &(self.0[idx]);
         ret
     }
 }
@@ -334,68 +313,59 @@ impl<'a> Neg for &'a Mod_e511_187 {
 
 impl<'b> AddAssign<&'b Mod_e511_187> for Mod_e511_187 {
     fn add_assign(&mut self, rhs: &'b Mod_e511_187) {
-        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
-        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
-        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
-        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
-        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
-        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
-        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
-        let a7: i64 = self[14] as i64 | (self[15] as i64) << 27;
-        let a8: i64 = self[16] as i64 | (self[17] as i64) << 27;
-        let a9: i64 = (self[18] & 0x01ffffff) as i64;
+        let a0 = self[0];
+        let a1 = self[1];
+        let a2 = self[2];
+        let a3 = self[3];
+        let a4 = self[4];
+        let a5 = self[5];
+        let a6 = self[6];
+        let a7 = self[7];
+        let a8 = self[8];
+        let a9 = self[9] & 0x0000000001fffffff;
 
-        let b0: i64 = rhs[0] as i64 | (rhs[1] as i64) << 27;
-        let b1: i64 = rhs[2] as i64 | (rhs[3] as i64) << 27;
-        let b2: i64 = rhs[4] as i64 | (rhs[5] as i64) << 27;
-        let b3: i64 = rhs[6] as i64 | (rhs[7] as i64) << 27;
-        let b4: i64 = rhs[8] as i64 | (rhs[9] as i64) << 27;
-        let b5: i64 = rhs[10] as i64 | (rhs[11] as i64) << 27;
-        let b6: i64 = rhs[12] as i64 | (rhs[13] as i64) << 27;
-        let b7: i64 = rhs[14] as i64 | (rhs[15] as i64) << 27;
-        let b8: i64 = rhs[16] as i64 | (rhs[17] as i64) << 27;
-        let b9: i64 = (rhs[18] & 0x01ffffff) as i64;
+        let b0 = rhs[0];
+        let b1 = rhs[1];
+        let b2 = rhs[2];
+        let b3 = rhs[3];
+        let b4 = rhs[4];
+        let b5 = rhs[5];
+        let b6 = rhs[6];
+        let b7 = rhs[7];
+        let b8 = rhs[8];
+        let b9 = rhs[9] & 0x0000000001fffffff;
 
-        let cin: i64 = self.carry_out() + rhs.carry_out();
-        let s0: i64 = a0 + b0 + (cin * C_VAL);
-        let c0: i64 = s0 >> 54;
-        let s1: i64 = a1 + b1 + c0;
-        let c1: i64 = s1 >> 54;
-        let s2: i64 = a2 + b2 + c1;
-        let c2: i64 = s2 >> 54;
-        let s3: i64 = a3 + b3 + c2;
-        let c3: i64 = s3 >> 54;
-        let s4: i64 = a4 + b4 + c3;
-        let c4: i64 = s4 >> 54;
-        let s5: i64 = a5 + b5 + c4;
-        let c5: i64 = s5 >> 54;
-        let s6: i64 = a6 + b6 + c5;
-        let c6: i64 = s6 >> 54;
-        let s7: i64 = a7 + b7 + c6;
-        let c7: i64 = s7 >> 54;
-        let s8: i64 = a8 + b8 + c7;
-        let c8: i64 = s8 >> 54;
-        let s9: i64 = a9 + b9 + c8;
+        let cin = self.carry_out() + rhs.carry_out();
+        let s0 = a0 + b0 + (cin * C_VAL);
+        let c0 = s0 >> 54;
+        let s1 = a1 + b1 + c0;
+        let c1 = s1 >> 54;
+        let s2 = a2 + b2 + c1;
+        let c2 = s2 >> 54;
+        let s3 = a3 + b3 + c2;
+        let c3 = s3 >> 54;
+        let s4 = a4 + b4 + c3;
+        let c4 = s4 >> 54;
+        let s5 = a5 + b5 + c4;
+        let c5 = s5 >> 54;
+        let s6 = a6 + b6 + c5;
+        let c6 = s6 >> 54;
+        let s7 = a7 + b7 + c6;
+        let c7 = s7 >> 54;
+        let s8 = a8 + b8 + c7;
+        let c8 = s8 >> 54;
+        let s9 = a9 + b9 + c8;
 
-        self[0] = (s0 & 0x07ffffff) as u32;
-        self[1] = ((s0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (s1 & 0x07ffffff) as u32;
-        self[3] = ((s1 >> 27) & 0x07ffffff) as u32;
-        self[4] = (s2 & 0x07ffffff) as u32;
-        self[5] = ((s2 >> 27) & 0x07ffffff) as u32;
-        self[6] = (s3 & 0x07ffffff) as u32;
-        self[7] = ((s3 >> 27) & 0x07ffffff) as u32;
-        self[8] = (s4 & 0x07ffffff) as u32;
-        self[9] = ((s4 >> 27) & 0x07ffffff) as u32;
-        self[10] = (s5 & 0x07ffffff) as u32;
-        self[11] = ((s5 >> 27) & 0x07ffffff) as u32;
-        self[12] = (s6 & 0x07ffffff) as u32;
-        self[13] = ((s6 >> 27) & 0x07ffffff) as u32;
-        self[14] = (s7 & 0x07ffffff) as u32;
-        self[15] = ((s7 >> 27) & 0x07ffffff) as u32;
-        self[16] = (s8 & 0x07ffffff) as u32;
-        self[17] = ((s8 >> 27) & 0x07ffffff) as u32;
-        self[18] = s9 as u32;
+        self[0] = s0 & 0x003fffffffffffff;
+        self[1] = s1 & 0x003fffffffffffff;
+        self[2] = s2 & 0x003fffffffffffff;
+        self[3] = s3 & 0x003fffffffffffff;
+        self[4] = s4 & 0x003fffffffffffff;
+        self[5] = s5 & 0x003fffffffffffff;
+        self[6] = s6 & 0x003fffffffffffff;
+        self[7] = s7 & 0x003fffffffffffff;
+        self[8] = s8 & 0x003fffffffffffff;
+        self[9] = s9;
     }
 }
 
@@ -427,68 +397,59 @@ impl<'a, 'b> Div<&'b Mod_e511_187> for &'a Mod_e511_187 {
 
 impl<'b> SubAssign<&'b Mod_e511_187> for Mod_e511_187 {
     fn sub_assign(&mut self, rhs: &'b Mod_e511_187) {
-        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
-        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
-        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
-        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
-        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
-        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
-        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
-        let a7: i64 = self[14] as i64 | (self[15] as i64) << 27;
-        let a8: i64 = self[16] as i64 | (self[17] as i64) << 27;
-        let a9: i64 = (self[18] & 0x01ffffff) as i64;
+        let a0 = self[0];
+        let a1 = self[1];
+        let a2 = self[2];
+        let a3 = self[3];
+        let a4 = self[4];
+        let a5 = self[5];
+        let a6 = self[6];
+        let a7 = self[7];
+        let a8 = self[8];
+        let a9 = self[9] & 0x0000000001ffffff;
 
-        let b0: i64 = rhs[0] as i64 | (rhs[1] as i64) << 27;
-        let b1: i64 = rhs[2] as i64 | (rhs[3] as i64) << 27;
-        let b2: i64 = rhs[4] as i64 | (rhs[5] as i64) << 27;
-        let b3: i64 = rhs[6] as i64 | (rhs[7] as i64) << 27;
-        let b4: i64 = rhs[8] as i64 | (rhs[9] as i64) << 27;
-        let b5: i64 = rhs[10] as i64 | (rhs[11] as i64) << 27;
-        let b6: i64 = rhs[12] as i64 | (rhs[13] as i64) << 27;
-        let b7: i64 = rhs[14] as i64 | (rhs[15] as i64) << 27;
-        let b8: i64 = rhs[16] as i64 | (rhs[17] as i64) << 27;
-        let b9: i64 = (rhs[18] & 0x01ffffff) as i64;
+        let b0 = rhs[0];
+        let b1 = rhs[1];
+        let b2 = rhs[2];
+        let b3 = rhs[3];
+        let b4 = rhs[4];
+        let b5 = rhs[5];
+        let b6 = rhs[6];
+        let b7 = rhs[7];
+        let b8 = rhs[8];
+        let b9 = rhs[9] & 0x0000000001ffffff;
 
-        let cin: i64 = self.carry_out() + rhs.carry_out();
-        let s0: i64 = a0 - b0 + (cin * C_VAL);
-        let c0: i64 = s0 >> 54;
-        let s1: i64 = a1 - b1 + c0;
-        let c1: i64 = s1 >> 54;
-        let s2: i64 = a2 - b2 + c1;
-        let c2: i64 = s2 >> 54;
-        let s3: i64 = a3 - b3 + c2;
-        let c3: i64 = s3 >> 54;
-        let s4: i64 = a4 - b4 + c3;
-        let c4: i64 = s4 >> 54;
-        let s5: i64 = a5 - b5 + c4;
-        let c5: i64 = s5 >> 54;
-        let s6: i64 = a6 - b6 + c5;
-        let c6: i64 = s6 >> 54;
-        let s7: i64 = a7 - b7 + c6;
-        let c7: i64 = s7 >> 54;
-        let s8: i64 = a8 - b8 + c7;
-        let c8: i64 = s8 >> 54;
-        let s9: i64 = a9 - b9 + c8;
+        let cin = self.carry_out() + rhs.carry_out();
+        let s0 = a0 - b0 + (cin * C_VAL);
+        let c0 = s0 >> 54;
+        let s1 = a1 - b1 + c0;
+        let c1 = s1 >> 54;
+        let s2 = a2 - b2 + c1;
+        let c2 = s2 >> 54;
+        let s3 = a3 - b3 + c2;
+        let c3 = s3 >> 54;
+        let s4 = a4 - b4 + c3;
+        let c4 = s4 >> 54;
+        let s5 = a5 - b5 + c4;
+        let c5 = s5 >> 54;
+        let s6 = a6 - b6 + c5;
+        let c6 = s6 >> 54;
+        let s7 = a7 - b7 + c6;
+        let c7 = s7 >> 54;
+        let s8 = a8 - b8 + c7;
+        let c8 = s8 >> 54;
+        let s9 = a9 - b9 + c8;
 
-        self[0] = (s0 & 0x07ffffff) as u32;
-        self[1] = ((s0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (s1 & 0x07ffffff) as u32;
-        self[3] = ((s1 >> 27) & 0x07ffffff) as u32;
-        self[4] = (s2 & 0x07ffffff) as u32;
-        self[5] = ((s2 >> 27) & 0x07ffffff) as u32;
-        self[6] = (s3 & 0x07ffffff) as u32;
-        self[7] = ((s3 >> 27) & 0x07ffffff) as u32;
-        self[8] = (s4 & 0x07ffffff) as u32;
-        self[9] = ((s4 >> 27) & 0x07ffffff) as u32;
-        self[10] = (s5 & 0x07ffffff) as u32;
-        self[11] = ((s5 >> 27) & 0x07ffffff) as u32;
-        self[12] = (s6 & 0x07ffffff) as u32;
-        self[13] = ((s6 >> 27) & 0x07ffffff) as u32;
-        self[14] = (s7 & 0x07ffffff) as u32;
-        self[15] = ((s7 >> 27) & 0x07ffffff) as u32;
-        self[16] = (s8 & 0x07ffffff) as u32;
-        self[17] = ((s8 >> 27) & 0x07ffffff) as u32;
-        self[18] = s9 as u32;
+        self[0] = s0 & 0x003fffffffffffff;
+        self[1] = s1 & 0x003fffffffffffff;
+        self[2] = s2 & 0x003fffffffffffff;
+        self[3] = s3 & 0x003fffffffffffff;
+        self[4] = s4 & 0x003fffffffffffff;
+        self[5] = s5 & 0x003fffffffffffff;
+        self[6] = s6 & 0x003fffffffffffff;
+        self[7] = s7 & 0x003fffffffffffff;
+        self[8] = s8 & 0x003fffffffffffff;
+        self[9] = s9;
     }
 }
 
@@ -504,45 +465,45 @@ impl<'a, 'b> Sub<&'b Mod_e511_187> for &'a Mod_e511_187 {
 
 impl<'b> MulAssign<&'b Mod_e511_187> for Mod_e511_187 {
     fn mul_assign(&mut self, rhs: &'b Mod_e511_187) {
-        let a0: i64 = self[0] as i64;
-        let a1: i64 = self[1] as i64;
-        let a2: i64 = self[2] as i64;
-        let a3: i64 = self[3] as i64;
-        let a4: i64 = self[4] as i64;
-        let a5: i64 = self[5] as i64;
-        let a6: i64 = self[6] as i64;
-        let a7: i64 = self[7] as i64;
-        let a8: i64 = self[8] as i64;
-        let a9: i64 = self[9] as i64;
-        let a10: i64 = self[10] as i64;
-        let a11: i64 = self[11] as i64;
-        let a12: i64 = self[12] as i64;
-        let a13: i64 = self[13] as i64;
-        let a14: i64 = self[14] as i64;
-        let a15: i64 = self[15] as i64;
-        let a16: i64 = self[16] as i64;
-        let a17: i64 = self[17] as i64;
-        let a18: i64 = self[18] as i64;
+        let a0 = self[0] & 0x07ffffff;
+        let a1 = self[0] >> 27;
+        let a2 = self[1] & 0x07ffffff;
+        let a3 = self[1] >> 27;
+        let a4 = self[2] & 0x07ffffff;
+        let a5 = self[2] >> 27;
+        let a6 = self[3] & 0x07ffffff;
+        let a7 = self[3] >> 27;
+        let a8 = self[4] & 0x07ffffff;
+        let a9 = self[4] >> 27;
+        let a10 = self[5] & 0x07ffffff;
+        let a11 = self[5] >> 27;
+        let a12 = self[6] & 0x07ffffff;
+        let a13 = self[6] >> 27;
+        let a14 = self[7] & 0x07ffffff;
+        let a15 = self[7] >> 27;
+        let a16 = self[8] & 0x07ffffff;
+        let a17 = self[8] >> 27;
+        let a18 = self[9];
 
-        let b0: i64 = rhs[0] as i64;
-        let b1: i64 = rhs[1] as i64;
-        let b2: i64 = rhs[2] as i64;
-        let b3: i64 = rhs[3] as i64;
-        let b4: i64 = rhs[4] as i64;
-        let b5: i64 = rhs[5] as i64;
-        let b6: i64 = rhs[6] as i64;
-        let b7: i64 = rhs[7] as i64;
-        let b8: i64 = rhs[8] as i64;
-        let b9: i64 = rhs[9] as i64;
-        let b10: i64 = rhs[10] as i64;
-        let b11: i64 = rhs[11] as i64;
-        let b12: i64 = rhs[12] as i64;
-        let b13: i64 = rhs[13] as i64;
-        let b14: i64 = rhs[14] as i64;
-        let b15: i64 = rhs[15] as i64;
-        let b16: i64 = rhs[16] as i64;
-        let b17: i64 = rhs[17] as i64;
-        let b18: i64 = rhs[18] as i64;
+        let b0 = rhs[0] & 0x07ffffff;
+        let b1 = rhs[0] >> 27;
+        let b2 = rhs[1] & 0x07ffffff;
+        let b3 = rhs[1] >> 27;
+        let b4 = rhs[2] & 0x07ffffff;
+        let b5 = rhs[2] >> 27;
+        let b6 = rhs[3] & 0x07ffffff;
+        let b7 = rhs[3] >> 27;
+        let b8 = rhs[4] & 0x07ffffff;
+        let b9 = rhs[4] >> 27;
+        let b10 = rhs[5] & 0x07ffffff;
+        let b11 = rhs[5] >> 27;
+        let b12 = rhs[6] & 0x07ffffff;
+        let b13 = rhs[6] >> 27;
+        let b14 = rhs[7] & 0x07ffffff;
+        let b15 = rhs[7] >> 27;
+        let b16 = rhs[8] & 0x07ffffff;
+        let b17 = rhs[8] >> 27;
+        let b18 = rhs[9];
 
         // Combined multiples
         let m_0_0 = a0 * b0;
@@ -1199,25 +1160,16 @@ impl<'b> MulAssign<&'b Mod_e511_187> for Mod_e511_187 {
         let k8_0 = s8_0 >> 54;
         let s9_0 = l9_0 + (hc9_0 & 0x0000000001ffffff) + k8_0;
 
-        self[0] = (s0_0 & 0x07ffffff) as u32;
-        self[1] = ((s0_0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (s1_0 & 0x07ffffff) as u32;
-        self[3] = ((s1_0 >> 27) & 0x07ffffff) as u32;
-        self[4] = (s2_0 & 0x07ffffff) as u32;
-        self[5] = ((s2_0 >> 27) & 0x07ffffff) as u32;
-        self[6] = (s3_0 & 0x07ffffff) as u32;
-        self[7] = ((s3_0 >> 27) & 0x07ffffff) as u32;
-        self[8] = (s4_0 & 0x07ffffff) as u32;
-        self[9] = ((s4_0 >> 27) & 0x07ffffff) as u32;
-        self[10] = (s5_0 & 0x07ffffff) as u32;
-        self[11] = ((s5_0 >> 27) & 0x07ffffff) as u32;
-        self[12] = (s6_0 & 0x07ffffff) as u32;
-        self[13] = ((s6_0 >> 27) & 0x07ffffff) as u32;
-        self[14] = (s7_0 & 0x07ffffff) as u32;
-        self[15] = ((s7_0 >> 27) & 0x07ffffff) as u32;
-        self[16] = (s8_0 & 0x07ffffff) as u32;
-        self[17] = ((s8_0 >> 27) & 0x07ffffff) as u32;
-        self[18] = s9_0 as u32;
+        self[0] = s0_0 & 0x003fffffffffffff;
+        self[1] = s1_0 & 0x003fffffffffffff;
+        self[2] = s2_0 & 0x003fffffffffffff;
+        self[3] = s3_0 & 0x003fffffffffffff;
+        self[4] = s4_0 & 0x003fffffffffffff;
+        self[5] = s5_0 & 0x003fffffffffffff;
+        self[6] = s6_0 & 0x003fffffffffffff;
+        self[7] = s7_0 & 0x003fffffffffffff;
+        self[8] = s8_0 & 0x003fffffffffffff;
+        self[9] = s9_0;
      }
 }
 
@@ -1249,25 +1201,25 @@ impl PrimeField for Mod_e511_187 {
     }
 
     fn square(&mut self) {
-        let a0: i64 = self[0] as i64;
-        let a1: i64 = self[1] as i64;
-        let a2: i64 = self[2] as i64;
-        let a3: i64 = self[3] as i64;
-        let a4: i64 = self[4] as i64;
-        let a5: i64 = self[5] as i64;
-        let a6: i64 = self[6] as i64;
-        let a7: i64 = self[7] as i64;
-        let a8: i64 = self[8] as i64;
-        let a9: i64 = self[9] as i64;
-        let a10: i64 = self[10] as i64;
-        let a11: i64 = self[11] as i64;
-        let a12: i64 = self[12] as i64;
-        let a13: i64 = self[13] as i64;
-        let a14: i64 = self[14] as i64;
-        let a15: i64 = self[15] as i64;
-        let a16: i64 = self[16] as i64;
-        let a17: i64 = self[17] as i64;
-        let a18: i64 = self[18] as i64;
+        let a0 = self[0] & 0x07ffffff;
+        let a1 = self[0] >> 27;
+        let a2 = self[1] & 0x07ffffff;
+        let a3 = self[1] >> 27;
+        let a4 = self[2] & 0x07ffffff;
+        let a5 = self[2] >> 27;
+        let a6 = self[3] & 0x07ffffff;
+        let a7 = self[3] >> 27;
+        let a8 = self[4] & 0x07ffffff;
+        let a9 = self[4] >> 27;
+        let a10 = self[5] & 0x07ffffff;
+        let a11 = self[5] >> 27;
+        let a12 = self[6] & 0x07ffffff;
+        let a13 = self[6] >> 27;
+        let a14 = self[7] & 0x07ffffff;
+        let a15 = self[7] >> 27;
+        let a16 = self[8] & 0x07ffffff;
+        let a17 = self[8] >> 27;
+        let a18 = self[9];
 
         // Combined multiples
         let m_0_0 = a0 * a0;
@@ -1924,25 +1876,16 @@ impl PrimeField for Mod_e511_187 {
         let k8_0 = s8_0 >> 54;
         let s9_0 = l9_0 + (hc9_0 & 0x0000000001ffffff) + k8_0;
 
-        self[0] = (s0_0 & 0x07ffffff) as u32;
-        self[1] = ((s0_0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (s1_0 & 0x07ffffff) as u32;
-        self[3] = ((s1_0 >> 27) & 0x07ffffff) as u32;
-        self[4] = (s2_0 & 0x07ffffff) as u32;
-        self[5] = ((s2_0 >> 27) & 0x07ffffff) as u32;
-        self[6] = (s3_0 & 0x07ffffff) as u32;
-        self[7] = ((s3_0 >> 27) & 0x07ffffff) as u32;
-        self[8] = (s4_0 & 0x07ffffff) as u32;
-        self[9] = ((s4_0 >> 27) & 0x07ffffff) as u32;
-        self[10] = (s5_0 & 0x07ffffff) as u32;
-        self[11] = ((s5_0 >> 27) & 0x07ffffff) as u32;
-        self[12] = (s6_0 & 0x07ffffff) as u32;
-        self[13] = ((s6_0 >> 27) & 0x07ffffff) as u32;
-        self[14] = (s7_0 & 0x07ffffff) as u32;
-        self[15] = ((s7_0 >> 27) & 0x07ffffff) as u32;
-        self[16] = (s8_0 & 0x07ffffff) as u32;
-        self[17] = ((s8_0 >> 27) & 0x07ffffff) as u32;
-        self[18] = s9_0 as u32;
+        self[0] = s0_0 & 0x003fffffffffffff;
+        self[1] = s1_0 & 0x003fffffffffffff;
+        self[2] = s2_0 & 0x003fffffffffffff;
+        self[3] = s3_0 & 0x003fffffffffffff;
+        self[4] = s4_0 & 0x003fffffffffffff;
+        self[5] = s5_0 & 0x003fffffffffffff;
+        self[6] = s6_0 & 0x003fffffffffffff;
+        self[7] = s7_0 & 0x003fffffffffffff;
+        self[8] = s8_0 & 0x003fffffffffffff;
+        self[9] = s9_0;
     }
 
     fn squared(&self) -> Self {
@@ -1990,59 +1933,50 @@ impl PrimeField for Mod_e511_187 {
     }
 
     fn small_add_assign(&mut self, rhs: i32) {
-        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
-        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
-        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
-        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
-        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
-        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
-        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
-        let a7: i64 = self[14] as i64 | (self[15] as i64) << 27;
-        let a8: i64 = self[16] as i64 | (self[17] as i64) << 27;
-        let a9: i64 = (self[18] & 0x01ffffff) as i64;
+        let a0 = self[0];
+        let a1 = self[1];
+        let a2 = self[2];
+        let a3 = self[3];
+        let a4 = self[4];
+        let a5 = self[5];
+        let a6 = self[6];
+        let a7 = self[7];
+        let a8 = self[8];
+        let a9 = self[9] & 0x0000000001ffffff;
 
-        let b: i64 = i64::from(rhs);
+        let b = i64::from(rhs);
 
-        let cin: i64 = self.carry_out();
-        let s0: i64 = a0 + b + (cin * C_VAL);
-        let c0: i64 = s0 >> 54;
-        let s1: i64 = a1 + c0;
-        let c1: i64 = s1 >> 54;
-        let s2: i64 = a2 + c1;
-        let c2: i64 = s2 >> 54;
-        let s3: i64 = a3 + c2;
-        let c3: i64 = s3 >> 54;
-        let s4: i64 = a4 + c3;
-        let c4: i64 = s4 >> 54;
-        let s5: i64 = a5 + c4;
-        let c5: i64 = s5 >> 54;
-        let s6: i64 = a6 + c5;
-        let c6: i64 = s6 >> 54;
-        let s7: i64 = a7 + c6;
-        let c7: i64 = s7 >> 54;
-        let s8: i64 = a8 + c7;
-        let c8: i64 = s8 >> 54;
-        let s9: i64 = a9 + c8;
+        let cin = self.carry_out();
+        let s0 = a0 + b + (cin * C_VAL);
+        let c0 = s0 >> 54;
+        let s1 = a1 + c0;
+        let c1 = s1 >> 54;
+        let s2 = a2 + c1;
+        let c2 = s2 >> 54;
+        let s3 = a3 + c2;
+        let c3 = s3 >> 54;
+        let s4 = a4 + c3;
+        let c4 = s4 >> 54;
+        let s5 = a5 + c4;
+        let c5 = s5 >> 54;
+        let s6 = a6 + c5;
+        let c6 = s6 >> 54;
+        let s7 = a7 + c6;
+        let c7 = s7 >> 54;
+        let s8 = a8 + c7;
+        let c8 = s8 >> 54;
+        let s9 = a9 + c8;
 
-        self[0] = (s0 & 0x07ffffff) as u32;
-        self[1] = ((s0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (s1 & 0x07ffffff) as u32;
-        self[3] = ((s1 >> 27) & 0x07ffffff) as u32;
-        self[4] = (s2 & 0x07ffffff) as u32;
-        self[5] = ((s2 >> 27) & 0x07ffffff) as u32;
-        self[6] = (s3 & 0x07ffffff) as u32;
-        self[7] = ((s3 >> 27) & 0x07ffffff) as u32;
-        self[8] = (s4 & 0x07ffffff) as u32;
-        self[9] = ((s4 >> 27) & 0x07ffffff) as u32;
-        self[10] = (s5 & 0x07ffffff) as u32;
-        self[11] = ((s5 >> 27) & 0x07ffffff) as u32;
-        self[12] = (s6 & 0x07ffffff) as u32;
-        self[13] = ((s6 >> 27) & 0x07ffffff) as u32;
-        self[14] = (s7 & 0x07ffffff) as u32;
-        self[15] = ((s7 >> 27) & 0x07ffffff) as u32;
-        self[16] = (s8 & 0x07ffffff) as u32;
-        self[17] = ((s8 >> 27) & 0x07ffffff) as u32;
-        self[18] = s9 as u32;
+        self[0] = s0 & 0x003fffffffffffff;
+        self[1] = s1 & 0x003fffffffffffff;
+        self[2] = s2 & 0x003fffffffffffff;
+        self[3] = s3 & 0x003fffffffffffff;
+        self[4] = s4 & 0x003fffffffffffff;
+        self[5] = s5 & 0x003fffffffffffff;
+        self[6] = s6 & 0x003fffffffffffff;
+        self[7] = s7 & 0x003fffffffffffff;
+        self[8] = s8 & 0x003fffffffffffff;
+        self[9] = s9;
     }
 
     fn small_add(&self, rhs: i32) -> Mod_e511_187 {
@@ -2054,59 +1988,50 @@ impl PrimeField for Mod_e511_187 {
     }
 
     fn small_sub_assign(&mut self, rhs: i32) {
-        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
-        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
-        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
-        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
-        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
-        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
-        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
-        let a7: i64 = self[14] as i64 | (self[15] as i64) << 27;
-        let a8: i64 = self[16] as i64 | (self[17] as i64) << 27;
-        let a9: i64 = (self[18] & 0x01ffffff) as i64;
+        let a0 = self[0];
+        let a1 = self[1];
+        let a2 = self[2];
+        let a3 = self[3];
+        let a4 = self[4];
+        let a5 = self[5];
+        let a6 = self[6];
+        let a7 = self[7];
+        let a8 = self[8];
+        let a9 = self[9] & 0x0000000001ffffff;
 
-        let b: i64 = i64::from(rhs);
+        let b = i64::from(rhs);
 
-        let cin: i64 = self.carry_out();
-        let s0: i64 = a0 - b + (cin * C_VAL);
-        let c0: i64 = s0 >> 54;
-        let s1: i64 = a1 + c0;
-        let c1: i64 = s1 >> 54;
-        let s2: i64 = a2 + c1;
-        let c2: i64 = s2 >> 54;
-        let s3: i64 = a3 + c2;
-        let c3: i64 = s3 >> 54;
-        let s4: i64 = a4 + c3;
-        let c4: i64 = s4 >> 54;
-        let s5: i64 = a5 + c4;
-        let c5: i64 = s5 >> 54;
-        let s6: i64 = a6 + c5;
-        let c6: i64 = s6 >> 54;
-        let s7: i64 = a7 + c6;
-        let c7: i64 = s7 >> 54;
-        let s8: i64 = a8 + c7;
-        let c8: i64 = s8 >> 54;
-        let s9: i64 = a9 + c8;
+        let cin = self.carry_out();
+        let s0 = a0 - b + (cin * C_VAL);
+        let c0 = s0 >> 54;
+        let s1 = a1 + c0;
+        let c1 = s1 >> 54;
+        let s2 = a2 + c1;
+        let c2 = s2 >> 54;
+        let s3 = a3 + c2;
+        let c3 = s3 >> 54;
+        let s4 = a4 + c3;
+        let c4 = s4 >> 54;
+        let s5 = a5 + c4;
+        let c5 = s5 >> 54;
+        let s6 = a6 + c5;
+        let c6 = s6 >> 54;
+        let s7 = a7 + c6;
+        let c7 = s7 >> 54;
+        let s8 = a8 + c7;
+        let c8 = s8 >> 54;
+        let s9 = a9 + c8;
 
-        self[0] = (s0 & 0x07ffffff) as u32;
-        self[1] = ((s0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (s1 & 0x07ffffff) as u32;
-        self[3] = ((s1 >> 27) & 0x07ffffff) as u32;
-        self[4] = (s2 & 0x07ffffff) as u32;
-        self[5] = ((s2 >> 27) & 0x07ffffff) as u32;
-        self[6] = (s3 & 0x07ffffff) as u32;
-        self[7] = ((s3 >> 27) & 0x07ffffff) as u32;
-        self[8] = (s4 & 0x07ffffff) as u32;
-        self[9] = ((s4 >> 27) & 0x07ffffff) as u32;
-        self[10] = (s5 & 0x07ffffff) as u32;
-        self[11] = ((s5 >> 27) & 0x07ffffff) as u32;
-        self[12] = (s6 & 0x07ffffff) as u32;
-        self[13] = ((s6 >> 27) & 0x07ffffff) as u32;
-        self[14] = (s7 & 0x07ffffff) as u32;
-        self[15] = ((s7 >> 27) & 0x07ffffff) as u32;
-        self[16] = (s8 & 0x07ffffff) as u32;
-        self[17] = ((s8 >> 27) & 0x07ffffff) as u32;
-        self[18] = s9 as u32;
+        self[0] = s0 & 0x003fffffffffffff;
+        self[1] = s1 & 0x003fffffffffffff;
+        self[2] = s2 & 0x003fffffffffffff;
+        self[3] = s3 & 0x003fffffffffffff;
+        self[4] = s4 & 0x003fffffffffffff;
+        self[5] = s5 & 0x003fffffffffffff;
+        self[6] = s6 & 0x003fffffffffffff;
+        self[7] = s7 & 0x003fffffffffffff;
+        self[8] = s8 & 0x003fffffffffffff;
+        self[9] = s9;
     }
 
     fn small_sub(&self, rhs: i32) -> Mod_e511_187 {
@@ -2118,49 +2043,49 @@ impl PrimeField for Mod_e511_187 {
     }
 
     fn small_mul_assign(&mut self, rhs: i32) {
-        let cin: i64 = self.carry_out();
-        let a0: i64 = self[0] as i64;
-        let a1: i64 = self[1] as i64;
-        let a2: i64 = self[2] as i64;
-        let a3: i64 = self[3] as i64;
-        let a4: i64 = self[4] as i64;
-        let a5: i64 = self[5] as i64;
-        let a6: i64 = self[6] as i64;
-        let a7: i64 = self[7] as i64;
-        let a8: i64 = self[8] as i64;
-        let a9: i64 = self[9] as i64;
-        let a10: i64 = self[10] as i64;
-        let a11: i64 = self[11] as i64;
-        let a12: i64 = self[12] as i64;
-        let a13: i64 = self[13] as i64;
-        let a14: i64 = self[14] as i64;
-        let a15: i64 = self[15] as i64;
-        let a16: i64 = self[16] as i64;
-        let a17: i64 = self[17] as i64;
-        let a18: i64 = self[18] as i64;
+        let a0 = self[0] & 0x07ffffff;
+        let a1 = self[0] >> 27;
+        let a2 = self[1] & 0x07ffffff;
+        let a3 = self[1] >> 27;
+        let a4 = self[2] & 0x07ffffff;
+        let a5 = self[2] >> 27;
+        let a6 = self[3] & 0x07ffffff;
+        let a7 = self[3] >> 27;
+        let a8 = self[4] & 0x07ffffff;
+        let a9 = self[4] >> 27;
+        let a10 = self[5] & 0x07ffffff;
+        let a11 = self[5] >> 27;
+        let a12 = self[6] & 0x07ffffff;
+        let a13 = self[6] >> 27;
+        let a14 = self[7] & 0x07ffffff;
+        let a15 = self[7] >> 27;
+        let a16 = self[8] & 0x07ffffff;
+        let a17 = self[8] >> 27;
+        let a18 = self[9];
 
-        let b: i64 = i64::from(rhs);
+        let b = i64::from(rhs);
 
-        let m0: i64 = a0 * b;
-        let m1: i64 = a1 * b;
-        let m2: i64 = a2 * b;
-        let m3: i64 = a3 * b;
-        let m4: i64 = a4 * b;
-        let m5: i64 = a5 * b;
-        let m6: i64 = a6 * b;
-        let m7: i64 = a7 * b;
-        let m8: i64 = a8 * b;
-        let m9: i64 = a9 * b;
-        let m10: i64 = a10 * b;
-        let m11: i64 = a11 * b;
-        let m12: i64 = a12 * b;
-        let m13: i64 = a13 * b;
-        let m14: i64 = a14 * b;
-        let m15: i64 = a15 * b;
-        let m16: i64 = a16 * b;
-        let m17: i64 = a17 * b;
-        let m18: i64 = a18 * b;
+        let m0 = a0 * b;
+        let m1 = a1 * b;
+        let m2 = a2 * b;
+        let m3 = a3 * b;
+        let m4 = a4 * b;
+        let m5 = a5 * b;
+        let m6 = a6 * b;
+        let m7 = a7 * b;
+        let m8 = a8 * b;
+        let m9 = a9 * b;
+        let m10 = a10 * b;
+        let m11 = a11 * b;
+        let m12 = a12 * b;
+        let m13 = a13 * b;
+        let m14 = a14 * b;
+        let m15 = a15 * b;
+        let m16 = a16 * b;
+        let m17 = a17 * b;
+        let m18 = a18 * b;
 
+        let cin = self.carry_out();
         let d0 = m0 + ((m1 & 0x07ffffff) << 27) + (cin * C_VAL);
         let c0 = d0 >> 54;
         let d1 = (m1 >> 27) + m2 + ((m3 & 0x07ffffff) << 27) + c0;
@@ -2181,25 +2106,16 @@ impl PrimeField for Mod_e511_187 {
         let c8 = d8 >> 54;
         let d9 = (m17 >> 27) + m18 + c8;
 
-        self[0] = (d0 & 0x07ffffff) as u32;
-        self[1] = ((d0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (d1 & 0x07ffffff) as u32;
-        self[3] = ((d1 >> 27) & 0x07ffffff) as u32;
-        self[4] = (d2 & 0x07ffffff) as u32;
-        self[5] = ((d2 >> 27) & 0x07ffffff) as u32;
-        self[6] = (d3 & 0x07ffffff) as u32;
-        self[7] = ((d3 >> 27) & 0x07ffffff) as u32;
-        self[8] = (d4 & 0x07ffffff) as u32;
-        self[9] = ((d4 >> 27) & 0x07ffffff) as u32;
-        self[10] = (d5 & 0x07ffffff) as u32;
-        self[11] = ((d5 >> 27) & 0x07ffffff) as u32;
-        self[12] = (d6 & 0x07ffffff) as u32;
-        self[13] = ((d6 >> 27) & 0x07ffffff) as u32;
-        self[14] = (d7 & 0x07ffffff) as u32;
-        self[15] = ((d7 >> 27) & 0x07ffffff) as u32;
-        self[16] = (d8 & 0x07ffffff) as u32;
-        self[17] = ((d8 >> 27) & 0x07ffffff) as u32;
-        self[18] = d9 as u32;
+        self[0] = d0 & 0x003fffffffffffff;
+        self[1] = d1 & 0x003fffffffffffff;
+        self[2] = d2 & 0x003fffffffffffff;
+        self[3] = d3 & 0x003fffffffffffff;
+        self[4] = d4 & 0x003fffffffffffff;
+        self[5] = d5 & 0x003fffffffffffff;
+        self[6] = d6 & 0x003fffffffffffff;
+        self[7] = d7 & 0x003fffffffffffff;
+        self[8] = d8 & 0x003fffffffffffff;
+        self[9] = d9;
     }
 
     fn small_mul(&self, b: i32) -> Mod_e511_187 {
@@ -2216,75 +2132,69 @@ mod tests {
     use fields::prime_field::*;
     use fields::mod_e511_187::*;
 
-    const TWO: Mod_e511_187 = Mod_e511_187([ 2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                             0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+    const TWO: Mod_e511_187 = Mod_e511_187([ 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
     const M_TWO: Mod_e511_187 =
-        Mod_e511_187([ 0x07ffff43, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+        Mod_e511_187([ 0x003fffffffffff43, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x0000000001ffffff ]);
 
-    const THREE: Mod_e511_187 = Mod_e511_187([ 3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                               0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+    const THREE: Mod_e511_187 = Mod_e511_187([ 3, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
     const M_THREE: Mod_e511_187 =
-        Mod_e511_187([ 0x07ffff42, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+        Mod_e511_187([ 0x003fffffffffff42, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x0000000001ffffff ]);
 
-    const FOUR: Mod_e511_187 = Mod_e511_187([ 4, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                              0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+    const FOUR: Mod_e511_187 = Mod_e511_187([ 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
     const M_FOUR: Mod_e511_187 =
-        Mod_e511_187([ 0x07ffff41, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+        Mod_e511_187([ 0x003fffffffffff41, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x0000000001ffffff ]);
 
-    const SIX: Mod_e511_187 = Mod_e511_187([ 6, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                             0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+    const SIX: Mod_e511_187 = Mod_e511_187([ 6, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
     const M_SIX: Mod_e511_187 =
-        Mod_e511_187([ 0x07ffff3f, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+        Mod_e511_187([ 0x003fffffffffff3f, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x0000000001ffffff ]);
 
-    const EIGHT: Mod_e511_187 = Mod_e511_187([ 8, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                               0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+    const EIGHT: Mod_e511_187 = Mod_e511_187([ 8, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
     const M_EIGHT: Mod_e511_187 =
-        Mod_e511_187([ 0x07ffff3d, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+        Mod_e511_187([ 0x003fffffffffff3d, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x0000000001ffffff ]);
 
-    const NINE: Mod_e511_187 = Mod_e511_187([ 9, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                              0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+    const NINE: Mod_e511_187 = Mod_e511_187([ 9, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
     const M_NINE: Mod_e511_187 =
-        Mod_e511_187([ 0x07ffff3c, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+        Mod_e511_187([ 0x003fffffffffff3c, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x0000000001ffffff ]);
 
-    const SIXTEEN: Mod_e511_187 = Mod_e511_187([ 16, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                                 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+    const SIXTEEN: Mod_e511_187 = Mod_e511_187([ 16, 0, 0, 0, 0,
+                                                 0, 0, 0, 0, 0 ]);
 
     const M_SIXTEEN: Mod_e511_187 =
-        Mod_e511_187([ 0x07ffff35, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x07ffffff, 0x07ffffff,
-                       0x07ffffff, 0x07ffffff, 0x01ffffff ]);
+        Mod_e511_187([ 0x003fffffffffff35, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x003fffffffffffff,
+                       0x003fffffffffffff, 0x0000000001ffffff ]);
 
     fn test_pack_unpack(expected: &[u8; 64]) {
         let mut unpacked = Mod_e511_187::unpack(expected);
@@ -2299,7 +2209,7 @@ mod tests {
         let bytes = expected.pack();
         let actual = Mod_e511_187::unpack(&bytes);
 
-        for i in 0..19 {
+        for i in 0..10 {
             assert!(expected[i] == actual[i]);
         }
     }
@@ -2441,86 +2351,86 @@ mod tests {
         test_unpack_pack(&mut ZERO.clone());
         test_unpack_pack(&mut ONE.clone());
         test_unpack_pack(&mut M_ONE.clone());
-        test_unpack_pack(&mut Mod_e511_187([ 0x07ffffff, 0x00000000,
-                                             0x07ffffff, 0x00000000,
-                                             0x07ffffff, 0x00000000,
-                                             0x07ffffff, 0x00000000,
-                                             0x07ffffff, 0x00000000,
-                                             0x07ffffff, 0x00000000,
-                                             0x07ffffff, 0x00000000,
-                                             0x07ffffff, 0x00000000,
-                                             0x07ffffff, 0x00000000,
-                                             0x01ffffff ]));
-        test_unpack_pack(&mut Mod_e511_187([ 0x00000000, 0x07ffffff,
-                                             0x00000000, 0x07ffffff,
-                                             0x00000000, 0x07ffffff,
-                                             0x00000000, 0x07ffffff,
-                                             0x00000000, 0x07ffffff,
-                                             0x00000000, 0x07ffffff,
-                                             0x00000000, 0x07ffffff,
-                                             0x00000000, 0x07ffffff,
-                                             0x00000000, 0x07ffffff,
-                                             0x00000000 ]));
-        test_unpack_pack(&mut Mod_e511_187([ 0x02aaaaaa, 0x05555555,
-                                             0x02aaaaaa, 0x05555555,
-                                             0x02aaaaaa, 0x05555555,
-                                             0x02aaaaaa, 0x05555555,
-                                             0x02aaaaaa, 0x05555555,
-                                             0x02aaaaaa, 0x05555555,
-                                             0x02aaaaaa, 0x05555555,
-                                             0x02aaaaaa, 0x05555555,
-                                             0x02aaaaaa, 0x05555555,
-                                             0x00aaaaaa ]));
-        test_unpack_pack(&mut Mod_e511_187([ 0x05555555, 0x02aaaaaa,
-                                             0x05555555, 0x02aaaaaa,
-                                             0x05555555, 0x02aaaaaa,
-                                             0x05555555, 0x02aaaaaa,
-                                             0x05555555, 0x02aaaaaa,
-                                             0x05555555, 0x02aaaaaa,
-                                             0x05555555, 0x02aaaaaa,
-                                             0x05555555, 0x02aaaaaa,
-                                             0x05555555, 0x02aaaaaa,
-                                             0x01555555 ]));
-        test_unpack_pack(&mut Mod_e511_187([ 0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa, 0x00000000,
-                                             0x02aaaaaa ]));
-        test_unpack_pack(&mut Mod_e511_187([ 0x00000000, 0x02aaaaaa,
-                                             0x00000000, 0x02aaaaaa,
-                                             0x00000000, 0x02aaaaaa,
-                                             0x00000000, 0x02aaaaaa,
-                                             0x00000000, 0x02aaaaaa,
-                                             0x00000000, 0x02aaaaaa,
-                                             0x00000000, 0x02aaaaaa,
-                                             0x00000000, 0x02aaaaaa,
-                                             0x00000000, 0x02aaaaaa,
-                                             0x00000000 ]));
-        test_unpack_pack(&mut Mod_e511_187([ 0x07ffffff, 0x05555555,
-                                             0x07ffffff, 0x05555555,
-                                             0x07ffffff, 0x05555555,
-                                             0x07ffffff, 0x05555555,
-                                             0x07ffffff, 0x05555555,
-                                             0x07ffffff, 0x05555555,
-                                             0x07ffffff, 0x05555555,
-                                             0x07ffffff, 0x05555555,
-                                             0x07ffffff, 0x05555555,
-                                             0x01ffffff ]));
-        test_unpack_pack(&mut Mod_e511_187([ 0x05555555, 0x07ffffff,
-                                             0x05555555, 0x07ffffff,
-                                             0x05555555, 0x07ffffff,
-                                             0x05555555, 0x07ffffff,
-                                             0x05555555, 0x07ffffff,
-                                             0x05555555, 0x07ffffff,
-                                             0x05555555, 0x07ffffff,
-                                             0x05555555, 0x07ffffff,
-                                             0x05555555, 0x07ffffff,
-                                             0x01555555 ]));
+        test_unpack_pack(&mut Mod_e511_187([ 0x003fffffffffffff,
+                                             0x0000000000000000,
+                                             0x003fffffffffffff,
+                                             0x0000000000000000,
+                                             0x003fffffffffffff,
+                                             0x0000000000000000,
+                                             0x003fffffffffffff,
+                                             0x0000000000000000,
+                                             0x003fffffffffffff,
+                                             0x0000000000000000 ]));
+        test_unpack_pack(&mut Mod_e511_187([ 0x0000000000000000,
+                                             0x003fffffffffffff,
+                                             0x0000000000000000,
+                                             0x003fffffffffffff,
+                                             0x0000000000000000,
+                                             0x003fffffffffffff,
+                                             0x0000000000000000,
+                                             0x003fffffffffffff,
+                                             0x0000000000000000,
+                                             0x0000000001ffffff ]));
+        test_unpack_pack(&mut Mod_e511_187([ 0x002aaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000001555555 ]));
+        test_unpack_pack(&mut Mod_e511_187([ 0x0055555555555555,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x0000000000aaaaaa ]));
+        test_unpack_pack(&mut Mod_e511_187([ 0x002aaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000001555555 ]));
+        test_unpack_pack(&mut Mod_e511_187([ 0x0000000000000000,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x002aaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x0000000000aaaaaa ]));
+        test_unpack_pack(&mut Mod_e511_187([ 0x007fffffffffffff,
+                                             0x0055555555555555,
+                                             0x007fffffffffffff,
+                                             0x0055555555555555,
+                                             0x007fffffffffffff,
+                                             0x0055555555555555,
+                                             0x007fffffffffffff,
+                                             0x0055555555555555,
+                                             0x007fffffffffffff,
+                                             0x0000000001555555 ]));
+        test_unpack_pack(&mut Mod_e511_187([ 0x0055555555555555,
+                                             0x007fffffffffffff,
+                                             0x0055555555555555,
+                                             0x007fffffffffffff,
+                                             0x0055555555555555,
+                                             0x007fffffffffffff,
+                                             0x0055555555555555,
+                                             0x007fffffffffffff,
+                                             0x0055555555555555,
+                                             0x0000000001ffffff ]));
     }
 
     #[test]

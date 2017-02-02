@@ -19,37 +19,35 @@ use std::ops::Neg;
 /// curve.  Uses a 15-length array of 28-bit digits.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e414_17(pub [u32; 15]);
+pub struct Mod_e414_17(pub [i64; 8]);
 
 pub const C_VAL: i64 = 17;
 
 /// The normalized representation of the value 0.
-pub const ZERO: Mod_e414_17 = Mod_e414_17([ 0, 0, 0, 0, 0, 0, 0, 0,
-                                            0, 0, 0, 0, 0, 0, 0  ]);
+pub const ZERO: Mod_e414_17 = Mod_e414_17([ 0, 0, 0, 0, 0, 0, 0, 0 ]);
 
 /// The normalized representation of the value 1.
-pub const ONE: Mod_e414_17 = Mod_e414_17([ 1, 0, 0, 0, 0, 0, 0, 0,
-                                           0, 0, 0, 0, 0, 0, 0 ]);
+pub const ONE: Mod_e414_17 = Mod_e414_17([ 1, 0, 0, 0, 0, 0, 0, 0 ]);
 
 /// The normalized representation of the value -1.
 pub const M_ONE: Mod_e414_17 =
-    Mod_e414_17([ 0x0fffffee, 0x0fffffff, 0x0fffffff, 0x0fffffff,
-                  0x0fffffff, 0x0fffffff, 0x0fffffff, 0x0fffffff,
-                  0x0fffffff, 0x0fffffff, 0x0fffffff, 0x0fffffff,
-                  0x0fffffff, 0x0fffffff, 0x003fffff ]);
+    Mod_e414_17([ 0x00ffffffffffffee, 0x00ffffffffffffff,
+                  0x00ffffffffffffff, 0x00ffffffffffffff,
+                  0x00ffffffffffffff, 0x00ffffffffffffff,
+                  0x00ffffffffffffff, 0x00000000003fffff ]);
 
-/// The normalized representation of the modulus 2^511 - 187.
+/// The normalized representation of the modulus 2^414 - 17.
 pub const MODULUS: Mod_e414_17 =
-    Mod_e414_17([ 0x0fffffef, 0x0fffffff, 0x0fffffff, 0x0fffffff,
-                  0x0fffffff, 0x0fffffff, 0x0fffffff, 0x0fffffff,
-                  0x0fffffff, 0x0fffffff, 0x0fffffff, 0x0fffffff,
-                  0x0fffffff, 0x0fffffff, 0x003fffff ]);
+    Mod_e414_17([ 0x00ffffffffffffef, 0x00ffffffffffffff,
+                  0x00ffffffffffffff, 0x00ffffffffffffff,
+                  0x00ffffffffffffff, 0x00ffffffffffffff,
+                  0x00ffffffffffffff, 0x00000000003fffff ]);
 
 impl Debug for Mod_e414_17 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e414_17: [ {:x}", &self[0]));
 
-        for i in 1..15 {
+        for i in 1..8 {
             try!(write!(f, ", {:x}", &self[i]));
         }
 
@@ -63,7 +61,7 @@ impl LowerHex for Mod_e414_17 {
         let bytes = cpy.pack();
 
         for i in 0..52 {
-            try!(write!(f, "{:02x}", bytes[63 - i]));
+            try!(write!(f, "{:02x}", bytes[51 - i]));
         }
 
         Ok(())
@@ -76,7 +74,7 @@ impl UpperHex for Mod_e414_17 {
         let bytes = cpy.pack();
 
         for i in 0..52 {
-            try!(write!(f, "{:02X}", bytes[63 - i]));
+            try!(write!(f, "{:02X}", bytes[51 - i]));
         }
 
         Ok(())
@@ -84,7 +82,7 @@ impl UpperHex for Mod_e414_17 {
 }
 
 impl Mod_e414_17 {
-    fn normalize_eq(&mut self, other: &mut Mod_e414_17) -> bool {
+    pub fn normalize_eq(&mut self, other: &mut Mod_e414_17) -> bool {
         let self_bytes =  self.pack();
         let other_bytes = other.pack();
         let mut are_equal: bool = true;
@@ -100,11 +98,11 @@ impl Mod_e414_17 {
     /// stash the carry-out value of each operation, and feed that
     /// back into the next one.
     fn carry_out(&self) -> i64 {
-        i64::from((self[18] as i32) >> 25)
+        self[7] >> 22
     }
 
     /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^511 - 187.
+    /// holding a value that is truly less than 2^414 - 17.
     ///
     /// This can be done n mod (2^m - c) using a single add and small
     /// multiply as follows: we can detect overflow by doing
@@ -131,62 +129,55 @@ impl Mod_e414_17 {
         bytes[0] = (self[0] & 0b11111111) as u8;
         bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
         bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
-        bytes[3] = (((self[0] >> 24) & 0b00001111) |
-                    ((self[1] << 4) & 0b11110000)) as u8;
-        bytes[4] = ((self[1] >> 4) & 0b11111111) as u8;
-        bytes[5] = ((self[1] >> 12) & 0b11111111) as u8;
-        bytes[6] = ((self[1] >> 20) & 0b11111111) as u8;
-        bytes[7] = (self[2] & 0b11111111) as u8;
-        bytes[8] = ((self[2] >> 8) & 0b11111111) as u8;
-        bytes[9] = ((self[2] >> 16) & 0b11111111) as u8;
-        bytes[10] = (((self[2] >> 24) & 0b00001111) |
-                     ((self[3] << 4) & 0b11110000)) as u8;
-        bytes[11] = ((self[3] >> 4) & 0b11111111) as u8;
-        bytes[12] = ((self[3] >> 12) & 0b11111111) as u8;
-        bytes[13] = ((self[3] >> 20) & 0b11111111) as u8;
-        bytes[14] = (self[4] & 0b11111111) as u8;
-        bytes[15] = ((self[4] >> 8) & 0b11111111) as u8;
-        bytes[16] = ((self[4] >> 16) & 0b11111111) as u8;
-        bytes[17] = (((self[4] >> 24) & 0b00001111) |
-                     ((self[5] << 4) & 0b11110000)) as u8;
-        bytes[18] = ((self[5] >> 4) & 0b11111111) as u8;
-        bytes[19] = ((self[5] >> 12) & 0b11111111) as u8;
-        bytes[20] = ((self[5] >> 20) & 0b11111111) as u8;
-        bytes[21] = (self[6] & 0b11111111) as u8;
-        bytes[22] = ((self[6] >> 8) & 0b11111111) as u8;
-        bytes[23] = ((self[6] >> 16) & 0b11111111) as u8;
-        bytes[24] = (((self[6] >> 24) & 0b00001111) |
-                     ((self[7] << 4) & 0b11110000)) as u8;
-        bytes[25] = ((self[7] >> 4) & 0b11111111) as u8;
-        bytes[26] = ((self[7] >> 12) & 0b11111111) as u8;
-        bytes[27] = ((self[7] >> 20) & 0b11111111) as u8;
-        bytes[28] = (self[8] & 0b11111111) as u8;
-        bytes[29] = ((self[8] >> 8) & 0b11111111) as u8;
-        bytes[30] = ((self[8] >> 16) & 0b11111111) as u8;
-        bytes[31] = (((self[8] >> 24) & 0b00001111) |
-                     ((self[9] << 4) & 0b11110000)) as u8;
-        bytes[32] = ((self[9] >> 4) & 0b11111111) as u8;
-        bytes[33] = ((self[9] >> 12) & 0b11111111) as u8;
-        bytes[34] = ((self[9] >> 20) & 0b11111111) as u8;
-        bytes[35] = (self[10] & 0b11111111) as u8;
-        bytes[36] = ((self[10] >> 8) & 0b11111111) as u8;
-        bytes[37] = ((self[10] >> 16) & 0b11111111) as u8;
-        bytes[38] = (((self[10] >> 24) & 0b00001111) |
-                     ((self[11] << 4) & 0b11110000)) as u8;
-        bytes[39] = ((self[11] >> 4) & 0b11111111) as u8;
-        bytes[40] = ((self[11] >> 12) & 0b11111111) as u8;
-        bytes[41] = ((self[11] >> 20) & 0b11111111) as u8;
-        bytes[42] = (self[12] & 0b11111111) as u8;
-        bytes[43] = ((self[12] >> 8) & 0b11111111) as u8;
-        bytes[44] = ((self[12] >> 16) & 0b11111111) as u8;
-        bytes[45] = (((self[12] >> 24) & 0b00001111) |
-                     ((self[13] << 4) & 0b11110000)) as u8;
-        bytes[46] = ((self[13] >> 4) & 0b11111111) as u8;
-        bytes[47] = ((self[13] >> 12) & 0b11111111) as u8;
-        bytes[48] = ((self[13] >> 20) & 0b11111111) as u8;
-        bytes[49] = (self[14] & 0b11111111) as u8;
-        bytes[50] = ((self[14] >> 8) & 0b11111111) as u8;
-        bytes[51] = ((self[14] >> 16) & 0b11111111) as u8;
+        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
+        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
+        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
+        bytes[6] = ((self[0] >> 48) & 0b11111111) as u8;
+        bytes[7] = (self[1] & 0b11111111) as u8;
+        bytes[8] = ((self[1] >> 8) & 0b11111111) as u8;
+        bytes[9] = ((self[1] >> 16) & 0b11111111) as u8;
+        bytes[10] = ((self[1] >> 24) & 0b11111111) as u8;
+        bytes[11] = ((self[1] >> 32) & 0b11111111) as u8;
+        bytes[12] = ((self[1] >> 40) & 0b11111111) as u8;
+        bytes[13] = ((self[1] >> 48) & 0b11111111) as u8;
+        bytes[14] = (self[2] & 0b11111111) as u8;
+        bytes[15] = ((self[2] >> 8) & 0b11111111) as u8;
+        bytes[16] = ((self[2] >> 16) & 0b11111111) as u8;
+        bytes[17] = ((self[2] >> 24) & 0b11111111) as u8;
+        bytes[18] = ((self[2] >> 32) & 0b11111111) as u8;
+        bytes[19] = ((self[2] >> 40) & 0b11111111) as u8;
+        bytes[20] = ((self[2] >> 48) & 0b11111111) as u8;
+        bytes[21] = (self[3] & 0b11111111) as u8;
+        bytes[22] = ((self[3] >> 8) & 0b11111111) as u8;
+        bytes[23] = ((self[3] >> 16) & 0b11111111) as u8;
+        bytes[24] = ((self[3] >> 24) & 0b11111111) as u8;
+        bytes[25] = ((self[3] >> 32) & 0b11111111) as u8;
+        bytes[26] = ((self[3] >> 40) & 0b11111111) as u8;
+        bytes[27] = ((self[3] >> 48) & 0b11111111) as u8;
+        bytes[28] = (self[4] & 0b11111111) as u8;
+        bytes[29] = ((self[4] >> 8) & 0b11111111) as u8;
+        bytes[30] = ((self[4] >> 16) & 0b11111111) as u8;
+        bytes[31] = ((self[4] >> 24) & 0b11111111) as u8;
+        bytes[32] = ((self[4] >> 32) & 0b11111111) as u8;
+        bytes[33] = ((self[4] >> 40) & 0b11111111) as u8;
+        bytes[34] = ((self[4] >> 48) & 0b11111111) as u8;
+        bytes[35] = (self[5] & 0b11111111) as u8;
+        bytes[36] = ((self[5] >> 8) & 0b11111111) as u8;
+        bytes[37] = ((self[5] >> 16) & 0b11111111) as u8;
+        bytes[38] = ((self[5] >> 24) & 0b11111111) as u8;
+        bytes[39] = ((self[5] >> 32) & 0b11111111) as u8;
+        bytes[40] = ((self[5] >> 40) & 0b11111111) as u8;
+        bytes[41] = ((self[5] >> 48) & 0b11111111) as u8;
+        bytes[42] = (self[6] & 0b11111111) as u8;
+        bytes[43] = ((self[6] >> 8) & 0b11111111) as u8;
+        bytes[44] = ((self[6] >> 16) & 0b11111111) as u8;
+        bytes[45] = ((self[6] >> 24) & 0b11111111) as u8;
+        bytes[46] = ((self[6] >> 32) & 0b11111111) as u8;
+        bytes[47] = ((self[6] >> 40) & 0b11111111) as u8;
+        bytes[48] = ((self[6] >> 48) & 0b11111111) as u8;
+        bytes[49] = (self[7] & 0b11111111) as u8;
+        bytes[50] = ((self[7] >> 8) & 0b11111111) as u8;
+        bytes[51] = ((self[7] >> 16) & 0b11111111) as u8;
 
         bytes
     }
@@ -194,84 +185,77 @@ impl Mod_e414_17 {
     /// Deserialize a little-endian byte array into a value.  The byte
     /// array must contain a number less than the modulus 2^521 - 1.
     pub fn unpack(bytes : &[u8; 52]) -> Mod_e414_17 {
-        let mut out = Mod_e414_17([0u32; 15]);
+        let mut out = Mod_e414_17([0i64; 8]);
 
-        out[0] = ((bytes[0] as u32) & 0x000000ff) |
-                 (((bytes[1] as u32) << 8) & 0x0000ff00) |
-                 (((bytes[2] as u32) << 16) & 0x00ff0000) |
-                 (((bytes[3] as u32) << 24) & 0x0f000000);
-        out[1] = (((bytes[3] as u32) >> 4) & 0x0000000f) |
-                 (((bytes[4] as u32) << 4) & 0x00000ff0) |
-                 (((bytes[5] as u32) << 12) & 0x000ff000) |
-                 (((bytes[6] as u32) << 20) & 0x0ff00000);
-        out[2] = ((bytes[7] as u32) & 0x000000ff) |
-                 (((bytes[8] as u32) << 8) & 0x0000ff00) |
-                 (((bytes[9] as u32) << 16) & 0x00ff0000) |
-                 (((bytes[10] as u32) << 24) & 0x0f000000);
-        out[3] = (((bytes[10] as u32) >> 4) & 0x0000000f) |
-                 (((bytes[11] as u32) << 4) & 0x00000ff0) |
-                 (((bytes[12] as u32) << 12) & 0x000ff000) |
-                 (((bytes[13] as u32) << 20) & 0x0ff00000);
-        out[4] = ((bytes[14] as u32) & 0x000000ff) |
-                 (((bytes[15] as u32) << 8) & 0x0000ff00) |
-                 (((bytes[16] as u32) << 16) & 0x00ff0000) |
-                 (((bytes[17] as u32) << 24) & 0x0f000000);
-        out[5] = (((bytes[17] as u32) >> 4) & 0x0000000f) |
-                 (((bytes[18] as u32) << 4) & 0x00000ff0) |
-                 (((bytes[19] as u32) << 12) & 0x000ff000) |
-                 (((bytes[20] as u32) << 20) & 0x0ff00000);
-        out[6] = ((bytes[21] as u32) & 0x000000ff) |
-                 (((bytes[22] as u32) << 8) & 0x0000ff00) |
-                 (((bytes[23] as u32) << 16) & 0x00ff0000) |
-                 (((bytes[24] as u32) << 24) & 0x0f000000);
-        out[7] = (((bytes[24] as u32) >> 4) & 0x0000000f) |
-                 (((bytes[25] as u32) << 4) & 0x00000ff0) |
-                 (((bytes[26] as u32) << 12) & 0x000ff000) |
-                 (((bytes[27] as u32) << 20) & 0x0ff00000);
-        out[8] = ((bytes[28] as u32) & 0x000000ff) |
-                 (((bytes[29] as u32) << 8) & 0x0000ff00) |
-                 (((bytes[30] as u32) << 16) & 0x00ff0000) |
-                 (((bytes[31] as u32) << 24) & 0x0f000000);
-        out[9] = (((bytes[31] as u32) >> 4) & 0x0000000f) |
-                 (((bytes[32] as u32) << 4) & 0x00000ff0) |
-                 (((bytes[33] as u32) << 12) & 0x000ff000) |
-                 (((bytes[34] as u32) << 20) & 0x0ff00000);
-        out[10] = ((bytes[35] as u32) & 0x000000ff) |
-                  (((bytes[36] as u32) << 8) & 0x0000ff00) |
-                  (((bytes[37] as u32) << 16) & 0x00ff0000) |
-                  (((bytes[38] as u32) << 24) & 0x0f000000);
-        out[11] = (((bytes[38] as u32) >> 4) & 0x0000000f) |
-                  (((bytes[39] as u32) << 4) & 0x00000ff0) |
-                  (((bytes[40] as u32) << 12) & 0x000ff000) |
-                  (((bytes[41] as u32) << 20) & 0x0ff00000);
-        out[12] = ((bytes[42] as u32) & 0x000000ff) |
-                  (((bytes[43] as u32) << 8) & 0x0000ff00) |
-                  (((bytes[44] as u32) << 16) & 0x00ff0000) |
-                  (((bytes[45] as u32) << 24) & 0x0f000000);
-        out[13] = (((bytes[45] as u32) >> 4) & 0x0000000f) |
-                  (((bytes[46] as u32) << 4) & 0x00000ff0) |
-                  (((bytes[47] as u32) << 12) & 0x000ff000) |
-                  (((bytes[48] as u32) << 20) & 0x0ff00000);
-        out[14] = ((bytes[49] as u32) & 0x000000ff) |
-                  (((bytes[50] as u32) << 8) & 0x0000ff00) |
-                  (((bytes[51] as u32) << 16) & 0x00ff0000);
+        out[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
+                 (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[2] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[3] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[4] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[6] as i64) << 48) & 0x00ff000000000000);
+        out[1] = ((bytes[7] as i64) & 0x00000000000000ff) |
+                 (((bytes[8] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[9] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[10] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[11] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[12] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[13] as i64) << 48) & 0x00ff000000000000);
+        out[2] = ((bytes[14] as i64) & 0x00000000000000ff) |
+                 (((bytes[15] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[16] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[17] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[18] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[19] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[20] as i64) << 48) & 0x00ff000000000000);
+        out[3] = ((bytes[21] as i64) & 0x00000000000000ff) |
+                 (((bytes[22] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[23] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[24] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[25] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[26] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[27] as i64) << 48) & 0x00ff000000000000);
+        out[4] = ((bytes[28] as i64) & 0x00000000000000ff) |
+                 (((bytes[29] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[30] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[31] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[32] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[33] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[34] as i64) << 48) & 0x00ff000000000000);
+        out[5] = ((bytes[35] as i64) & 0x00000000000000ff) |
+                 (((bytes[36] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[37] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[38] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[39] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[40] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[41] as i64) << 48) & 0x00ff000000000000);
+        out[6] = ((bytes[42] as i64) & 0x00000000000000ff) |
+                 (((bytes[43] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[44] as i64) << 16) & 0x0000000000ff0000) |
+                 (((bytes[45] as i64) << 24) & 0x00000000ff000000) |
+                 (((bytes[46] as i64) << 32) & 0x000000ff00000000) |
+                 (((bytes[47] as i64) << 40) & 0x0000ff0000000000) |
+                 (((bytes[48] as i64) << 48) & 0x00ff000000000000);
+        out[7] = ((bytes[49] as i64) & 0x00000000000000ff) |
+                 (((bytes[50] as i64) << 8) & 0x000000000000ff00) |
+                 (((bytes[51] as i64) << 16) & 0x0000000000ff0000);
 
         out
     }
 }
 
 impl IndexMut<usize> for Mod_e414_17 {
-    fn index_mut<'a>(&'a mut self, idx : usize) -> &'a mut u32 {
-        let ret : &'a mut u32 = &mut(self.0[idx]);
+    fn index_mut<'a>(&'a mut self, idx : usize) -> &'a mut i64 {
+        let ret : &'a mut i64 = &mut(self.0[idx]);
         ret
     }
 }
 
 impl Index<usize> for Mod_e414_17 {
-    type Output = u32;
+    type Output = i64;
 
-    fn index<'a>(&'a self, idx : usize) -> &'a u32 {
-        let ret : &'a u32 = &(self.0[idx]);
+    fn index<'a>(&'a self, idx : usize) -> &'a i64 {
+        let ret : &'a i64 = &(self.0[idx]);
         ret
     }
 }
@@ -289,56 +273,49 @@ impl<'a> Neg for &'a Mod_e414_17 {
 
 impl<'b> AddAssign<&'b Mod_e414_17> for Mod_e414_17 {
     fn add_assign(&mut self, rhs: &'b Mod_e414_17) {
-        let a0: i64 = self[0] as i64 | (self[1] as i64) << 28;
-        let a1: i64 = self[2] as i64 | (self[3] as i64) << 28;
-        let a2: i64 = self[4] as i64 | (self[5] as i64) << 28;
-        let a3: i64 = self[6] as i64 | (self[7] as i64) << 28;
-        let a4: i64 = self[8] as i64 | (self[9] as i64) << 28;
-        let a5: i64 = self[10] as i64 | (self[11] as i64) << 28;
-        let a6: i64 = self[12] as i64 | (self[13] as i64) << 28;
-        let a7: i64 = (rhs[14] & 0x003fffff) as i64;
+        let a0 = self[0];
+        let a1 = self[1];
+        let a2 = self[2];
+        let a3 = self[3];
+        let a4 = self[4];
+        let a5 = self[5];
+        let a6 = self[6];
+        let a7 = self[7] & 0x00000000003fffff;
 
-        let b0: i64 = rhs[0] as i64 | (rhs[1] as i64) << 28;
-        let b1: i64 = rhs[2] as i64 | (rhs[3] as i64) << 28;
-        let b2: i64 = rhs[4] as i64 | (rhs[5] as i64) << 28;
-        let b3: i64 = rhs[6] as i64 | (rhs[7] as i64) << 28;
-        let b4: i64 = rhs[8] as i64 | (rhs[9] as i64) << 28;
-        let b5: i64 = rhs[10] as i64 | (rhs[11] as i64) << 28;
-        let b6: i64 = rhs[12] as i64 | (rhs[13] as i64) << 28;
-        let b7: i64 = (rhs[14] & 0x003fffff) as i64;
+        let b0 = rhs[0];
+        let b1 = rhs[1];
+        let b2 = rhs[2];
+        let b3 = rhs[3];
+        let b4 = rhs[4];
+        let b5 = rhs[5];
+        let b6 = rhs[6];
+        let b7 = rhs[7] & 0x00000000003fffff;
 
-        let cin: i64 = self.carry_out() + rhs.carry_out();
-        let s0: i64 = a0 + b0 + (cin * C_VAL);
-        let c0: i64 = s0 >> 56;
-        let s1: i64 = a1 + b1 + c0;
-        let c1: i64 = s1 >> 56;
-        let s2: i64 = a2 + b2 + c1;
-        let c2: i64 = s2 >> 56;
-        let s3: i64 = a3 + b3 + c2;
-        let c3: i64 = s3 >> 56;
-        let s4: i64 = a4 + b4 + c3;
-        let c4: i64 = s4 >> 56;
-        let s5: i64 = a5 + b5 + c4;
-        let c5: i64 = s5 >> 56;
-        let s6: i64 = a6 + b6 + c5;
-        let c6: i64 = s6 >> 56;
-        let s7: i64 = a7 + b7 + c6;
+        let cin = self.carry_out() + rhs.carry_out();
+        let s0 = a0 + b0 + (cin * C_VAL);
+        let c0 = s0 >> 56;
+        let s1 = a1 + b1 + c0;
+        let c1 = s1 >> 56;
+        let s2 = a2 + b2 + c1;
+        let c2 = s2 >> 56;
+        let s3 = a3 + b3 + c2;
+        let c3 = s3 >> 56;
+        let s4 = a4 + b4 + c3;
+        let c4 = s4 >> 56;
+        let s5 = a5 + b5 + c4;
+        let c5 = s5 >> 56;
+        let s6 = a6 + b6 + c5;
+        let c6 = s6 >> 56;
+        let s7 = a7 + b7 + c6;
 
-        self[0] = (s0 & 0x0fffffff) as u32;
-        self[1] = ((s0 >> 28) & 0x0fffffff) as u32;
-        self[2] = (s1 & 0x0fffffff) as u32;
-        self[3] = ((s1 >> 28) & 0x0fffffff) as u32;
-        self[4] = (s2 & 0x0fffffff) as u32;
-        self[5] = ((s2 >> 28) & 0x0fffffff) as u32;
-        self[6] = (s3 & 0x0fffffff) as u32;
-        self[7] = ((s3 >> 28) & 0x0fffffff) as u32;
-        self[8] = (s4 & 0x0fffffff) as u32;
-        self[9] = ((s4 >> 28) & 0x0fffffff) as u32;
-        self[10] = (s5 & 0x0fffffff) as u32;
-        self[11] = ((s5 >> 28) & 0x0fffffff) as u32;
-        self[12] = (s6 & 0x0fffffff) as u32;
-        self[13] = ((s6 >> 28) & 0x0fffffff) as u32;
-        self[14] = s7 as u32;
+        self[0] = s0 & 0x00ffffffffffffff;
+        self[1] = s1 & 0x00ffffffffffffff;
+        self[2] = s2 & 0x00ffffffffffffff;
+        self[3] = s3 & 0x00ffffffffffffff;
+        self[4] = s4 & 0x00ffffffffffffff;
+        self[5] = s5 & 0x00ffffffffffffff;
+        self[6] = s6 & 0x00ffffffffffffff;
+        self[7] = s7;
     }
 }
 
@@ -370,56 +347,49 @@ impl<'a, 'b> Div<&'b Mod_e414_17> for &'a Mod_e414_17 {
 
 impl<'b> SubAssign<&'b Mod_e414_17> for Mod_e414_17 {
     fn sub_assign(&mut self, rhs: &'b Mod_e414_17) {
-        let a0: i64 = self[0] as i64 | (self[1] as i64) << 28;
-        let a1: i64 = self[2] as i64 | (self[3] as i64) << 28;
-        let a2: i64 = self[4] as i64 | (self[5] as i64) << 28;
-        let a3: i64 = self[6] as i64 | (self[7] as i64) << 28;
-        let a4: i64 = self[8] as i64 | (self[9] as i64) << 28;
-        let a5: i64 = self[10] as i64 | (self[11] as i64) << 28;
-        let a6: i64 = self[12] as i64 | (self[13] as i64) << 28;
-        let a7: i64 = (rhs[14] & 0x003fffff) as i64;
+        let a0 = self[0];
+        let a1 = self[1];
+        let a2 = self[2];
+        let a3 = self[3];
+        let a4 = self[4];
+        let a5 = self[5];
+        let a6 = self[6];
+        let a7 = self[7] & 0x00000000003fffff;
 
-        let b0: i64 = rhs[0] as i64 | (rhs[1] as i64) << 28;
-        let b1: i64 = rhs[2] as i64 | (rhs[3] as i64) << 28;
-        let b2: i64 = rhs[4] as i64 | (rhs[5] as i64) << 28;
-        let b3: i64 = rhs[6] as i64 | (rhs[7] as i64) << 28;
-        let b4: i64 = rhs[8] as i64 | (rhs[9] as i64) << 28;
-        let b5: i64 = rhs[10] as i64 | (rhs[11] as i64) << 28;
-        let b6: i64 = rhs[12] as i64 | (rhs[13] as i64) << 28;
-        let b7: i64 = (rhs[14] & 0x003fffff) as i64;
+        let b0 = rhs[0];
+        let b1 = rhs[1];
+        let b2 = rhs[2];
+        let b3 = rhs[3];
+        let b4 = rhs[4];
+        let b5 = rhs[5];
+        let b6 = rhs[6];
+        let b7 = rhs[7] & 0x00000000003fffff;
 
-        let cin: i64 = self.carry_out() + rhs.carry_out();
-        let s0: i64 = a0 - b0 + (cin * C_VAL);
-        let c0: i64 = s0 >> 56;
-        let s1: i64 = a1 - b1 + c0;
-        let c1: i64 = s1 >> 56;
-        let s2: i64 = a2 - b2 + c1;
-        let c2: i64 = s2 >> 56;
-        let s3: i64 = a3 - b3 + c2;
-        let c3: i64 = s3 >> 56;
-        let s4: i64 = a4 - b4 + c3;
-        let c4: i64 = s4 >> 56;
-        let s5: i64 = a5 - b5 + c4;
-        let c5: i64 = s5 >> 56;
-        let s6: i64 = a6 - b6 + c5;
-        let c6: i64 = s6 >> 56;
-        let s7: i64 = a7 - b7 + c6;
+        let cin = self.carry_out() + rhs.carry_out();
+        let s0 = a0 - b0 + (cin * C_VAL);
+        let c0 = s0 >> 56;
+        let s1 = a1 - b1 + c0;
+        let c1 = s1 >> 56;
+        let s2 = a2 - b2 + c1;
+        let c2 = s2 >> 56;
+        let s3 = a3 - b3 + c2;
+        let c3 = s3 >> 56;
+        let s4 = a4 - b4 + c3;
+        let c4 = s4 >> 56;
+        let s5 = a5 - b5 + c4;
+        let c5 = s5 >> 56;
+        let s6 = a6 - b6 + c5;
+        let c6 = s6 >> 56;
+        let s7 = a7 - b7 + c6;
 
-        self[0] = (s0 & 0x0fffffff) as u32;
-        self[1] = ((s0 >> 28) & 0x0fffffff) as u32;
-        self[2] = (s1 & 0x0fffffff) as u32;
-        self[3] = ((s1 >> 28) & 0x0fffffff) as u32;
-        self[4] = (s2 & 0x0fffffff) as u32;
-        self[5] = ((s2 >> 28) & 0x0fffffff) as u32;
-        self[6] = (s3 & 0x0fffffff) as u32;
-        self[7] = ((s3 >> 28) & 0x0fffffff) as u32;
-        self[8] = (s4 & 0x0fffffff) as u32;
-        self[9] = ((s4 >> 28) & 0x0fffffff) as u32;
-        self[10] = (s5 & 0x0fffffff) as u32;
-        self[11] = ((s5 >> 28) & 0x0fffffff) as u32;
-        self[12] = (s6 & 0x0fffffff) as u32;
-        self[13] = ((s6 >> 28) & 0x0fffffff) as u32;
-        self[14] = s7 as u32;
+        self[0] = s0 & 0x00ffffffffffffff;
+        self[1] = s1 & 0x00ffffffffffffff;
+        self[2] = s2 & 0x00ffffffffffffff;
+        self[3] = s3 & 0x00ffffffffffffff;
+        self[4] = s4 & 0x00ffffffffffffff;
+        self[5] = s5 & 0x00ffffffffffffff;
+        self[6] = s6 & 0x00ffffffffffffff;
+        self[7] = s7;
     }
 }
 
@@ -435,37 +405,37 @@ impl<'a, 'b> Sub<&'b Mod_e414_17> for &'a Mod_e414_17 {
 
 impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
     fn mul_assign(&mut self, rhs: &'b Mod_e414_17) {
-        let a0: i64 = self[0] as i64;
-        let a1: i64 = self[1] as i64;
-        let a2: i64 = self[2] as i64;
-        let a3: i64 = self[3] as i64;
-        let a4: i64 = self[4] as i64;
-        let a5: i64 = self[5] as i64;
-        let a6: i64 = self[6] as i64;
-        let a7: i64 = self[7] as i64;
-        let a8: i64 = self[8] as i64;
-        let a9: i64 = self[9] as i64;
-        let a10: i64 = self[10] as i64;
-        let a11: i64 = self[11] as i64;
-        let a12: i64 = self[12] as i64;
-        let a13: i64 = self[13] as i64;
-        let a14: i64 = self[14] as i64;
+        let a0 = self[0] & 0x0fffffff;
+        let a1 = self[0] >> 28;
+        let a2 = self[1] & 0x0fffffff;
+        let a3 = self[1] >> 28;
+        let a4 = self[2] & 0x0fffffff;
+        let a5 = self[2] >> 28;
+        let a6 = self[3] & 0x0fffffff;
+        let a7 = self[3] >> 28;
+        let a8 = self[4] & 0x0fffffff;
+        let a9 = self[4] >> 28;
+        let a10 = self[5] & 0x0fffffff;
+        let a11 = self[5] >> 28;
+        let a12 = self[6] & 0x0fffffff;
+        let a13 = self[6] >> 28;
+        let a14 = self[7];
 
-        let b0: i64 = rhs[0] as i64;
-        let b1: i64 = rhs[1] as i64;
-        let b2: i64 = rhs[2] as i64;
-        let b3: i64 = rhs[3] as i64;
-        let b4: i64 = rhs[4] as i64;
-        let b5: i64 = rhs[5] as i64;
-        let b6: i64 = rhs[6] as i64;
-        let b7: i64 = rhs[7] as i64;
-        let b8: i64 = rhs[8] as i64;
-        let b9: i64 = rhs[9] as i64;
-        let b10: i64 = rhs[10] as i64;
-        let b11: i64 = rhs[11] as i64;
-        let b12: i64 = rhs[12] as i64;
-        let b13: i64 = rhs[13] as i64;
-        let b14: i64 = rhs[14] as i64;
+        let b0 = rhs[0] & 0x0fffffff;
+        let b1 = rhs[0] >> 28;
+        let b2 = rhs[1] & 0x0fffffff;
+        let b3 = rhs[1] >> 28;
+        let b4 = rhs[2] & 0x0fffffff;
+        let b5 = rhs[2] >> 28;
+        let b6 = rhs[3] & 0x0fffffff;
+        let b7 = rhs[3] >> 28;
+        let b8 = rhs[4] & 0x0fffffff;
+        let b9 = rhs[4] >> 28;
+        let b10 = rhs[5] & 0x0fffffff;
+        let b11 = rhs[5] >> 28;
+        let b12 = rhs[6] & 0x0fffffff;
+        let b13 = rhs[6] >> 28;
+        let b14 = rhs[7];
 
         // Combined multiples
         let m_0_0 = a0 * b0;
@@ -696,20 +666,20 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
 
         // Compute the 40-digit combined product using 64-bit operations.
         let d0 = m_0_0 + ((m_0_1 & 0x0fffffff) << 28) +
-            ((m_1_0 & 0x0fffffff) << 28);
-        let c0 = d0 >> 54;
+                 ((m_1_0 & 0x0fffffff) << 28);
+        let c0 = d0 >> 56;
         let d1 = (m_0_1 >> 28) + m_0_2 + ((m_0_3 & 0x0fffffff) << 28) +
                  (m_1_0 >> 28) + m_1_1 + ((m_1_2 & 0x0fffffff) << 28) +
                  m_2_0 + ((m_2_1 & 0x0fffffff) << 28) +
                  ((m_3_0 & 0x0fffffff) << 28) + c0;
-        let c1 = d1 >> 54;
+        let c1 = d1 >> 56;
         let d2 = (m_0_3 >> 28) + m_0_4 + ((m_0_5 & 0x0fffffff) << 28) +
                  (m_1_2 >> 28) + m_1_3 + ((m_1_4 & 0x0fffffff) << 28) +
                  (m_2_1 >> 28) + m_2_2 + ((m_2_3 & 0x0fffffff) << 28) +
                  (m_3_0 >> 28) + m_3_1 + ((m_3_2 & 0x0fffffff) << 28) +
                  m_4_0 + ((m_4_1 & 0x0fffffff) << 28) +
                  ((m_5_0 & 0x0fffffff) << 28) + c1;
-        let c2 = d2 >> 54;
+        let c2 = d2 >> 56;
         let d3 = (m_0_5 >> 28) + m_0_6 + ((m_0_7 & 0x0fffffff) << 28) +
                  (m_1_4 >> 28) + m_1_5 + ((m_1_6 & 0x0fffffff) << 28) +
                  (m_2_3 >> 28) + m_2_4 + ((m_2_5 & 0x0fffffff) << 28) +
@@ -718,7 +688,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                  (m_5_0 >> 28) + m_5_1 + ((m_5_2 & 0x0fffffff) << 28) +
                  m_6_0 + ((m_6_1 & 0x0fffffff) << 28) +
                  ((m_7_0 & 0x0fffffff) << 28) + c2;
-        let c3 = d3 >> 54;
+        let c3 = d3 >> 56;
         let d4 = (m_0_7 >> 28) + m_0_8 + ((m_0_9 & 0x0fffffff) << 28) +
                  (m_1_6 >> 28) + m_1_7 + ((m_1_8 & 0x0fffffff) << 28) +
                  (m_2_5 >> 28) + m_2_6 + ((m_2_7 & 0x0fffffff) << 28) +
@@ -729,7 +699,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                  (m_7_0 >> 28) + m_7_1 + ((m_7_2 & 0x0fffffff) << 28) +
                  m_8_0 + ((m_8_1 & 0x0fffffff) << 28) +
                  ((m_9_0 & 0x0fffffff) << 28) + c3;
-        let c4 = d4 >> 54;
+        let c4 = d4 >> 56;
         let d5 = (m_0_9 >> 28) + m_0_10 + ((m_0_11 & 0x0fffffff) << 28) +
                  (m_1_8 >> 28) + m_1_9 + ((m_1_10 & 0x0fffffff) << 28) +
                  (m_2_7 >> 28) + m_2_8 + ((m_2_9 & 0x0fffffff) << 28) +
@@ -742,7 +712,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                  (m_9_0 >> 28) + m_9_1 + ((m_9_2 & 0x0fffffff) << 28) +
                  m_10_0 + ((m_10_1 & 0x0fffffff) << 28) +
                  ((m_11_0 & 0x0fffffff) << 28) + c4;
-        let c5 = d5 >> 54;
+        let c5 = d5 >> 56;
         let d6 = (m_0_11 >> 28) + m_0_12 + ((m_0_13 & 0x0fffffff) << 28) +
                  (m_1_10 >> 28) + m_1_11 + ((m_1_12 & 0x0fffffff) << 28) +
                  (m_2_9 >> 28) + m_2_10 + ((m_2_11 & 0x0fffffff) << 28) +
@@ -757,7 +727,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                  (m_11_0 >> 28) + m_11_1 + ((m_11_2 & 0x0fffffff) << 28) +
                  m_12_0 + ((m_12_1 & 0x0fffffff) << 28) +
                  ((m_13_0 & 0x0fffffff) << 28) + c5;
-        let c6 = d6 >> 54;
+        let c6 = d6 >> 56;
         let d7 = (m_0_13 >> 28) + m_0_14 +
                  (m_1_12 >> 28) + m_1_13 + ((m_1_14 & 0x0fffffff) << 28) +
                  (m_2_11 >> 28) + m_2_12 + ((m_2_13 & 0x0fffffff) << 28) +
@@ -773,7 +743,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                  (m_12_1 >> 28) + m_12_2 + ((m_12_3 & 0x0fffffff) << 28) +
                  (m_13_0 >> 28) + m_13_1 + ((m_13_2 & 0x0fffffff) << 28) +
                  m_14_0 + ((m_14_1 & 0x0fffffff) << 28) + c6;
-        let c7 = d7 >> 54;
+        let c7 = d7 >> 56;
         let d8 = (m_1_14 >> 28) +
                  (m_2_13 >> 28) + m_2_14 +
                  (m_3_12 >> 28) + m_3_13 + ((m_3_14 & 0x0fffffff) << 28) +
@@ -788,7 +758,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                  (m_12_3 >> 28) + m_12_4 + ((m_12_5 & 0x0fffffff) << 28) +
                  (m_13_2 >> 28) + m_13_3 + ((m_13_4 & 0x0fffffff) << 28) +
                  (m_14_1 >> 28) + m_14_2 + ((m_14_3 & 0x0fffffff) << 28) + c7;
-        let c8 = d8 >> 54;
+        let c8 = d8 >> 56;
         let d9 = (m_3_14 >> 28) +
                  (m_4_13 >> 28) + m_4_14 +
                  (m_5_12 >> 28) + m_5_13 + ((m_5_14 & 0x0fffffff) << 28) +
@@ -801,7 +771,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                  (m_12_5 >> 28) + m_12_6 + ((m_12_7 & 0x0fffffff) << 28) +
                  (m_13_4 >> 28) + m_13_5 + ((m_13_6 & 0x0fffffff) << 28) +
                  (m_14_3 >> 28) + m_14_4 + ((m_14_5 & 0x0fffffff) << 28) + c8;
-        let c9 = d9 >> 54;
+        let c9 = d9 >> 56;
         let d10 = (m_5_14 >> 28) +
                   (m_6_13 >> 28) + m_6_14 +
                   (m_7_12 >> 28) + m_7_13 + ((m_7_14 & 0x0fffffff) << 28) +
@@ -812,7 +782,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                   (m_12_7 >> 28) + m_12_8 + ((m_12_9 & 0x0fffffff) << 28) +
                   (m_13_6 >> 28) + m_13_7 + ((m_13_8 & 0x0fffffff) << 28) +
                   (m_14_5 >> 28) + m_14_6 + ((m_14_7 & 0x0fffffff) << 28) + c9;
-        let c10 = d10 >> 54;
+        let c10 = d10 >> 56;
         let d11 = (m_7_14 >> 28) +
                   (m_8_13 >> 28) + m_8_14 +
                   (m_9_12 >> 28) + m_9_13 + ((m_9_14 & 0x0fffffff) << 28) +
@@ -821,7 +791,7 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                   (m_12_9 >> 28) + m_12_10 + ((m_12_11 & 0x0fffffff) << 28) +
                   (m_13_8 >> 28) + m_13_9 + ((m_13_10 & 0x0fffffff) << 28) +
                   (m_14_7 >> 28) + m_14_8 + ((m_14_9 & 0x0fffffff) << 28) + c10;
-        let c11 = d11 >> 54;
+        let c11 = d11 >> 56;
         let d12 = (m_9_14 >> 28) +
                   (m_10_13 >> 28) + m_10_14 +
                   (m_11_12 >> 28) + m_11_13 + ((m_11_14 & 0x0fffffff) << 28) +
@@ -829,14 +799,15 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
                   (m_13_10 >> 28) + m_13_11 + ((m_13_12 & 0x0fffffff) << 28) +
                   (m_14_9 >> 28) + m_14_10 + ((m_14_11 & 0x0fffffff) << 28) +
                   c11;
-        let c12 = d12 >> 54;
+        let c12 = d12 >> 56;
         let d13 = (m_11_14 >> 28) +
                   (m_12_13 >> 28) + m_12_14 +
                   (m_13_12 >> 28) + m_13_13 + ((m_13_14 & 0x0fffffff) << 28) +
                   (m_14_11 >> 28) + m_14_12 + ((m_14_13 & 0x0fffffff) << 28) +
                   c12;
-        let c13 = d13 >> 54;
-        let d14 = (m_14_13 >> 28) + m_14_14 + c13;
+        let c13 = d13 >> 56;
+        let d14 = (m_13_14 >> 28) +
+                  (m_14_13 >> 28) + m_14_14 + c13;
 
         // Modular reduction by a pseudo-mersenne prime of the form 2^n - c.
 
@@ -895,21 +866,14 @@ impl<'b> MulAssign<&'b Mod_e414_17> for Mod_e414_17 {
         let k6_0 = s6_0 >> 56;
         let s7_0 = l7_0 + (hc7_0 & 0x00000000003fffff) + k6_0;
 
-        self[0] = (s0_0 & 0x0fffffff) as u32;
-        self[1] = ((s0_0 >> 28) & 0x0fffffff) as u32;
-        self[2] = (s1_0 & 0x0fffffff) as u32;
-        self[3] = ((s1_0 >> 28) & 0x0fffffff) as u32;
-        self[4] = (s2_0 & 0x0fffffff) as u32;
-        self[5] = ((s2_0 >> 28) & 0x0fffffff) as u32;
-        self[6] = (s3_0 & 0x0fffffff) as u32;
-        self[7] = ((s3_0 >> 28) & 0x0fffffff) as u32;
-        self[8] = (s4_0 & 0x0fffffff) as u32;
-        self[9] = ((s4_0 >> 28) & 0x0fffffff) as u32;
-        self[10] = (s5_0 & 0x0fffffff) as u32;
-        self[11] = ((s5_0 >> 28) & 0x0fffffff) as u32;
-        self[12] = (s6_0 & 0x0fffffff) as u32;
-        self[13] = ((s6_0 >> 28) & 0x0fffffff) as u32;
-        self[14] = s7_0 as u32;
+        self[0] = s0_0 & 0x00ffffffffffffff;
+        self[1] = s1_0 & 0x00ffffffffffffff;
+        self[2] = s2_0 & 0x00ffffffffffffff;
+        self[3] = s3_0 & 0x00ffffffffffffff;
+        self[4] = s4_0 & 0x00ffffffffffffff;
+        self[5] = s5_0 & 0x00ffffffffffffff;
+        self[6] = s6_0 & 0x00ffffffffffffff;
+        self[7] = s7_0;
      }
 }
 
@@ -941,21 +905,21 @@ impl PrimeField for Mod_e414_17 {
     }
 
     fn square(&mut self) {
-        let a0: i64 = self[0] as i64;
-        let a1: i64 = self[1] as i64;
-        let a2: i64 = self[2] as i64;
-        let a3: i64 = self[3] as i64;
-        let a4: i64 = self[4] as i64;
-        let a5: i64 = self[5] as i64;
-        let a6: i64 = self[6] as i64;
-        let a7: i64 = self[7] as i64;
-        let a8: i64 = self[8] as i64;
-        let a9: i64 = self[9] as i64;
-        let a10: i64 = self[10] as i64;
-        let a11: i64 = self[11] as i64;
-        let a12: i64 = self[12] as i64;
-        let a13: i64 = self[13] as i64;
-        let a14: i64 = self[14] as i64;
+        let a0 = self[0] & 0x0fffffff;
+        let a1 = self[0] >> 28;
+        let a2 = self[1] & 0x0fffffff;
+        let a3 = self[1] >> 28;
+        let a4 = self[2] & 0x0fffffff;
+        let a5 = self[2] >> 28;
+        let a6 = self[3] & 0x0fffffff;
+        let a7 = self[3] >> 28;
+        let a8 = self[4] & 0x0fffffff;
+        let a9 = self[4] >> 28;
+        let a10 = self[5] & 0x0fffffff;
+        let a11 = self[5] >> 28;
+        let a12 = self[6] & 0x0fffffff;
+        let a13 = self[6] >> 28;
+        let a14 = self[7];
 
         // Combined multiples
         let m_0_0 = a0 * a0;
@@ -1187,19 +1151,19 @@ impl PrimeField for Mod_e414_17 {
         // Compute the 40-digit combined product using 64-bit operations.
         let d0 = m_0_0 + ((m_0_1 & 0x0fffffff) << 28) +
             ((m_1_0 & 0x0fffffff) << 28);
-        let c0 = d0 >> 54;
+        let c0 = d0 >> 56;
         let d1 = (m_0_1 >> 28) + m_0_2 + ((m_0_3 & 0x0fffffff) << 28) +
                  (m_1_0 >> 28) + m_1_1 + ((m_1_2 & 0x0fffffff) << 28) +
                  m_2_0 + ((m_2_1 & 0x0fffffff) << 28) +
                  ((m_3_0 & 0x0fffffff) << 28) + c0;
-        let c1 = d1 >> 54;
+        let c1 = d1 >> 56;
         let d2 = (m_0_3 >> 28) + m_0_4 + ((m_0_5 & 0x0fffffff) << 28) +
                  (m_1_2 >> 28) + m_1_3 + ((m_1_4 & 0x0fffffff) << 28) +
                  (m_2_1 >> 28) + m_2_2 + ((m_2_3 & 0x0fffffff) << 28) +
                  (m_3_0 >> 28) + m_3_1 + ((m_3_2 & 0x0fffffff) << 28) +
                  m_4_0 + ((m_4_1 & 0x0fffffff) << 28) +
                  ((m_5_0 & 0x0fffffff) << 28) + c1;
-        let c2 = d2 >> 54;
+        let c2 = d2 >> 56;
         let d3 = (m_0_5 >> 28) + m_0_6 + ((m_0_7 & 0x0fffffff) << 28) +
                  (m_1_4 >> 28) + m_1_5 + ((m_1_6 & 0x0fffffff) << 28) +
                  (m_2_3 >> 28) + m_2_4 + ((m_2_5 & 0x0fffffff) << 28) +
@@ -1208,7 +1172,7 @@ impl PrimeField for Mod_e414_17 {
                  (m_5_0 >> 28) + m_5_1 + ((m_5_2 & 0x0fffffff) << 28) +
                  m_6_0 + ((m_6_1 & 0x0fffffff) << 28) +
                  ((m_7_0 & 0x0fffffff) << 28) + c2;
-        let c3 = d3 >> 54;
+        let c3 = d3 >> 56;
         let d4 = (m_0_7 >> 28) + m_0_8 + ((m_0_9 & 0x0fffffff) << 28) +
                  (m_1_6 >> 28) + m_1_7 + ((m_1_8 & 0x0fffffff) << 28) +
                  (m_2_5 >> 28) + m_2_6 + ((m_2_7 & 0x0fffffff) << 28) +
@@ -1219,7 +1183,7 @@ impl PrimeField for Mod_e414_17 {
                  (m_7_0 >> 28) + m_7_1 + ((m_7_2 & 0x0fffffff) << 28) +
                  m_8_0 + ((m_8_1 & 0x0fffffff) << 28) +
                  ((m_9_0 & 0x0fffffff) << 28) + c3;
-        let c4 = d4 >> 54;
+        let c4 = d4 >> 56;
         let d5 = (m_0_9 >> 28) + m_0_10 + ((m_0_11 & 0x0fffffff) << 28) +
                  (m_1_8 >> 28) + m_1_9 + ((m_1_10 & 0x0fffffff) << 28) +
                  (m_2_7 >> 28) + m_2_8 + ((m_2_9 & 0x0fffffff) << 28) +
@@ -1232,7 +1196,7 @@ impl PrimeField for Mod_e414_17 {
                  (m_9_0 >> 28) + m_9_1 + ((m_9_2 & 0x0fffffff) << 28) +
                  m_10_0 + ((m_10_1 & 0x0fffffff) << 28) +
                  ((m_11_0 & 0x0fffffff) << 28) + c4;
-        let c5 = d5 >> 54;
+        let c5 = d5 >> 56;
         let d6 = (m_0_11 >> 28) + m_0_12 + ((m_0_13 & 0x0fffffff) << 28) +
                  (m_1_10 >> 28) + m_1_11 + ((m_1_12 & 0x0fffffff) << 28) +
                  (m_2_9 >> 28) + m_2_10 + ((m_2_11 & 0x0fffffff) << 28) +
@@ -1247,7 +1211,7 @@ impl PrimeField for Mod_e414_17 {
                  (m_11_0 >> 28) + m_11_1 + ((m_11_2 & 0x0fffffff) << 28) +
                  m_12_0 + ((m_12_1 & 0x0fffffff) << 28) +
                  ((m_13_0 & 0x0fffffff) << 28) + c5;
-        let c6 = d6 >> 54;
+        let c6 = d6 >> 56;
         let d7 = (m_0_13 >> 28) + m_0_14 +
                  (m_1_12 >> 28) + m_1_13 + ((m_1_14 & 0x0fffffff) << 28) +
                  (m_2_11 >> 28) + m_2_12 + ((m_2_13 & 0x0fffffff) << 28) +
@@ -1263,7 +1227,7 @@ impl PrimeField for Mod_e414_17 {
                  (m_12_1 >> 28) + m_12_2 + ((m_12_3 & 0x0fffffff) << 28) +
                  (m_13_0 >> 28) + m_13_1 + ((m_13_2 & 0x0fffffff) << 28) +
                  m_14_0 + ((m_14_1 & 0x0fffffff) << 28) + c6;
-        let c7 = d7 >> 54;
+        let c7 = d7 >> 56;
         let d8 = (m_1_14 >> 28) +
                  (m_2_13 >> 28) + m_2_14 +
                  (m_3_12 >> 28) + m_3_13 + ((m_3_14 & 0x0fffffff) << 28) +
@@ -1278,7 +1242,7 @@ impl PrimeField for Mod_e414_17 {
                  (m_12_3 >> 28) + m_12_4 + ((m_12_5 & 0x0fffffff) << 28) +
                  (m_13_2 >> 28) + m_13_3 + ((m_13_4 & 0x0fffffff) << 28) +
                  (m_14_1 >> 28) + m_14_2 + ((m_14_3 & 0x0fffffff) << 28) + c7;
-        let c8 = d8 >> 54;
+        let c8 = d8 >> 56;
         let d9 = (m_3_14 >> 28) +
                  (m_4_13 >> 28) + m_4_14 +
                  (m_5_12 >> 28) + m_5_13 + ((m_5_14 & 0x0fffffff) << 28) +
@@ -1291,7 +1255,7 @@ impl PrimeField for Mod_e414_17 {
                  (m_12_5 >> 28) + m_12_6 + ((m_12_7 & 0x0fffffff) << 28) +
                  (m_13_4 >> 28) + m_13_5 + ((m_13_6 & 0x0fffffff) << 28) +
                  (m_14_3 >> 28) + m_14_4 + ((m_14_5 & 0x0fffffff) << 28) + c8;
-        let c9 = d9 >> 54;
+        let c9 = d9 >> 56;
         let d10 = (m_5_14 >> 28) +
                   (m_6_13 >> 28) + m_6_14 +
                   (m_7_12 >> 28) + m_7_13 + ((m_7_14 & 0x0fffffff) << 28) +
@@ -1302,7 +1266,7 @@ impl PrimeField for Mod_e414_17 {
                   (m_12_7 >> 28) + m_12_8 + ((m_12_9 & 0x0fffffff) << 28) +
                   (m_13_6 >> 28) + m_13_7 + ((m_13_8 & 0x0fffffff) << 28) +
                   (m_14_5 >> 28) + m_14_6 + ((m_14_7 & 0x0fffffff) << 28) + c9;
-        let c10 = d10 >> 54;
+        let c10 = d10 >> 56;
         let d11 = (m_7_14 >> 28) +
                   (m_8_13 >> 28) + m_8_14 +
                   (m_9_12 >> 28) + m_9_13 + ((m_9_14 & 0x0fffffff) << 28) +
@@ -1311,7 +1275,7 @@ impl PrimeField for Mod_e414_17 {
                   (m_12_9 >> 28) + m_12_10 + ((m_12_11 & 0x0fffffff) << 28) +
                   (m_13_8 >> 28) + m_13_9 + ((m_13_10 & 0x0fffffff) << 28) +
                   (m_14_7 >> 28) + m_14_8 + ((m_14_9 & 0x0fffffff) << 28) + c10;
-        let c11 = d11 >> 54;
+        let c11 = d11 >> 56;
         let d12 = (m_9_14 >> 28) +
                   (m_10_13 >> 28) + m_10_14 +
                   (m_11_12 >> 28) + m_11_13 + ((m_11_14 & 0x0fffffff) << 28) +
@@ -1319,14 +1283,15 @@ impl PrimeField for Mod_e414_17 {
                   (m_13_10 >> 28) + m_13_11 + ((m_13_12 & 0x0fffffff) << 28) +
                   (m_14_9 >> 28) + m_14_10 + ((m_14_11 & 0x0fffffff) << 28) +
                   c11;
-        let c12 = d12 >> 54;
+        let c12 = d12 >> 56;
         let d13 = (m_11_14 >> 28) +
                   (m_12_13 >> 28) + m_12_14 +
                   (m_13_12 >> 28) + m_13_13 + ((m_13_14 & 0x0fffffff) << 28) +
                   (m_14_11 >> 28) + m_14_12 + ((m_14_13 & 0x0fffffff) << 28) +
                   c12;
-        let c13 = d13 >> 54;
-        let d14 = (m_14_13 >> 28) + m_14_14 + c13;
+        let c13 = d13 >> 56;
+        let d14 = (m_13_14 >> 28) +
+                  (m_14_13 >> 28) + m_14_14 + c13;
 
         // Modular reduction by a pseudo-mersenne prime of the form 2^n - c.
 
@@ -1385,21 +1350,14 @@ impl PrimeField for Mod_e414_17 {
         let k6_0 = s6_0 >> 56;
         let s7_0 = l7_0 + (hc7_0 & 0x00000000003fffff) + k6_0;
 
-        self[0] = (s0_0 & 0x0fffffff) as u32;
-        self[1] = ((s0_0 >> 28) & 0x0fffffff) as u32;
-        self[2] = (s1_0 & 0x0fffffff) as u32;
-        self[3] = ((s1_0 >> 28) & 0x0fffffff) as u32;
-        self[4] = (s2_0 & 0x0fffffff) as u32;
-        self[5] = ((s2_0 >> 28) & 0x0fffffff) as u32;
-        self[6] = (s3_0 & 0x0fffffff) as u32;
-        self[7] = ((s3_0 >> 28) & 0x0fffffff) as u32;
-        self[8] = (s4_0 & 0x0fffffff) as u32;
-        self[9] = ((s4_0 >> 28) & 0x0fffffff) as u32;
-        self[10] = (s5_0 & 0x0fffffff) as u32;
-        self[11] = ((s5_0 >> 28) & 0x0fffffff) as u32;
-        self[12] = (s6_0 & 0x0fffffff) as u32;
-        self[13] = ((s6_0 >> 28) & 0x0fffffff) as u32;
-        self[14] = s7_0 as u32;
+        self[0] = s0_0 & 0x00ffffffffffffff;
+        self[1] = s1_0 & 0x00ffffffffffffff;
+        self[2] = s2_0 & 0x00ffffffffffffff;
+        self[3] = s3_0 & 0x00ffffffffffffff;
+        self[4] = s4_0 & 0x00ffffffffffffff;
+        self[5] = s5_0 & 0x00ffffffffffffff;
+        self[6] = s6_0 & 0x00ffffffffffffff;
+        self[7] = s7_0;
     }
 
     fn squared(&self) -> Self {
@@ -1443,49 +1401,42 @@ impl PrimeField for Mod_e414_17 {
     }
 
     fn small_add_assign(&mut self, rhs: i32) {
-        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
-        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
-        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
-        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
-        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
-        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
-        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
-        let a7: i64 = (self[14] & 0x003fffff) as i64;
+        let a0 = self[0];
+        let a1 = self[1];
+        let a2 = self[2];
+        let a3 = self[3];
+        let a4 = self[4];
+        let a5 = self[5];
+        let a6 = self[6];
+        let a7 = self[7] & 0x00000000003fffff;
 
-        let b: i64 = i64::from(rhs);
+        let b = i64::from(rhs);
 
-        let cin: i64 = self.carry_out();
-        let s0: i64 = a0 + b + (cin * C_VAL);
-        let c0: i64 = s0 >> 54;
-        let s1: i64 = a1 + c0;
-        let c1: i64 = s1 >> 54;
-        let s2: i64 = a2 + c1;
-        let c2: i64 = s2 >> 54;
-        let s3: i64 = a3 + c2;
-        let c3: i64 = s3 >> 54;
-        let s4: i64 = a4 + c3;
-        let c4: i64 = s4 >> 54;
-        let s5: i64 = a5 + c4;
-        let c5: i64 = s5 >> 54;
-        let s6: i64 = a6 + c5;
-        let c6: i64 = s6 >> 54;
-        let s7: i64 = a7 + c6;
+        let cin = self.carry_out();
+        let s0 = a0 + b + (cin * C_VAL);
+        let c0 = s0 >> 56;
+        let s1 = a1 + c0;
+        let c1 = s1 >> 56;
+        let s2 = a2 + c1;
+        let c2 = s2 >> 56;
+        let s3 = a3 + c2;
+        let c3 = s3 >> 56;
+        let s4 = a4 + c3;
+        let c4 = s4 >> 56;
+        let s5 = a5 + c4;
+        let c5 = s5 >> 56;
+        let s6 = a6 + c5;
+        let c6 = s6 >> 56;
+        let s7 = a7 + c6;
 
-        self[0] = (s0 & 0x07ffffff) as u32;
-        self[1] = ((s0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (s1 & 0x07ffffff) as u32;
-        self[3] = ((s1 >> 27) & 0x07ffffff) as u32;
-        self[4] = (s2 & 0x07ffffff) as u32;
-        self[5] = ((s2 >> 27) & 0x07ffffff) as u32;
-        self[6] = (s3 & 0x07ffffff) as u32;
-        self[7] = ((s3 >> 27) & 0x07ffffff) as u32;
-        self[8] = (s4 & 0x07ffffff) as u32;
-        self[9] = ((s4 >> 27) & 0x07ffffff) as u32;
-        self[10] = (s5 & 0x07ffffff) as u32;
-        self[11] = ((s5 >> 27) & 0x07ffffff) as u32;
-        self[12] = (s6 & 0x07ffffff) as u32;
-        self[13] = ((s6 >> 27) & 0x07ffffff) as u32;
-        self[14] = s7 as u32;
+        self[0] = s0 & 0x00ffffffffffffff;
+        self[1] = s1 & 0x00ffffffffffffff;
+        self[2] = s2 & 0x00ffffffffffffff;
+        self[3] = s3 & 0x00ffffffffffffff;
+        self[4] = s4 & 0x00ffffffffffffff;
+        self[5] = s5 & 0x00ffffffffffffff;
+        self[6] = s6 & 0x00ffffffffffffff;
+        self[7] = s7;
     }
 
     fn small_add(&self, rhs: i32) -> Mod_e414_17 {
@@ -1497,49 +1448,42 @@ impl PrimeField for Mod_e414_17 {
     }
 
     fn small_sub_assign(&mut self, rhs: i32) {
-        let a0: i64 = self[0] as i64 | (self[1] as i64) << 27;
-        let a1: i64 = self[2] as i64 | (self[3] as i64) << 27;
-        let a2: i64 = self[4] as i64 | (self[5] as i64) << 27;
-        let a3: i64 = self[6] as i64 | (self[7] as i64) << 27;
-        let a4: i64 = self[8] as i64 | (self[9] as i64) << 27;
-        let a5: i64 = self[10] as i64 | (self[11] as i64) << 27;
-        let a6: i64 = self[12] as i64 | (self[13] as i64) << 27;
-        let a7: i64 = (self[14] & 0x003fffff) as i64;
+        let a0 = self[0];
+        let a1 = self[1];
+        let a2 = self[2];
+        let a3 = self[3];
+        let a4 = self[4];
+        let a5 = self[5];
+        let a6 = self[6];
+        let a7 = self[7] & 0x00000000003fffff;
 
-        let b: i64 = i64::from(rhs);
+        let b = i64::from(rhs);
 
-        let cin: i64 = self.carry_out();
-        let s0: i64 = a0 - b + (cin * C_VAL);
-        let c0: i64 = s0 >> 54;
-        let s1: i64 = a1 + c0;
-        let c1: i64 = s1 >> 54;
-        let s2: i64 = a2 + c1;
-        let c2: i64 = s2 >> 54;
-        let s3: i64 = a3 + c2;
-        let c3: i64 = s3 >> 54;
-        let s4: i64 = a4 + c3;
-        let c4: i64 = s4 >> 54;
-        let s5: i64 = a5 + c4;
-        let c5: i64 = s5 >> 54;
-        let s6: i64 = a6 + c5;
-        let c6: i64 = s6 >> 54;
-        let s7: i64 = a7 + c6;
+        let cin = self.carry_out();
+        let s0 = a0 - b + (cin * C_VAL);
+        let c0 = s0 >> 56;
+        let s1 = a1 + c0;
+        let c1 = s1 >> 56;
+        let s2 = a2 + c1;
+        let c2 = s2 >> 56;
+        let s3 = a3 + c2;
+        let c3 = s3 >> 56;
+        let s4 = a4 + c3;
+        let c4 = s4 >> 56;
+        let s5 = a5 + c4;
+        let c5 = s5 >> 56;
+        let s6 = a6 + c5;
+        let c6 = s6 >> 56;
+        let s7 = a7 + c6;
 
-        self[0] = (s0 & 0x07ffffff) as u32;
-        self[1] = ((s0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (s1 & 0x07ffffff) as u32;
-        self[3] = ((s1 >> 27) & 0x07ffffff) as u32;
-        self[4] = (s2 & 0x07ffffff) as u32;
-        self[5] = ((s2 >> 27) & 0x07ffffff) as u32;
-        self[6] = (s3 & 0x07ffffff) as u32;
-        self[7] = ((s3 >> 27) & 0x07ffffff) as u32;
-        self[8] = (s4 & 0x07ffffff) as u32;
-        self[9] = ((s4 >> 27) & 0x07ffffff) as u32;
-        self[10] = (s5 & 0x07ffffff) as u32;
-        self[11] = ((s5 >> 27) & 0x07ffffff) as u32;
-        self[12] = (s6 & 0x07ffffff) as u32;
-        self[13] = ((s6 >> 27) & 0x07ffffff) as u32;
-        self[14] = s7 as u32;
+        self[0] = s0 & 0x00ffffffffffffff;
+        self[1] = s1 & 0x00ffffffffffffff;
+        self[2] = s2 & 0x00ffffffffffffff;
+        self[3] = s3 & 0x00ffffffffffffff;
+        self[4] = s4 & 0x00ffffffffffffff;
+        self[5] = s5 & 0x00ffffffffffffff;
+        self[6] = s6 & 0x00ffffffffffffff;
+        self[7] = s7;
     }
 
     fn small_sub(&self, rhs: i32) -> Mod_e414_17 {
@@ -1551,72 +1495,65 @@ impl PrimeField for Mod_e414_17 {
     }
 
     fn small_mul_assign(&mut self, rhs: i32) {
-        let cin: i64 = self.carry_out();
-        let a0: i64 = self[0] as i64;
-        let a1: i64 = self[1] as i64;
-        let a2: i64 = self[2] as i64;
-        let a3: i64 = self[3] as i64;
-        let a4: i64 = self[4] as i64;
-        let a5: i64 = self[5] as i64;
-        let a6: i64 = self[6] as i64;
-        let a7: i64 = self[7] as i64;
-        let a8: i64 = self[8] as i64;
-        let a9: i64 = self[9] as i64;
-        let a10: i64 = self[10] as i64;
-        let a11: i64 = self[11] as i64;
-        let a12: i64 = self[12] as i64;
-        let a13: i64 = self[13] as i64;
-        let a14: i64 = self[14] as i64;
+        let a0 = self[0] & 0x0fffffff;
+        let a1 = self[0] >> 28;
+        let a2 = self[1] & 0x0fffffff;
+        let a3 = self[1] >> 28;
+        let a4 = self[2] & 0x0fffffff;
+        let a5 = self[2] >> 28;
+        let a6 = self[3] & 0x0fffffff;
+        let a7 = self[3] >> 28;
+        let a8 = self[4] & 0x0fffffff;
+        let a9 = self[4] >> 28;
+        let a10 = self[5] & 0x0fffffff;
+        let a11 = self[5] >> 28;
+        let a12 = self[6] & 0x0fffffff;
+        let a13 = self[6] >> 28;
+        let a14 = self[7];
 
-        let b: i64 = i64::from(rhs);
+        let b = i64::from(rhs);
 
-        let m0: i64 = a0 * b;
-        let m1: i64 = a1 * b;
-        let m2: i64 = a2 * b;
-        let m3: i64 = a3 * b;
-        let m4: i64 = a4 * b;
-        let m5: i64 = a5 * b;
-        let m6: i64 = a6 * b;
-        let m7: i64 = a7 * b;
-        let m8: i64 = a8 * b;
-        let m9: i64 = a9 * b;
-        let m10: i64 = a10 * b;
-        let m11: i64 = a11 * b;
-        let m12: i64 = a12 * b;
-        let m13: i64 = a13 * b;
-        let m14: i64 = a14 * b;
+        let m0 = a0 * b;
+        let m1 = a1 * b;
+        let m2 = a2 * b;
+        let m3 = a3 * b;
+        let m4 = a4 * b;
+        let m5 = a5 * b;
+        let m6 = a6 * b;
+        let m7 = a7 * b;
+        let m8 = a8 * b;
+        let m9 = a9 * b;
+        let m10 = a10 * b;
+        let m11 = a11 * b;
+        let m12 = a12 * b;
+        let m13 = a13 * b;
+        let m14 = a14 * b;
 
-        let d0 = m0 + ((m1 & 0x07ffffff) << 27) + (cin * C_VAL);
-        let c0 = d0 >> 54;
-        let d1 = (m1 >> 27) + m2 + ((m3 & 0x07ffffff) << 27) + c0;
-        let c1 = d1 >> 54;
-        let d2 = (m3 >> 27) + m4 + ((m5 & 0x07ffffff) << 27) + c1;
-        let c2 = d2 >> 54;
-        let d3 = (m5 >> 27) + m6 + ((m7 & 0x07ffffff) << 27) + c2;
-        let c3 = d3 >> 54;
-        let d4 = (m7 >> 27) + m8 + ((m9 & 0x07ffffff) << 27) + c3;
-        let c4 = d4 >> 54;
-        let d5 = (m9 >> 27) + m10 + ((m11 & 0x07ffffff) << 27) + c4;
-        let c5 = d5 >> 54;
-        let d6 = (m11 >> 27) + m12 + ((m13 & 0x07ffffff) << 27) + c5;
-        let c6 = d6 >> 54;
-        let d7 = (m13 >> 27) + m14 + c6;
+        let cin = self.carry_out();
+        let d0 = m0 + ((m1 & 0x0fffffff) << 28) + (cin * C_VAL);
+        let c0 = d0 >> 56;
+        let d1 = (m1 >> 28) + m2 + ((m3 & 0x0fffffff) << 28) + c0;
+        let c1 = d1 >> 56;
+        let d2 = (m3 >> 28) + m4 + ((m5 & 0x0fffffff) << 28) + c1;
+        let c2 = d2 >> 56;
+        let d3 = (m5 >> 28) + m6 + ((m7 & 0x0fffffff) << 28) + c2;
+        let c3 = d3 >> 56;
+        let d4 = (m7 >> 28) + m8 + ((m9 & 0x0fffffff) << 28) + c3;
+        let c4 = d4 >> 56;
+        let d5 = (m9 >> 28) + m10 + ((m11 & 0x0fffffff) << 28) + c4;
+        let c5 = d5 >> 56;
+        let d6 = (m11 >> 28) + m12 + ((m13 & 0x0fffffff) << 28) + c5;
+        let c6 = d6 >> 56;
+        let d7 = (m13 >> 28) + m14 + c6;
 
-        self[0] = (d0 & 0x07ffffff) as u32;
-        self[1] = ((d0 >> 27) & 0x07ffffff) as u32;
-        self[2] = (d1 & 0x07ffffff) as u32;
-        self[3] = ((d1 >> 27) & 0x07ffffff) as u32;
-        self[4] = (d2 & 0x07ffffff) as u32;
-        self[5] = ((d2 >> 27) & 0x07ffffff) as u32;
-        self[6] = (d3 & 0x07ffffff) as u32;
-        self[7] = ((d3 >> 27) & 0x07ffffff) as u32;
-        self[8] = (d4 & 0x07ffffff) as u32;
-        self[9] = ((d4 >> 27) & 0x07ffffff) as u32;
-        self[10] = (d5 & 0x07ffffff) as u32;
-        self[11] = ((d5 >> 27) & 0x07ffffff) as u32;
-        self[12] = (d6 & 0x07ffffff) as u32;
-        self[13] = ((d6 >> 27) & 0x07ffffff) as u32;
-        self[14] = d7 as u32;
+        self[0] = d0 & 0x00ffffffffffffff;
+        self[1] = d1 & 0x00ffffffffffffff;
+        self[2] = d2 & 0x00ffffffffffffff;
+        self[3] = d3 & 0x00ffffffffffffff;
+        self[4] = d4 & 0x00ffffffffffffff;
+        self[5] = d5 & 0x00ffffffffffffff;
+        self[6] = d6 & 0x00ffffffffffffff;
+        self[7] = d7;
     }
 
     fn small_mul(&self, b: i32) -> Mod_e414_17 {
@@ -1625,5 +1562,1795 @@ impl PrimeField for Mod_e414_17 {
         out.small_mul_assign(b);
 
         out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use fields::prime_field::*;
+    use fields::mod_e414_17::*;
+
+    const TWO: Mod_e414_17 = Mod_e414_17([ 2, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const M_TWO: Mod_e414_17 =
+        Mod_e414_17([ 0x00ffffffffffffed, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00000000003fffff ]);
+
+    const THREE: Mod_e414_17 = Mod_e414_17([ 3, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const M_THREE: Mod_e414_17 =
+        Mod_e414_17([ 0x00ffffffffffffec, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00000000003fffff ]);
+
+    const FOUR: Mod_e414_17 = Mod_e414_17([ 4, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const M_FOUR: Mod_e414_17 =
+        Mod_e414_17([ 0x00ffffffffffffeb, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00000000003fffff ]);
+
+    const SIX: Mod_e414_17 = Mod_e414_17([ 6, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const M_SIX: Mod_e414_17 =
+        Mod_e414_17([ 0x00ffffffffffffe9, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00000000003fffff ]);
+
+    const EIGHT: Mod_e414_17 = Mod_e414_17([ 8, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const M_EIGHT: Mod_e414_17 =
+        Mod_e414_17([ 0x00ffffffffffffe7, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00000000003fffff ]);
+
+    const NINE: Mod_e414_17 = Mod_e414_17([ 9, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const M_NINE: Mod_e414_17 =
+        Mod_e414_17([ 0x00ffffffffffffe6, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00000000003fffff ]);
+
+    const SIXTEEN: Mod_e414_17 = Mod_e414_17([ 16, 0, 0, 0, 0, 0, 0, 0 ]);
+
+    const M_SIXTEEN: Mod_e414_17 =
+        Mod_e414_17([ 0x00ffffffffffffdf, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00ffffffffffffff,
+                      0x00ffffffffffffff, 0x00000000003fffff ]);
+
+    fn test_pack_unpack(expected: &[u8; 52]) {
+        let mut unpacked = Mod_e414_17::unpack(expected);
+        let actual = unpacked.pack();
+
+        for i in 0..52 {
+            assert!(expected[i] == actual[i]);
+        }
+    }
+
+    fn test_unpack_pack(expected: &mut Mod_e414_17) {
+        let bytes = expected.pack();
+        let actual = Mod_e414_17::unpack(&bytes);
+
+        for i in 0..8 {
+            assert!(expected[i] == actual[i]);
+        }
+    }
+
+    #[test]
+    fn pack_unpack_test() {
+        test_pack_unpack(&[0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00,
+                           0xff, 0x00, 0xff, 0x00]);
+        test_pack_unpack(&[0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0xff,
+                           0x00, 0xff, 0x00, 0x3f]);
+        test_pack_unpack(&[0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0xaa,
+                           0x55, 0xaa, 0x55, 0x2a]);
+        test_pack_unpack(&[0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x55,
+                           0xaa, 0x55, 0xaa, 0x15]);
+        test_pack_unpack(&[0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0xaa,
+                           0x00, 0xaa, 0x00, 0x2a]);
+        test_pack_unpack(&[0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00,
+                           0xaa, 0x00, 0xaa, 0x00]);
+        test_pack_unpack(&[0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0xff,
+                           0x55, 0xff, 0x55, 0x3f]);
+        test_pack_unpack(&[0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x55,
+                           0xff, 0x55, 0xff, 0x15]);
+    }
+
+    #[test]
+    fn unpack_pack_test() {
+        test_unpack_pack(&mut ZERO.clone());
+        test_unpack_pack(&mut ONE.clone());
+        test_unpack_pack(&mut M_ONE.clone());
+        test_unpack_pack(&mut Mod_e414_17([ 0x00ffffffffffffff,
+                                             0x0000000000000000,
+                                             0x00ffffffffffffff,
+                                             0x0000000000000000,
+                                             0x00ffffffffffffff,
+                                             0x0000000000000000,
+                                             0x00ffffffffffffff,
+                                             0x0000000000000000 ]));
+        test_unpack_pack(&mut Mod_e414_17([ 0x0000000000000000,
+                                             0x00ffffffffffffff,
+                                             0x0000000000000000,
+                                             0x00ffffffffffffff,
+                                             0x0000000000000000,
+                                             0x00ffffffffffffff,
+                                             0x0000000000000000,
+                                             0x00000000003fffff ]));
+        test_unpack_pack(&mut Mod_e414_17([ 0x00aaaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0000000000155555 ]));
+        test_unpack_pack(&mut Mod_e414_17([ 0x0055555555555555,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0055555555555555,
+                                             0x00000000002aaaaa ]));
+        test_unpack_pack(&mut Mod_e414_17([ 0x00aaaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0000000000155555 ]));
+        test_unpack_pack(&mut Mod_e414_17([ 0x0000000000000000,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x00aaaaaaaaaaaaaa,
+                                             0x0000000000000000,
+                                             0x00000000002aaaaa ]));
+        test_unpack_pack(&mut Mod_e414_17([ 0x00ffffffffffffff,
+                                             0x0055555555555555,
+                                             0x00ffffffffffffff,
+                                             0x0055555555555555,
+                                             0x00ffffffffffffff,
+                                             0x0055555555555555,
+                                             0x00ffffffffffffff,
+                                             0x0000000000155555 ]));
+        test_unpack_pack(&mut Mod_e414_17([ 0x0055555555555555,
+                                             0x00ffffffffffffff,
+                                             0x0055555555555555,
+                                             0x00ffffffffffffff,
+                                             0x0055555555555555,
+                                             0x00ffffffffffffff,
+                                             0x0055555555555555,
+                                             0x00000000001fffff ]));
+    }
+
+    #[test]
+    fn test_add() {
+        let l1_zeros: [&mut Mod_e414_17; 5] = [ &mut (&ZERO + &ZERO),
+                                                 &mut (&M_ONE + &ONE),
+                                                 &mut (&ONE + &M_ONE),
+                                                 &mut (&M_TWO + &TWO),
+                                                 &mut (&TWO + &M_TWO) ];
+
+        let l1_ones: [&mut Mod_e414_17; 4] = [ &mut (&ZERO + &ONE),
+                                                &mut (&ONE + &ZERO),
+                                                &mut (&M_ONE + &TWO),
+                                                &mut (&TWO + &M_ONE) ];
+
+        let l1_twos: [&mut Mod_e414_17; 3] = [ &mut (&ZERO + &TWO),
+                                                &mut (&ONE + &ONE),
+                                                &mut (&TWO + &ZERO) ];
+
+        let l1_mones: [&mut Mod_e414_17; 4] = [ &mut (&ZERO + &M_ONE),
+                                                 &mut (&M_ONE + &ZERO),
+                                                 &mut (&M_TWO + &ONE),
+                                                 &mut (&ONE + &M_TWO) ];
+
+        let l1_mtwos: [&mut Mod_e414_17; 3] = [ &mut (&ZERO + &M_TWO),
+                                                 &mut (&M_ONE + &M_ONE),
+                                                 &mut (&M_TWO + &ZERO) ];
+
+        for i in 0..5 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..4 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..3 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..4 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..3 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..5 {
+            for j in 0..5 {
+                let mut val = &*l1_zeros[i] + &*l1_zeros[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..4 {
+                let mut val = &*l1_mones[i] + &*l1_ones[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..4 {
+                let mut val = &*l1_ones[i] + &*l1_mones[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_mtwos[i] + &*l1_twos[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_twos[i] + &*l1_mtwos[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..5 {
+            for j in 0..4 {
+                let mut val = &*l1_zeros[i] + &*l1_ones[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..5 {
+                let mut val = &*l1_ones[i] + &*l1_zeros[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..3 {
+                let mut val = &*l1_mones[i] + &*l1_twos[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..4 {
+                let mut val = &*l1_twos[i] + &*l1_mones[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..5 {
+            for j in 0..3 {
+                let mut val = &*l1_zeros[i] + &*l1_twos[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..4 {
+                let mut val = &*l1_ones[i] + &*l1_ones[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..5 {
+                let mut val = &*l1_twos[i] + &*l1_zeros[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..5 {
+            for j in 0..4 {
+                let mut val = &*l1_zeros[i] + &*l1_mones[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..5 {
+                let mut val = &*l1_mones[i] + &*l1_zeros[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..4 {
+                let mut val = &*l1_mtwos[i] + &*l1_ones[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..3 {
+                let mut val = &*l1_ones[i] + &*l1_mtwos[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..5 {
+            for j in 0..3 {
+                let mut val = &*l1_zeros[i] + &*l1_mtwos[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..4 {
+                let mut val = &*l1_mones[i] + &*l1_mones[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..5 {
+                let mut val = &*l1_mtwos[i] + &*l1_zeros[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+    }
+
+
+    #[test]
+    fn test_sub() {
+        let l1_zeros: [&mut Mod_e414_17; 3] = [ &mut (&ZERO - &ZERO),
+                                                 &mut (&ONE - &ONE),
+                                                 &mut (&TWO - &TWO) ];
+
+        let l1_ones: [&mut Mod_e414_17; 4] = [ &mut (&ZERO - &M_ONE),
+                                                &mut (&ONE - &ZERO),
+                                                &mut (&M_ONE - &M_TWO),
+                                                &mut (&TWO - &ONE) ];
+
+        let l1_twos: [&mut Mod_e414_17; 3] = [ &mut (&ZERO - &M_TWO),
+                                                &mut (&ONE - &M_ONE),
+                                                &mut (&TWO - &ZERO) ];
+
+        let l1_mones: [&mut Mod_e414_17; 4] = [ &mut (&ZERO - &ONE),
+                                                 &mut (&M_ONE - &ZERO),
+                                                 &mut (&M_TWO - &M_ONE),
+                                                 &mut (&ONE - &TWO) ];
+
+        let l1_mtwos: [&mut Mod_e414_17; 3] = [ &mut (&ZERO - &TWO),
+                                                 &mut (&M_ONE - &ONE),
+                                                 &mut (&M_TWO - &ZERO) ];
+
+        for i in 0..3 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..4 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..3 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..4 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..3 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_zeros[i] - &*l1_zeros[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..4 {
+                let mut val = &*l1_ones[i] - &*l1_ones[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_twos[i] - &*l1_twos[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..4 {
+                let mut val = &*l1_zeros[i] - &*l1_mones[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..3 {
+                let mut val = &*l1_ones[i] - &*l1_zeros[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_mones[i] - &*l1_mtwos[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..4 {
+                let mut val = &*l1_twos[i] - &*l1_ones[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_zeros[i] - &*l1_mtwos[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..4 {
+                let mut val = &*l1_ones[i] - &*l1_mones[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_twos[i] - &*l1_zeros[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..4 {
+                let mut val = &*l1_zeros[i] - &*l1_ones[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..3 {
+                let mut val = &*l1_mones[i] - &*l1_zeros[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..4 {
+                let mut val = &*l1_mtwos[i] - &*l1_mones[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..3 {
+                let mut val = &*l1_ones[i] - &*l1_twos[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_zeros[i] - &*l1_twos[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..4 {
+                let mut val = &*l1_mones[i] - &*l1_ones[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let mut val = &*l1_mtwos[i] - &*l1_zeros[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+    }
+
+    #[test]
+    fn test_mul() {
+        let l1_zeros: [&mut Mod_e414_17; 9] = [ &mut (&ZERO * &ZERO),
+                                                 &mut (&ONE * &ZERO),
+                                                 &mut (&TWO * &ZERO),
+                                                 &mut (&M_ONE * &ZERO),
+                                                 &mut (&M_TWO * &ZERO),
+                                                 &mut (&ZERO * &ONE),
+                                                 &mut (&ZERO * &TWO),
+                                                 &mut (&ZERO * &M_ONE),
+                                                 &mut (&ZERO * &M_TWO) ];
+
+        let l1_ones: [&mut Mod_e414_17; 2] = [ &mut (&ONE * &ONE),
+                                                &mut (&M_ONE * &M_ONE) ];
+
+        let l1_twos: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &TWO),
+                                                &mut (&TWO * &ONE),
+                                                &mut (&M_ONE * &M_TWO),
+                                                &mut (&M_TWO * &M_ONE) ];
+
+        let l1_fours: [&mut Mod_e414_17; 2] = [ &mut (&TWO * &TWO),
+                                                 &mut (&M_TWO * &M_TWO) ];
+
+        let l1_mones: [&mut Mod_e414_17; 2] = [ &mut (&ONE * &M_ONE),
+                                                 &mut (&M_ONE * &ONE) ];
+
+        let l1_mtwos: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &M_TWO),
+                                                 &mut (&TWO * &M_ONE),
+                                                 &mut (&M_ONE * &TWO),
+                                                 &mut (&M_TWO * &ONE) ];
+
+        let l1_mfours: [&mut Mod_e414_17; 2] = [ &mut (&TWO * &M_TWO),
+                                                  &mut (&M_TWO * &TWO) ];
+
+        for i in 0..9 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..2 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..4 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..2 {
+            assert!(FOUR.normalize_eq(l1_fours[i]));
+        }
+
+        for i in 0..2 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..4 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..2 {
+            assert!(M_FOUR.normalize_eq(l1_mfours[i]));
+        }
+
+        for i in 0..9 {
+            for j in 0..9 {
+                let mut val = &*l1_zeros[i] * &*l1_zeros[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..9 {
+                let mut val = &*l1_ones[i] * &*l1_zeros[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..9 {
+                let mut val = &*l1_twos[i] * &*l1_zeros[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..9 {
+                let mut val = &*l1_mones[i] * &*l1_zeros[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..9 {
+                let mut val = &*l1_mtwos[i] * &*l1_zeros[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..9 {
+            for j in 0..2 {
+                let mut val = &*l1_zeros[i] * &*l1_ones[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..9 {
+            for j in 0..4 {
+                let mut val = &*l1_zeros[i] * &*l1_twos[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..9 {
+            for j in 0..2 {
+                let mut val = &*l1_zeros[i] * &*l1_mones[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..9 {
+            for j in 0..4 {
+                let mut val = &*l1_zeros[i] * &*l1_mtwos[j];
+
+                assert!(ZERO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..2 {
+                let mut val = &*l1_ones[i] * &*l1_ones[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..2 {
+                let mut val = &*l1_mones[i] * &*l1_mones[j];
+
+                assert!(ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..4 {
+                let mut val = &*l1_ones[i] * &*l1_twos[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..2 {
+                let mut val = &*l1_twos[i] * &*l1_ones[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..4 {
+                let mut val = &*l1_mones[i] * &*l1_mtwos[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..2 {
+                let mut val = &*l1_mtwos[i] * &*l1_mones[j];
+
+                assert!(TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..2 {
+                let mut val = &*l1_twos[i] * &*l1_twos[j];
+
+                assert!(FOUR.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..2 {
+                let mut val = &*l1_mtwos[i] * &*l1_mtwos[j];
+
+                assert!(FOUR.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..2 {
+                let mut val = &*l1_ones[i] * &*l1_mones[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..2 {
+                let mut val = &*l1_mones[i] * &*l1_ones[j];
+
+                assert!(M_ONE.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..4 {
+                let mut val = &*l1_ones[i] * &*l1_mtwos[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..2 {
+                let mut val = &*l1_twos[i] * &*l1_mones[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..4 {
+                let mut val = &*l1_mones[i] * &*l1_twos[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..4 {
+            for j in 0..2 {
+                let mut val = &*l1_mtwos[i] * &*l1_ones[j];
+
+                assert!(M_TWO.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..2 {
+                let mut val = &*l1_twos[i] * &*l1_mtwos[j];
+
+                assert!(M_FOUR.normalize_eq(&mut val));
+            }
+        }
+
+        for i in 0..2 {
+            for j in 0..2 {
+                let mut val = &*l1_mtwos[i] * &*l1_twos[j];
+
+                assert!(M_FOUR.normalize_eq(&mut val));
+            }
+        }
+    }
+
+    #[test]
+    fn test_square() {
+        let l1_zeros: [&mut Mod_e414_17; 10] = [ &mut (&ZERO * &ZERO),
+                                                  &mut (&ONE * &ZERO),
+                                                  &mut (&TWO * &ZERO),
+                                                  &mut (&M_ONE * &ZERO),
+                                                  &mut (&M_TWO * &ZERO),
+                                                  &mut (&ZERO * &ONE),
+                                                  &mut (&ZERO * &TWO),
+                                                  &mut (&ZERO * &M_ONE),
+                                                  &mut (&ZERO * &M_TWO),
+                                                  &mut ZERO.squared() ];
+
+        let l1_ones: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &ONE),
+                                                &mut (&M_ONE * &M_ONE),
+                                                &mut ONE.squared(),
+                                                &mut M_ONE.squared() ];
+
+        let l1_twos: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &TWO),
+                                                &mut (&TWO * &ONE),
+                                                &mut (&M_ONE * &M_TWO),
+                                                &mut (&M_TWO * &M_ONE) ];
+
+        let l1_threes: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &THREE),
+                                                  &mut (&THREE * &ONE),
+                                                  &mut (&M_ONE * &M_THREE),
+                                                  &mut (&M_THREE * &M_ONE) ];
+
+        let l1_fours: [&mut Mod_e414_17; 4] = [ &mut (&TWO * &TWO),
+                                                 &mut (&M_TWO * &M_TWO),
+                                                 &mut TWO.squared(),
+                                                 &mut M_TWO.squared() ];
+
+        for i in 0..10 {
+            let mut val = l1_zeros[i].squared();
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_ones[i].squared();
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_twos[i].squared();
+
+            assert!(FOUR.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_threes[i].squared();
+
+            assert!(NINE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_fours[i].squared();
+
+            assert!(SIXTEEN.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_inv() {
+        let l1_ones: [&mut Mod_e414_17; 2] = [ &mut (&ONE * &ONE),
+                                                &mut (&M_ONE * &M_ONE) ];
+
+        let l1_twos: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &TWO),
+                                                &mut (&TWO * &ONE),
+                                                &mut (&M_ONE * &M_TWO),
+                                                &mut (&M_TWO * &M_ONE) ];
+
+        let l1_threes: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &THREE),
+                                                  &mut (&THREE * &ONE),
+                                                  &mut (&M_ONE * &M_THREE),
+                                                  &mut (&M_THREE * &M_ONE) ];
+
+        let l1_fours: [&mut Mod_e414_17; 2] = [ &mut (&TWO * &TWO),
+                                                 &mut (&M_TWO * &M_TWO) ];
+
+        let l1_mones: [&mut Mod_e414_17; 2] = [ &mut (&ONE * &M_ONE),
+                                                 &mut (&M_ONE * &ONE) ];
+
+        let l1_mtwos: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &M_TWO),
+                                                 &mut (&TWO * &M_ONE),
+                                                 &mut (&M_ONE * &TWO),
+                                                 &mut (&M_TWO * &ONE) ];
+
+        let l1_mthrees: [&mut Mod_e414_17; 4] = [ &mut (&ONE * &M_THREE),
+                                                   &mut (&THREE * &M_ONE),
+                                                   &mut (&M_ONE * &THREE),
+                                                   &mut (&M_THREE * &ONE) ];
+
+        let l1_mfours: [&mut Mod_e414_17; 2] = [ &mut (&TWO * &M_TWO),
+                                                  &mut (&M_TWO * &TWO) ];
+
+        for i in 0..2 {
+            let inv = l1_ones[i].inverted();
+            let mut val = &*l1_ones[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let inv = l1_twos[i].inverted();
+            let mut val = &*l1_twos[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let inv = l1_threes[i].inverted();
+            let mut val = &*l1_threes[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let inv = l1_fours[i].inverted();
+            let mut val = &*l1_fours[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let inv = l1_mones[i].inverted();
+            let mut val = &*l1_mones[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let inv = l1_mtwos[i].inverted();
+            let mut val = &*l1_mtwos[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let inv = l1_mthrees[i].inverted();
+            let mut val = &*l1_mthrees[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let inv = l1_mfours[i].inverted();
+            let mut val = &*l1_mfours[i] * &inv;
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_div() {
+        let l1_ones: [&mut Mod_e414_17; 12] = [ &mut (&ONE / &ONE),
+                                                 &mut (&M_ONE / &M_ONE),
+                                                 &mut (&TWO / &TWO),
+                                                 &mut (&M_TWO / &M_TWO),
+                                                 &mut (&THREE / &THREE),
+                                                 &mut (&M_THREE / &M_THREE),
+                                                 &mut (&FOUR / &FOUR),
+                                                 &mut (&M_FOUR / &M_FOUR),
+                                                 &mut (&NINE / &NINE),
+                                                 &mut (&M_NINE / &M_NINE),
+                                                 &mut (&SIXTEEN / &SIXTEEN),
+                                                 &mut (&M_SIXTEEN / &M_SIXTEEN) ];
+
+        let l1_twos: [&mut Mod_e414_17; 10] = [ &mut (&TWO / &ONE),
+                                                 &mut (&M_TWO / &M_ONE),
+                                                 &mut (&FOUR / &TWO),
+                                                 &mut (&M_FOUR / &M_TWO),
+                                                 &mut (&SIX / &THREE),
+                                                 &mut (&M_SIX / &M_THREE),
+                                                 &mut (&EIGHT / &FOUR),
+                                                 &mut (&M_EIGHT / &M_FOUR),
+                                                 &mut (&SIXTEEN / &EIGHT),
+                                                 &mut (&M_SIXTEEN / &M_EIGHT) ];
+
+        let l1_threes: [&mut Mod_e414_17; 6] = [ &mut (&THREE / &ONE),
+                                                  &mut (&M_THREE / &M_ONE),
+                                                  &mut (&SIX / &TWO),
+                                                  &mut (&M_SIX / &M_TWO),
+                                                  &mut (&NINE / &THREE),
+                                                  &mut (&M_NINE / &M_THREE) ];
+
+        let l1_fours: [&mut Mod_e414_17; 6] = [ &mut (&FOUR / &ONE),
+                                                 &mut (&M_FOUR / &M_ONE),
+                                                 &mut (&EIGHT / &TWO),
+                                                 &mut (&M_EIGHT / &M_TWO),
+                                                 &mut (&SIXTEEN / &FOUR),
+                                                 &mut (&M_SIXTEEN / &M_FOUR) ];
+
+        let l1_mones: [&mut Mod_e414_17; 12] = [ &mut (&ONE / &M_ONE),
+                                                  &mut (&M_ONE / &ONE),
+                                                  &mut (&TWO / &M_TWO),
+                                                  &mut (&M_TWO / &TWO),
+                                                  &mut (&THREE / &M_THREE),
+                                                  &mut (&M_THREE / &THREE),
+                                                  &mut (&FOUR / &M_FOUR),
+                                                  &mut (&M_FOUR / &FOUR),
+                                                  &mut (&NINE / &M_NINE),
+                                                  &mut (&M_NINE / &NINE),
+                                                  &mut (&SIXTEEN / &M_SIXTEEN),
+                                                  &mut (&M_SIXTEEN / &SIXTEEN) ];
+
+        let l1_mtwos: [&mut Mod_e414_17; 10] = [ &mut (&TWO / &M_ONE),
+                                                  &mut (&M_TWO / &ONE),
+                                                  &mut (&FOUR / &M_TWO),
+                                                  &mut (&M_FOUR / &TWO),
+                                                  &mut (&SIX / &M_THREE),
+                                                  &mut (&M_SIX / &THREE),
+                                                  &mut (&EIGHT / &M_FOUR),
+                                                  &mut (&M_EIGHT / &FOUR),
+                                                  &mut (&SIXTEEN / &M_EIGHT),
+                                                  &mut (&M_SIXTEEN / &EIGHT) ];
+
+        let l1_mthrees: [&mut Mod_e414_17; 6] = [ &mut (&THREE / &M_ONE),
+                                                   &mut (&M_THREE / &ONE),
+                                                   &mut (&SIX / &M_TWO),
+                                                   &mut (&M_SIX / &TWO),
+                                                   &mut (&NINE / &M_THREE),
+                                                   &mut (&M_NINE / &THREE) ];
+
+        let l1_mfours: [&mut Mod_e414_17; 6] = [ &mut (&FOUR / &M_ONE),
+                                                  &mut (&M_FOUR / &ONE),
+                                                  &mut (&EIGHT / &M_TWO),
+                                                  &mut (&M_EIGHT / &TWO),
+                                                  &mut (&SIXTEEN / &M_FOUR),
+                                                  &mut (&M_SIXTEEN / &FOUR) ];
+
+        for i in 0..12 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..10 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..6 {
+            assert!(THREE.normalize_eq(l1_threes[i]));
+        }
+
+        for i in 0..6 {
+            assert!(FOUR.normalize_eq(l1_fours[i]));
+        }
+
+        for i in 0..12 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..10 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..6 {
+            assert!(M_THREE.normalize_eq(l1_mthrees[i]));
+        }
+
+        for i in 0..6 {
+            assert!(M_FOUR.normalize_eq(l1_mfours[i]));
+        }
+    }
+
+    #[test]
+    fn test_small_add() {
+        let l1_zeros: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_add(0),
+                                                 &mut M_ONE.small_add(1),
+                                                 &mut ONE.small_add(-1),
+                                                 &mut M_TWO.small_add(2),
+                                                 &mut TWO.small_add(-2) ];
+
+        let l1_ones: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_add(1),
+                                                &mut M_ONE.small_add(2),
+                                                &mut ONE.small_add(0),
+                                                &mut M_TWO.small_add(3),
+                                                &mut TWO.small_add(-1) ];
+
+        let l1_twos: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_add(2),
+                                                &mut ONE.small_add(1),
+                                                &mut M_ONE.small_add(3),
+                                                &mut TWO.small_add(0),
+                                                &mut M_TWO.small_add(4) ];
+
+        let l1_mones: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_add(-1),
+                                                 &mut M_ONE.small_add(0),
+                                                 &mut ONE.small_add(-2),
+                                                 &mut M_TWO.small_add(1),
+                                                 &mut TWO.small_add(-3) ];
+
+        let l1_mtwos: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_add(-2),
+                                                 &mut M_ONE.small_add(-1),
+                                                 &mut ONE.small_add(-3),
+                                                 &mut M_TWO.small_add(0),
+                                                 &mut TWO.small_add(-4) ];
+
+        for i in 0..5 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..5 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..5 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..5 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..5 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(-1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(-2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(0);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(-1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(2);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(3);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(2);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(1);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(0);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(3);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(4);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(-1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(-2);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(-3);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(0);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_add(-2);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_add(-3);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_add(-4);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_add(-1);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_add(0);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_small_sub() {
+        let l1_zeros: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_sub(0),
+                                                 &mut M_ONE.small_sub(-1),
+                                                 &mut ONE.small_sub(1),
+                                                 &mut M_TWO.small_sub(-2),
+                                                 &mut TWO.small_sub(2) ];
+
+        let l1_ones: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_sub(-1),
+                                                &mut M_ONE.small_sub(-2),
+                                                &mut ONE.small_sub(0),
+                                                &mut M_TWO.small_sub(-3),
+                                                &mut TWO.small_sub(1) ];
+
+        let l1_twos: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_sub(-2),
+                                                &mut ONE.small_sub(-1),
+                                                &mut M_ONE.small_sub(-3),
+                                                &mut TWO.small_sub(0),
+                                                &mut M_TWO.small_sub(-4) ];
+
+        let l1_mones: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_sub(1),
+                                                 &mut M_ONE.small_sub(0),
+                                                 &mut ONE.small_sub(2),
+                                                 &mut M_TWO.small_sub(-1),
+                                                 &mut TWO.small_sub(3) ];
+
+        let l1_mtwos: [&mut Mod_e414_17; 5] = [ &mut ZERO.small_sub(2),
+                                                 &mut M_ONE.small_sub(1),
+                                                 &mut ONE.small_sub(3),
+                                                 &mut M_TWO.small_sub(0),
+                                                 &mut TWO.small_sub(4) ];
+
+        for i in 0..5 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..5 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..5 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..5 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..5 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(-1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(-2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(-1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(0);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(-2);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(-3);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(-2);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(-1);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(0);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(-3);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(-4);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(2);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(3);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(0);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(-1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_zeros[i].small_sub(2);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_ones[i].small_sub(3);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_twos[i].small_sub(4);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mones[i].small_sub(1);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..5 {
+            let mut val = l1_mtwos[i].small_sub(0);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_small_mul() {
+
+        let l1_zeros: [&mut Mod_e414_17; 9] = [ &mut ZERO.small_mul(0),
+                                                 &mut ONE.small_mul(0),
+                                                 &mut TWO.small_mul(0),
+                                                 &mut M_ONE.small_mul(0),
+                                                 &mut M_TWO.small_mul(0),
+                                                 &mut ZERO.small_mul(1),
+                                                 &mut ZERO.small_mul(2),
+                                                 &mut ZERO.small_mul(-1),
+                                                 &mut ZERO.small_mul(-2) ];
+
+        let l1_ones: [&mut Mod_e414_17; 2] = [ &mut ONE.small_mul(1),
+                                                &mut M_ONE.small_mul(-1) ];
+
+        let l1_twos: [&mut Mod_e414_17; 4] = [ &mut ONE.small_mul(2),
+                                                &mut TWO.small_mul(1),
+                                                &mut M_ONE.small_mul(-2),
+                                                &mut M_TWO.small_mul(-1) ];
+
+        let l1_fours: [&mut Mod_e414_17; 2] = [ &mut TWO.small_mul(2),
+                                                 &mut M_TWO.small_mul(-2) ];
+
+        let l1_mones: [&mut Mod_e414_17; 2] = [ &mut ONE.small_mul(-1),
+                                                 &mut M_ONE.small_mul(1) ];
+
+        let l1_mtwos: [&mut Mod_e414_17; 4] = [ &mut ONE.small_mul(-2),
+                                                 &mut TWO.small_mul(-1),
+                                                 &mut M_ONE.small_mul(2),
+                                                 &mut M_TWO.small_mul(1) ];
+
+        let l1_mfours: [&mut Mod_e414_17; 2] = [ &mut TWO.small_mul(-2),
+                                                  &mut M_TWO.small_mul(2) ];
+
+        for i in 0..9 {
+            assert!(ZERO.normalize_eq(l1_zeros[i]));
+        }
+
+        for i in 0..2 {
+            assert!(ONE.normalize_eq(l1_ones[i]));
+        }
+
+        for i in 0..4 {
+            assert!(TWO.normalize_eq(l1_twos[i]));
+        }
+
+        for i in 0..2 {
+            assert!(FOUR.normalize_eq(l1_fours[i]));
+        }
+
+        for i in 0..2 {
+            assert!(M_ONE.normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..4 {
+            assert!(M_TWO.normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..2 {
+            assert!(M_FOUR.normalize_eq(l1_mfours[i]));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_twos[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_mtwos[i].small_mul(0);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(-1);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..9 {
+            let mut val = l1_zeros[i].small_mul(-2);
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(-1);
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(2);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_twos[i].small_mul(1);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(-2);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_mtwos[i].small_mul(-1);
+
+            assert!(TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_twos[i].small_mul(2);
+
+            assert!(FOUR.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mtwos[i].small_mul(-2);
+
+            assert!(FOUR.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(-1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(1);
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_ones[i].small_mul(-2);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_twos[i].small_mul(-1);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mones[i].small_mul(2);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..4 {
+            let mut val = l1_mtwos[i].small_mul(1);
+
+            assert!(M_TWO.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_twos[i].small_mul(-2);
+
+            assert!(M_FOUR.normalize_eq(&mut val));
+        }
+
+        for i in 0..2 {
+            let mut val = l1_mtwos[i].small_mul(2);
+
+            assert!(M_FOUR.normalize_eq(&mut val));
+        }
     }
 }
