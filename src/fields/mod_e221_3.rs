@@ -152,7 +152,7 @@ impl Mod_e221_3 {
         bytes[24] = ((self[3] >> 18) & 0b11111111) as u8;
         bytes[25] = ((self[3] >> 26) & 0b11111111) as u8;
         bytes[26] = ((self[3] >> 34) & 0b11111111) as u8;
-        bytes[27] = ((self[3] >> 42) & 0b11111111) as u8;
+        bytes[27] = ((self[3] >> 42) & 0b00011111) as u8;
 
         bytes
     }
@@ -192,7 +192,7 @@ impl Mod_e221_3 {
                  (((bytes[24] as i64) << 18) & 0x0000000003fc0000) |
                  (((bytes[25] as i64) << 26) & 0x00000003fc000000) |
                  (((bytes[26] as i64) << 34) & 0x000003fc00000000) |
-                 (((bytes[27] as i64) << 42) & 0x0003fc0000000000);
+                 (((bytes[27] as i64) << 42) & 0x00007c0000000000);
         out
     }
 }
@@ -318,7 +318,6 @@ impl<'a, 'b> Sub<&'b Mod_e221_3> for &'a Mod_e221_3 {
 
 impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
     fn mul_assign(&mut self, rhs: &'b Mod_e221_3) {
-        println!("{:?} * {:?}", self, rhs);
         let a0 = self[0] & 0x1fffffff;
         let a1 = self[0] >> 29;
         let a2 = self[1] & 0x1fffffff;
@@ -406,13 +405,11 @@ impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
         // Compute the 40-digit combined product using 64-bit operations.
         let d0 = m_0_0 + ((m_0_1 & 0x1fffffff) << 29) +
                  ((m_1_0 & 0x1fffffff) << 29);
-        println!("d0 {:016x}", d0);
         let c0 = d0 >> 58;
         let d1 = (m_0_1 >> 29) + m_0_2 + ((m_0_3 & 0x1fffffff) << 29) +
                  (m_1_0 >> 29) + m_1_1 + ((m_1_2 & 0x1fffffff) << 29) +
                  m_2_0 + ((m_2_1 & 0x1fffffff) << 29) +
                  ((m_3_0 & 0x1fffffff) << 29) + c0;
-        println!("d1 {:016x}", d1);
         let c1 = d1 >> 58;
         let d2 = (m_0_3 >> 29) + m_0_4 + ((m_0_5 & 0x1fffffff) << 29) +
                  (m_1_2 >> 29) + m_1_3 + ((m_1_4 & 0x1fffffff) << 29) +
@@ -420,7 +417,6 @@ impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
                  (m_3_0 >> 29) + m_3_1 + ((m_3_2 & 0x1fffffff) << 29) +
                  m_4_0 + ((m_4_1 & 0x1fffffff) << 29) +
                  ((m_5_0 & 0x1fffffff) << 29) + c1;
-        println!("d2 {:016x}", d2);
         let c2 = d2 >> 58;
         let d3 = (m_0_5 >> 29) + m_0_6 + ((m_0_7 & 0x1fffffff) << 29) +
                  (m_1_4 >> 29) + m_1_5 + ((m_1_6 & 0x1fffffff) << 29) +
@@ -430,7 +426,6 @@ impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
                  (m_5_0 >> 29) + m_5_1 + ((m_5_2 & 0x1fffffff) << 29) +
                  m_6_0 + ((m_6_1 & 0x1fffffff) << 29) +
                  ((m_7_0 & 0x1fffffff) << 29) + c2;
-        println!("d3 {:016x}", d3);
         let c3 = d3 >> 58;
         let d4 = (m_0_7 >> 29) +
                  (m_1_6 >> 29) + m_1_7 +
@@ -441,7 +436,6 @@ impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
                  (m_6_1 >> 29) + m_6_2 + ((m_6_3 & 0x1fffffff) << 29) +
                  (m_7_0 >> 29) + m_7_1 + ((m_7_2 & 0x1fffffff) << 29) +
                  c3;
-        println!("d4 {:016x}", d4);
         let c4 = d4 >> 58;
         let d5 = (m_2_7 >> 29) +
                  (m_3_6 >> 29) + m_3_7 +
@@ -450,75 +444,55 @@ impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
                  (m_6_3 >> 29) + m_6_4 + ((m_6_5 & 0x1fffffff) << 29) +
                  (m_7_2 >> 29) + m_7_3 + ((m_7_4 & 0x1fffffff) << 29) +
                  c4;
-        println!("d5 {:016x}", d5);
         let c5 = d5 >> 58;
         let d6 = (m_4_7 >> 29) +
                  (m_5_6 >> 29) + m_5_7 +
                  (m_6_5 >> 29) + m_6_6 + ((m_6_7 & 0x1fffffff) << 29) +
                  (m_7_4 >> 29) + m_7_5 + ((m_7_6 & 0x1fffffff) << 29) +
                  c5;
-        println!("d6 {:016x}", d6);
         let c6 = d6 >> 58;
         let d7 = (m_6_7 >> 29) +
                  (m_7_6 >> 29) + m_7_7 +
                  c6;
-        println!("d7 {:016x}", d7);
 
         // Modular reduction by a pseudo-mersenne prime of the form 2^n - c.
 
         // These are the n low-order
         let l0_0 = d0 & 0x03ffffffffffffff;
-        println!("l0_0 {:016x}", l0_0);
         let l1_0 = d1 & 0x03ffffffffffffff;
-        println!("l1_0 {:016x}", l1_0);
         let l2_0 = d2 & 0x03ffffffffffffff;
-        println!("l2_0 {:016x}", l2_0);
         let l3_0 = d3 & 0x00007fffffffffff;
-        println!("l3_0 {:016x}", l3_0);
 
         // Shift the high bits down into another n-bit number.
         let h0_0 = ((d3 & 0x03ffffffffffffff) >> 47) |
                    ((d4 & 0x00007fffffffffff) << 11);
-        println!("h0_0 {:016x}", h0_0);
         let h1_0 = ((d4 & 0x03ffffffffffffff) >> 47) |
                    ((d5 & 0x00007fffffffffff) << 11);
-        println!("h1_0 {:016x}", h1_0);
         let h2_0 = ((d5 & 0x03ffffffffffffff) >> 47) |
                    ((d6 & 0x00007fffffffffff) << 11);
-        println!("h2_0 {:016x}", h2_0);
         let h3_0 = ((d6 & 0x03ffffffffffffff) >> 47) |
                    (d7 << 11);
-        println!("h3_0 {:016x}", h3_0);
 
         // Multiply by C
         let hc0_0 = h0_0 * C_VAL;
-        println!("hc0_0 {:016x}", hc0_0);
         let hc1_0 = h1_0 * C_VAL;
-        println!("hc1_0 {:016x}", hc1_0);
         let hc2_0 = h2_0 * C_VAL;
-        println!("hc2_0 {:016x}", hc2_0);
         let hc3_0 = h3_0 * C_VAL;
-        println!("hc3_0 {:016x}", hc3_0);
 
         // Add h and l.
         let kin_0 = hc3_0 >> 47;
         let s0_0 = l0_0 + hc0_0 + (kin_0 * C_VAL);
-        println!("s0_0 {:016x}", s0_0);
         let k0_0 = s0_0 >> 58;
         let s1_0 = l1_0 + hc1_0 + k0_0;
-        println!("s1_0 {:016x}", s1_0);
         let k1_0 = s1_0 >> 58;
         let s2_0 = l2_0 + hc2_0 + k1_0;
-        println!("s2_0 {:016x}", s2_0);
         let k2_0 = s2_0 >> 58;
         let s3_0 = l3_0 + (hc3_0 & 0x00007fffffffffff) + k2_0;
-        println!("s3_0 {:016x}", s3_0);
 
         self[0] = s0_0 & 0x03ffffffffffffff;
         self[1] = s1_0 & 0x03ffffffffffffff;
         self[2] = s2_0 & 0x03ffffffffffffff;
         self[3] = s3_0;
-        println!("result {:?}", self);
      }
 }
 
@@ -550,7 +524,6 @@ impl PrimeField for Mod_e221_3 {
     }
 
     fn square(&mut self) {
-        println!("square {:?}", self);
         let a0 = self[0] & 0x1fffffff;
         let a1 = self[0] >> 29;
         let a2 = self[1] & 0x1fffffff;
@@ -629,13 +602,11 @@ impl PrimeField for Mod_e221_3 {
         // Compute the 40-digit combined product using 64-bit operations.
         let d0 = m_0_0 + ((m_0_1 & 0x1fffffff) << 29) +
                  ((m_1_0 & 0x1fffffff) << 29);
-        println!("d0 {:016x}", d0);
         let c0 = d0 >> 58;
         let d1 = (m_0_1 >> 29) + m_0_2 + ((m_0_3 & 0x1fffffff) << 29) +
                  (m_1_0 >> 29) + m_1_1 + ((m_1_2 & 0x1fffffff) << 29) +
                  m_2_0 + ((m_2_1 & 0x1fffffff) << 29) +
                  ((m_3_0 & 0x1fffffff) << 29) + c0;
-        println!("d1 {:016x}", d1);
         let c1 = d1 >> 58;
         let d2 = (m_0_3 >> 29) + m_0_4 + ((m_0_5 & 0x1fffffff) << 29) +
                  (m_1_2 >> 29) + m_1_3 + ((m_1_4 & 0x1fffffff) << 29) +
@@ -643,7 +614,6 @@ impl PrimeField for Mod_e221_3 {
                  (m_3_0 >> 29) + m_3_1 + ((m_3_2 & 0x1fffffff) << 29) +
                  m_4_0 + ((m_4_1 & 0x1fffffff) << 29) +
                  ((m_5_0 & 0x1fffffff) << 29) + c1;
-        println!("d2 {:016x}", d2);
         let c2 = d2 >> 58;
         let d3 = (m_0_5 >> 29) + m_0_6 + ((m_0_7 & 0x1fffffff) << 29) +
                  (m_1_4 >> 29) + m_1_5 + ((m_1_6 & 0x1fffffff) << 29) +
@@ -653,7 +623,6 @@ impl PrimeField for Mod_e221_3 {
                  (m_5_0 >> 29) + m_5_1 + ((m_5_2 & 0x1fffffff) << 29) +
                  m_6_0 + ((m_6_1 & 0x1fffffff) << 29) +
                  ((m_7_0 & 0x1fffffff) << 29) + c2;
-        println!("d3 {:016x}", d3);
         let c3 = d3 >> 58;
         let d4 = (m_0_7 >> 29) +
                  (m_1_6 >> 29) + m_1_7 +
@@ -664,7 +633,6 @@ impl PrimeField for Mod_e221_3 {
                  (m_6_1 >> 29) + m_6_2 + ((m_6_3 & 0x1fffffff) << 29) +
                  (m_7_0 >> 29) + m_7_1 + ((m_7_2 & 0x1fffffff) << 29) +
                  c3;
-        println!("d4 {:016x}", d4);
         let c4 = d4 >> 58;
         let d5 = (m_2_7 >> 29) +
                  (m_3_6 >> 29) + m_3_7 +
@@ -673,76 +641,56 @@ impl PrimeField for Mod_e221_3 {
                  (m_6_3 >> 29) + m_6_4 + ((m_6_5 & 0x1fffffff) << 29) +
                  (m_7_2 >> 29) + m_7_3 + ((m_7_4 & 0x1fffffff) << 29) +
                  c4;
-        println!("d5 {:016x}", d5);
         let c5 = d5 >> 58;
         let d6 = (m_4_7 >> 29) +
                  (m_5_6 >> 29) + m_5_7 +
                  (m_6_5 >> 29) + m_6_6 + ((m_6_7 & 0x1fffffff) << 29) +
                  (m_7_4 >> 29) + m_7_5 + ((m_7_6 & 0x1fffffff) << 29) +
                  c5;
-        println!("d6 {:016x}", d6);
         let c6 = d6 >> 58;
         let d7 = (m_6_7 >> 29) +
                  (m_7_6 >> 29) + m_7_7 +
                  c6;
-        println!("d7 {:016x}", d7);
 
         // Modular reduction by a pseudo-mersenne prime of the form 2^n - c.
 
         // These are the n low-order
         let l0_0 = d0 & 0x03ffffffffffffff;
-        println!("l0_0 {:016x}", l0_0);
         let l1_0 = d1 & 0x03ffffffffffffff;
-        println!("l1_0 {:016x}", l1_0);
         let l2_0 = d2 & 0x03ffffffffffffff;
-        println!("l2_0 {:016x}", l2_0);
         let l3_0 = d3 & 0x00007fffffffffff;
-        println!("l3_0 {:016x}", l3_0);
 
 
         // Shift the high bits down into another n-bit number.
         let h0_0 = ((d3 & 0x03ffffffffffffff) >> 47) |
                    ((d4 & 0x00007fffffffffff) << 11);
-        println!("h0_0 {:016x}", h0_0);
         let h1_0 = ((d4 & 0x03ffffffffffffff) >> 47) |
                    ((d5 & 0x00007fffffffffff) << 11);
-        println!("h1_0 {:016x}", h1_0);
         let h2_0 = ((d5 & 0x03ffffffffffffff) >> 47) |
                    ((d6 & 0x00007fffffffffff) << 11);
-        println!("h2_0 {:016x}", h2_0);
         let h3_0 = ((d6 & 0x03ffffffffffffff) >> 47) |
                    (d7 << 11);
-        println!("h3_0 {:016x}", h3_0);
 
         // Multiply by C
         let hc0_0 = h0_0 * C_VAL;
-        println!("hc0_0 {:016x}", hc0_0);
         let hc1_0 = h1_0 * C_VAL;
-        println!("hc1_0 {:016x}", hc1_0);
         let hc2_0 = h2_0 * C_VAL;
-        println!("hc2_0 {:016x}", hc2_0);
         let hc3_0 = h3_0 * C_VAL;
-        println!("hc3_0 {:016x}", hc3_0);
 
         // Add h and l.
         let kin_0 = hc3_0 >> 47;
         let s0_0 = l0_0 + hc0_0 + (kin_0 * C_VAL);
-        println!("s0_0 {:016x}", s0_0);
         let k0_0 = s0_0 >> 58;
         let s1_0 = l1_0 + hc1_0 + k0_0;
-        println!("s1_0 {:016x}", s1_0);
         let k1_0 = s1_0 >> 58;
         let s2_0 = l2_0 + hc2_0 + k1_0;
-        println!("s2_0 {:016x}", s2_0);
         let k2_0 = s2_0 >> 58;
         let s3_0 = l3_0 + (hc3_0 & 0x00007fffffffffff) + k2_0;
-        println!("s3_0 {:016x}", s3_0);
 
         self[0] = s0_0 & 0x03ffffffffffffff;
         self[1] = s1_0 & 0x03ffffffffffffff;
         self[2] = s2_0 & 0x03ffffffffffffff;
         self[3] = s3_0;
-        println!("result {:?}", self);
     }
 
     fn squared(&self) -> Self {
@@ -938,7 +886,6 @@ mod tests {
         let actual = unpacked.pack();
 
         for i in 0..28 {
-            println!("{}: {:x} == {:x}", i, expected[i], actual[i]);
             assert!(expected[i] == actual[i]);
         }
     }
@@ -948,7 +895,6 @@ mod tests {
         let actual = Mod_e221_3::unpack(&bytes);
 
         for i in 0..4 {
-            println!("{}: {:x} == {:x}", i, expected[i], actual[i]);
             assert!(expected[i] == actual[i]);
         }
     }
@@ -968,7 +914,7 @@ mod tests {
                            0x00, 0xff, 0x00, 0xff,
                            0x00, 0xff, 0x00, 0xff,
                            0x00, 0xff, 0x00, 0xff,
-                           0x00, 0xff, 0x00, 0x0f]);
+                           0x00, 0xff, 0x00, 0x1f]);
         test_pack_unpack(&[0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
@@ -982,7 +928,7 @@ mod tests {
                            0xaa, 0x55, 0xaa, 0x55,
                            0xaa, 0x55, 0xaa, 0x55,
                            0xaa, 0x55, 0xaa, 0x55,
-                           0xaa, 0x55, 0xaa, 0x05]);
+                           0xaa, 0x55, 0xaa, 0x15]);
         test_pack_unpack(&[0x00, 0xaa, 0x00, 0xaa,
                            0x00, 0xaa, 0x00, 0xaa,
                            0x00, 0xaa, 0x00, 0xaa,
@@ -1003,14 +949,14 @@ mod tests {
                            0x55, 0xff, 0x55, 0xff,
                            0x55, 0xff, 0x55, 0xff,
                            0x55, 0xff, 0x55, 0xff,
-                           0x55, 0xff, 0x55, 0x0f]);
+                           0x55, 0xff, 0x55, 0x1f]);
         test_pack_unpack(&[0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
-                           0xff, 0x55, 0xff, 0x05]);
+                           0xff, 0x55, 0xff, 0x15]);
     }
 
     #[test]

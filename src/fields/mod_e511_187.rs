@@ -199,7 +199,7 @@ impl Mod_e511_187 {
                      ((self[9] << 6) & 0b11000000)) as u8;
         bytes[61] = ((self[9] >> 2) & 0b11111111) as u8;
         bytes[62] = ((self[9] >> 10) & 0b11111111) as u8;
-        bytes[63] = ((self[9] >> 18) & 0b11111111) as u8;
+        bytes[63] = ((self[9] >> 18) & 0b01111111) as u8;
 
         bytes
     }
@@ -279,7 +279,7 @@ impl Mod_e511_187 {
         out[9] = (((bytes[60] as i64) >> 6) & 0x0000000000000003) |
                  (((bytes[61] as i64) << 2) & 0x00000000000003fc) |
                  (((bytes[62] as i64) << 10) & 0x000000000003fc00) |
-                 (((bytes[63] as i64) << 18) & 0x0000000003fc0000);
+                 (((bytes[63] as i64) << 18) & 0x0000000001fc0000);
         out
     }
 }
@@ -322,7 +322,7 @@ impl<'b> AddAssign<&'b Mod_e511_187> for Mod_e511_187 {
         let a6 = self[6];
         let a7 = self[7];
         let a8 = self[8];
-        let a9 = self[9] & 0x0000000001fffffff;
+        let a9 = self[9] & 0x00000000001ffffff;
 
         let b0 = rhs[0];
         let b1 = rhs[1];
@@ -333,7 +333,7 @@ impl<'b> AddAssign<&'b Mod_e511_187> for Mod_e511_187 {
         let b6 = rhs[6];
         let b7 = rhs[7];
         let b8 = rhs[8];
-        let b9 = rhs[9] & 0x0000000001fffffff;
+        let b9 = rhs[9] & 0x00000000001ffffff;
 
         let cin = self.carry_out() + rhs.carry_out();
         let s0 = a0 + b0 + (cin * C_VAL);
