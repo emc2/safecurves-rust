@@ -813,6 +813,27 @@ impl PrimeField for Mod_e251_9 {
         out
     }
 
+    fn legendre(&self) -> Self {
+        // First digit is 1.
+        let mut out = self.squared();
+        let mut sqval = out.clone();
+
+        // Second digit is 1.
+        sqval.square();
+        out *= &sqval;
+
+        // Third digit is 0.
+        sqval.square();
+
+        // All the remaining digits are 1.
+        for _ in 3..250 {
+            sqval.square();
+            out *= &sqval;
+        }
+
+        out
+    }
+
     fn small_add_assign(&mut self, rhs: i32) {
         let a0 = self[0];
         let a1 = self[1];

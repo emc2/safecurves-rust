@@ -2017,7 +2017,7 @@ impl PrimeField for Mod_e521_1 {
         // Skip second digit (which is a 0).
         sqval.square();
 
-        // All the remaining digits are 0.
+        // All the remaining digits are 1.
         for _ in 2..521 {
             sqval.square();
             *self *= &sqval;
@@ -2028,6 +2028,20 @@ impl PrimeField for Mod_e521_1 {
         let mut out = self.clone();
 
         out.invert();
+
+        out
+    }
+
+    fn legendre(&self) -> Self {
+        // First digit is 1.
+        let mut out = self.squared();
+        let mut sqval = out.clone();
+
+        // All the remaining digits are 1.
+        for _ in 1..520 {
+            sqval.square();
+            out *= &sqval;
+        }
 
         out
     }

@@ -70,6 +70,9 @@ pub trait PrimeField {
     /// Functional invert.
     fn inverted(&self) -> Self;
 
+    /// Legendre symbol for a field element.
+    fn legendre(&self) -> Self;
+
     /// Add an i32 in-place.
     fn small_add_assign(&mut self, b: i32);
 
