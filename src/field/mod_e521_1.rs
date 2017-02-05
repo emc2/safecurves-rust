@@ -1,4 +1,4 @@
-use fields::prime_field::PrimeField;
+use field::prime_field::PrimeField;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::fmt::LowerHex;
@@ -2231,8 +2231,8 @@ impl PrimeField for Mod_e521_1 {
 
 #[cfg(test)]
 mod tests {
-    use fields::prime_field::*;
-    use fields::mod_e521_1::*;
+    use field::prime_field::*;
+    use field::mod_e521_1::*;
 
     const TWO: Mod_e521_1 = Mod_e521_1([ 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 

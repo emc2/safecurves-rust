@@ -1,4 +1,4 @@
-use fields::prime_field::PrimeField;
+use field::prime_field::PrimeField;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::fmt::LowerHex;
@@ -15,37 +15,35 @@ use std::ops::Index;
 use std::ops::IndexMut;
 use std::ops::Neg;
 
-/// Elements of the finite field mod 2^255 - 19.  Used by the
-/// Curve25519 curve.  Uses 28-bit digits.
+/// Elements of the finite field mod 2^221 - 3.  Used by the M-221
+/// curve.  Uses 29-bit digits.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e255_19(pub [i64; 5]);
+pub struct Mod_e221_3(pub [i64; 4]);
 
-pub const C_VAL: i64 = 19;
+pub const C_VAL: i64 = 3;
 
 /// The normalized representation of the value 0.
-pub const ZERO: Mod_e255_19 = Mod_e255_19([ 0, 0, 0, 0, 0 ]);
+pub const ZERO: Mod_e221_3 = Mod_e221_3([ 0, 0, 0, 0 ]);
 
 /// The normalized representation of the value 1.
-pub const ONE: Mod_e255_19 = Mod_e255_19([ 1, 0, 0, 0, 0 ]);
+pub const ONE: Mod_e221_3 = Mod_e221_3([ 1, 0, 0, 0 ]);
 
 /// The normalized representation of the value -1.
-pub const M_ONE: Mod_e255_19 =
-    Mod_e255_19([ 0x00ffffffffffffec, 0x00ffffffffffffff,
-                  0x00ffffffffffffff, 0x00ffffffffffffff,
-                  0x000000007fffffff ]);
+pub const M_ONE: Mod_e221_3 =
+    Mod_e221_3([ 0x03fffffffffffffc, 0x03ffffffffffffff,
+                 0x03ffffffffffffff, 0x00007fffffffffff ]);
 
 /// The normalized representation of the modulus 2^414 - 17.
-pub const MODULUS: Mod_e255_19 =
-    Mod_e255_19([ 0x00ffffffffffffed, 0x00ffffffffffffff,
-                  0x00ffffffffffffff, 0x00ffffffffffffff,
-                  0x000000007fffffff ]);
+pub const MODULUS: Mod_e221_3 =
+    Mod_e221_3([ 0x03fffffffffffffd, 0x03ffffffffffffff,
+                 0x03ffffffffffffff, 0x00007fffffffffff ]);
 
-impl Debug for Mod_e255_19 {
+impl Debug for Mod_e221_3 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        try!(write!(f, "Mod_e255_19: [ {:x}", &self[0]));
+        try!(write!(f, "Mod_e221_3: [ {:x}", &self[0]));
 
-        for i in 1..5 {
+        for i in 1..4 {
             try!(write!(f, ", {:x}", &self[i]));
         }
 
@@ -53,12 +51,12 @@ impl Debug for Mod_e255_19 {
     }
 }
 
-impl LowerHex for Mod_e255_19 {
+impl LowerHex for Mod_e221_3 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut cpy = self.clone();
         let bytes = cpy.pack();
 
-        for i in 0..32 {
+        for i in 0..28 {
             try!(write!(f, "{:02x}", bytes[31 - i]));
         }
 
@@ -66,12 +64,12 @@ impl LowerHex for Mod_e255_19 {
     }
 }
 
-impl UpperHex for Mod_e255_19 {
+impl UpperHex for Mod_e221_3 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut cpy = self.clone();
         let bytes = cpy.pack();
 
-        for i in 0..32 {
+        for i in 0..28 {
             try!(write!(f, "{:02X}", bytes[31 - i]));
         }
 
@@ -79,13 +77,13 @@ impl UpperHex for Mod_e255_19 {
     }
 }
 
-impl Mod_e255_19 {
-    pub fn normalize_eq(&mut self, other: &mut Mod_e255_19) -> bool {
+impl Mod_e221_3 {
+    pub fn normalize_eq(&mut self, other: &mut Mod_e221_3) -> bool {
         let self_bytes =  self.pack();
         let other_bytes = other.pack();
         let mut are_equal: bool = true;
 
-        for i in 0..32 {
+        for i in 0..28 {
             are_equal &= self_bytes[i] == other_bytes[i];
         }
 
@@ -96,7 +94,7 @@ impl Mod_e255_19 {
     /// stash the carry-out value of each operation, and feed that
     /// back into the next one.
     fn carry_out(&self) -> i64 {
-        self[4] >> 31
+        self[3] >> 47
     }
 
     /// Normalize the representation, resulting in the internal digits
@@ -114,15 +112,15 @@ impl Mod_e255_19 {
 
     /// Serialize a value as a little-endian byte array.  This has the
     /// effect of normalizing the representation.
-    pub fn pack(&mut self) -> [u8; 32] {
+    pub fn pack(&mut self) -> [u8; 28] {
         self.normalize();
         self.pack_normalized()
     }
 
     /// Serialize an already normalized number as a little-endian byte
     /// array.  This must only be used on a normalized value.
-    pub fn pack_normalized(&mut self) -> [u8; 32] {
-        let mut bytes = [0u8; 32];
+    pub fn pack_normalized(&mut self) -> [u8; 28] {
+        let mut bytes = [0u8; 28];
 
         bytes[0] = (self[0] & 0b11111111) as u8;
         bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
@@ -131,39 +129,38 @@ impl Mod_e255_19 {
         bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
         bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
         bytes[6] = ((self[0] >> 48) & 0b11111111) as u8;
-        bytes[7] = (self[1] & 0b11111111) as u8;
-        bytes[8] = ((self[1] >> 8) & 0b11111111) as u8;
-        bytes[9] = ((self[1] >> 16) & 0b11111111) as u8;
-        bytes[10] = ((self[1] >> 24) & 0b11111111) as u8;
-        bytes[11] = ((self[1] >> 32) & 0b11111111) as u8;
-        bytes[12] = ((self[1] >> 40) & 0b11111111) as u8;
-        bytes[13] = ((self[1] >> 48) & 0b11111111) as u8;
-        bytes[14] = (self[2] & 0b11111111) as u8;
-        bytes[15] = ((self[2] >> 8) & 0b11111111) as u8;
-        bytes[16] = ((self[2] >> 16) & 0b11111111) as u8;
-        bytes[17] = ((self[2] >> 24) & 0b11111111) as u8;
-        bytes[18] = ((self[2] >> 32) & 0b11111111) as u8;
-        bytes[19] = ((self[2] >> 40) & 0b11111111) as u8;
-        bytes[20] = ((self[2] >> 48) & 0b11111111) as u8;
-        bytes[21] = (self[3] & 0b11111111) as u8;
-        bytes[22] = ((self[3] >> 8) & 0b11111111) as u8;
-        bytes[23] = ((self[3] >> 16) & 0b11111111) as u8;
-        bytes[24] = ((self[3] >> 24) & 0b11111111) as u8;
-        bytes[25] = ((self[3] >> 32) & 0b11111111) as u8;
-        bytes[26] = ((self[3] >> 40) & 0b11111111) as u8;
-        bytes[27] = ((self[3] >> 48) & 0b11111111) as u8;
-        bytes[28] = (self[4] & 0b11111111) as u8;
-        bytes[29] = ((self[4] >> 8) & 0b11111111) as u8;
-        bytes[30] = ((self[4] >> 16) & 0b11111111) as u8;
-        bytes[31] = ((self[4] >> 24) & 0b01111111) as u8;
+        bytes[7] = (((self[0] >> 56) & 0b00000011) as u8) |
+                   (((self[1] << 2) & 0b11111100) as u8);
+        bytes[8] = ((self[1] >> 6) & 0b11111111) as u8;
+        bytes[9] = ((self[1] >> 14) & 0b11111111) as u8;
+        bytes[10] = ((self[1] >> 22) & 0b11111111) as u8;
+        bytes[11] = ((self[1] >> 30) & 0b11111111) as u8;
+        bytes[12] = ((self[1] >> 38) & 0b11111111) as u8;
+        bytes[13] = ((self[1] >> 46) & 0b11111111) as u8;
+        bytes[14] = (((self[1] >> 54) & 0b00001111) as u8) |
+                    (((self[2] << 4) & 0b11110000) as u8);
+        bytes[15] = ((self[2] >> 4) & 0b11111111) as u8;
+        bytes[16] = ((self[2] >> 12) & 0b11111111) as u8;
+        bytes[17] = ((self[2] >> 20) & 0b11111111) as u8;
+        bytes[18] = ((self[2] >> 28) & 0b11111111) as u8;
+        bytes[19] = ((self[2] >> 36) & 0b11111111) as u8;
+        bytes[20] = ((self[2] >> 44) & 0b11111111) as u8;
+        bytes[21] = (((self[2] >> 52) & 0b00111111) as u8) |
+                    (((self[3] << 6) & 0b11000000) as u8);
+        bytes[22] = ((self[3] >> 2) & 0b11111111) as u8;
+        bytes[23] = ((self[3] >> 10) & 0b11111111) as u8;
+        bytes[24] = ((self[3] >> 18) & 0b11111111) as u8;
+        bytes[25] = ((self[3] >> 26) & 0b11111111) as u8;
+        bytes[26] = ((self[3] >> 34) & 0b11111111) as u8;
+        bytes[27] = ((self[3] >> 42) & 0b00011111) as u8;
 
         bytes
     }
 
     /// Deserialize a little-endian byte array into a value.  The byte
     /// array must contain a number less than the modulus 2^382 - 105.
-    pub fn unpack(bytes : &[u8; 32]) -> Mod_e255_19 {
-        let mut out = Mod_e255_19([0i64; 5]);
+    pub fn unpack(bytes : &[u8; 28]) -> Mod_e221_3 {
+        let mut out = Mod_e221_3([0i64; 4]);
 
         out[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
                  (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
@@ -171,45 +168,43 @@ impl Mod_e255_19 {
                  (((bytes[3] as i64) << 24) & 0x00000000ff000000) |
                  (((bytes[4] as i64) << 32) & 0x000000ff00000000) |
                  (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[6] as i64) << 48) & 0x00ff000000000000);
-        out[1] = ((bytes[7] as i64) & 0x00000000000000ff) |
-                 (((bytes[8] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[9] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[10] as i64) << 24) & 0x00000000ff000000) |
-                 (((bytes[11] as i64) << 32) & 0x000000ff00000000) |
-                 (((bytes[12] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[13] as i64) << 48) & 0x00ff000000000000);
-        out[2] = ((bytes[14] as i64) & 0x00000000000000ff) |
-                 (((bytes[15] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[16] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[17] as i64) << 24) & 0x00000000ff000000) |
-                 (((bytes[18] as i64) << 32) & 0x000000ff00000000) |
-                 (((bytes[19] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[20] as i64) << 48) & 0x00ff000000000000);
-        out[3] = ((bytes[21] as i64) & 0x00000000000000ff) |
-                 (((bytes[22] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[23] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[24] as i64) << 24) & 0x00000000ff000000) |
-                 (((bytes[25] as i64) << 32) & 0x000000ff00000000) |
-                 (((bytes[26] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[27] as i64) << 48) & 0x00ff000000000000);
-        out[4] = ((bytes[28] as i64) & 0x00000000000000ff) |
-                 (((bytes[29] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[30] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[31] as i64) << 24) & 0x000000007f000000);
-
+                 (((bytes[6] as i64) << 48) & 0x00ff000000000000) |
+                 (((bytes[7] as i64) << 56) & 0x0300000000000000);
+        out[1] = (((bytes[7] as i64) >> 2) & 0x000000000000003f) |
+                 (((bytes[8] as i64) << 6) & 0x0000000000003fc0) |
+                 (((bytes[9] as i64) << 14) & 0x00000000003fc000) |
+                 (((bytes[10] as i64) << 22) & 0x000000003fc00000) |
+                 (((bytes[11] as i64) << 30) & 0x0000003fc0000000) |
+                 (((bytes[12] as i64) << 38) & 0x00003fc000000000) |
+                 (((bytes[13] as i64) << 46) & 0x003fc00000000000) |
+                 (((bytes[14] as i64) << 54) & 0x03c0000000000000);
+        out[2] = (((bytes[14] as i64) >> 4) & 0x000000000000000f) |
+                 (((bytes[15] as i64) << 4) & 0x0000000000000ff0) |
+                 (((bytes[16] as i64) << 12) & 0x00000000000ff000) |
+                 (((bytes[17] as i64) << 20) & 0x000000000ff00000) |
+                 (((bytes[18] as i64) << 28) & 0x0000000ff0000000) |
+                 (((bytes[19] as i64) << 36) & 0x00000ff000000000) |
+                 (((bytes[20] as i64) << 44) & 0x000ff00000000000) |
+                 (((bytes[21] as i64) << 52) & 0x03f0000000000000);
+        out[3] = (((bytes[21] as i64) >> 6) & 0x0000000000000003) |
+                 (((bytes[22] as i64) << 2) & 0x00000000000003fc) |
+                 (((bytes[23] as i64) << 10) & 0x000000000003fc00) |
+                 (((bytes[24] as i64) << 18) & 0x0000000003fc0000) |
+                 (((bytes[25] as i64) << 26) & 0x00000003fc000000) |
+                 (((bytes[26] as i64) << 34) & 0x000003fc00000000) |
+                 (((bytes[27] as i64) << 42) & 0x00007c0000000000);
         out
     }
 }
 
-impl IndexMut<usize> for Mod_e255_19 {
+impl IndexMut<usize> for Mod_e221_3 {
     fn index_mut<'a>(&'a mut self, idx : usize) -> &'a mut i64 {
         let ret : &'a mut i64 = &mut(self.0[idx]);
         ret
     }
 }
 
-impl Index<usize> for Mod_e255_19 {
+impl Index<usize> for Mod_e221_3 {
     type Output = i64;
 
     fn index<'a>(&'a self, idx : usize) -> &'a i64 {
@@ -218,10 +213,10 @@ impl Index<usize> for Mod_e255_19 {
     }
 }
 
-impl<'a> Neg for &'a Mod_e255_19 {
-    type Output = Mod_e255_19;
+impl<'a> Neg for &'a Mod_e221_3 {
+    type Output = Mod_e221_3;
 
-    fn neg(self) -> Mod_e255_19 {
+    fn neg(self) -> Mod_e221_3 {
         let mut out = self.clone();
 
         out += &MODULUS;
@@ -229,131 +224,117 @@ impl<'a> Neg for &'a Mod_e255_19 {
     }
 }
 
-impl<'b> AddAssign<&'b Mod_e255_19> for Mod_e255_19 {
-    fn add_assign(&mut self, rhs: &'b Mod_e255_19) {
+impl<'b> AddAssign<&'b Mod_e221_3> for Mod_e221_3 {
+    fn add_assign(&mut self, rhs: &'b Mod_e221_3) {
         let a0 = self[0];
         let a1 = self[1];
         let a2 = self[2];
-        let a3 = self[3];
-        let a4 = self[4] & 0x000000007fffffff;
+        let a3 = self[3] & 0x00007fffffffffff;
 
         let b0 = rhs[0];
         let b1 = rhs[1];
         let b2 = rhs[2];
-        let b3 = rhs[3];
-        let b4 = rhs[4] & 0x000000007fffffff;
+        let b3 = rhs[3] & 0x00007fffffffffff;
 
         let cin = self.carry_out() + rhs.carry_out();
         let s0 = a0 + b0 + (cin * C_VAL);
-        let c0 = s0 >> 56;
+        let c0 = s0 >> 58;
         let s1 = a1 + b1 + c0;
-        let c1 = s1 >> 56;
+        let c1 = s1 >> 58;
         let s2 = a2 + b2 + c1;
-        let c2 = s2 >> 56;
+        let c2 = s2 >> 58;
         let s3 = a3 + b3 + c2;
-        let c3 = s3 >> 56;
-        let s4 = a4 + b4 + c3;
 
-        self[0] = s0 & 0x00ffffffffffffff;
-        self[1] = s1 & 0x00ffffffffffffff;
-        self[2] = s2 & 0x00ffffffffffffff;
-        self[3] = s3 & 0x00ffffffffffffff;
-        self[4] = s4;
+        self[0] = s0 & 0x03ffffffffffffff;
+        self[1] = s1 & 0x03ffffffffffffff;
+        self[2] = s2 & 0x03ffffffffffffff;
+        self[3] = s3;
     }
 }
 
-impl<'a, 'b> Add<&'b Mod_e255_19> for &'a Mod_e255_19 {
-    type Output = Mod_e255_19;
+impl<'a, 'b> Add<&'b Mod_e221_3> for &'a Mod_e221_3 {
+    type Output = Mod_e221_3;
 
-    fn add(self, a: &'b Mod_e255_19) -> Mod_e255_19 {
+    fn add(self, a: &'b Mod_e221_3) -> Mod_e221_3 {
         let mut out = self.clone();
         out += a;
         out
     }
 }
 
-impl<'b> DivAssign<&'b Mod_e255_19> for Mod_e255_19 {
-    fn div_assign(&mut self, rhs: &'b Mod_e255_19) {
+impl<'b> DivAssign<&'b Mod_e221_3> for Mod_e221_3 {
+    fn div_assign(&mut self, rhs: &'b Mod_e221_3) {
         *self *= &rhs.inverted();
     }
 }
 
-impl<'a, 'b> Div<&'b Mod_e255_19> for &'a Mod_e255_19 {
-    type Output = Mod_e255_19;
+impl<'a, 'b> Div<&'b Mod_e221_3> for &'a Mod_e221_3 {
+    type Output = Mod_e221_3;
 
-    fn div(self, a: &'b Mod_e255_19) -> Mod_e255_19 {
+    fn div(self, a: &'b Mod_e221_3) -> Mod_e221_3 {
         let mut out = self.clone();
         out /= a;
         out
     }
 }
 
-impl<'b> SubAssign<&'b Mod_e255_19> for Mod_e255_19 {
-    fn sub_assign(&mut self, rhs: &'b Mod_e255_19) {
+impl<'b> SubAssign<&'b Mod_e221_3> for Mod_e221_3 {
+    fn sub_assign(&mut self, rhs: &'b Mod_e221_3) {
         let a0 = self[0];
         let a1 = self[1];
         let a2 = self[2];
-        let a3 = self[3];
-        let a4 = self[4] & 0x000000007fffffff;
+        let a3 = self[3] & 0x00007fffffffffff;
 
         let b0 = rhs[0];
         let b1 = rhs[1];
         let b2 = rhs[2];
-        let b3 = rhs[3];
-        let b4 = rhs[4] & 0x000000007fffffff;
+        let b3 = rhs[3] & 0x00007fffffffffff;
 
         let cin = self.carry_out() + rhs.carry_out();
         let s0 = a0 - b0 + (cin * C_VAL);
-        let c0 = s0 >> 56;
+        let c0 = s0 >> 58;
         let s1 = a1 - b1 + c0;
-        let c1 = s1 >> 56;
+        let c1 = s1 >> 58;
         let s2 = a2 - b2 + c1;
-        let c2 = s2 >> 56;
+        let c2 = s2 >> 58;
         let s3 = a3 - b3 + c2;
-        let c3 = s3 >> 56;
-        let s4 = a4 - b4 + c3;
 
-        self[0] = s0 & 0x00ffffffffffffff;
-        self[1] = s1 & 0x00ffffffffffffff;
-        self[2] = s2 & 0x00ffffffffffffff;
-        self[3] = s3 & 0x00ffffffffffffff;
-        self[4] = s4;
+        self[0] = s0 & 0x03ffffffffffffff;
+        self[1] = s1 & 0x03ffffffffffffff;
+        self[2] = s2 & 0x03ffffffffffffff;
+        self[3] = s3;
     }
 }
 
-impl<'a, 'b> Sub<&'b Mod_e255_19> for &'a Mod_e255_19 {
-    type Output = Mod_e255_19;
+impl<'a, 'b> Sub<&'b Mod_e221_3> for &'a Mod_e221_3 {
+    type Output = Mod_e221_3;
 
-    fn sub(self, a: &'b Mod_e255_19) -> Mod_e255_19 {
+    fn sub(self, a: &'b Mod_e221_3) -> Mod_e221_3 {
         let mut out = self.clone();
         out -= a;
         out
     }
 }
 
-impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
-    fn mul_assign(&mut self, rhs: &'b Mod_e255_19) {
-        let a0 = self[0] & 0x0fffffff;
-        let a1 = self[0] >> 28;
-        let a2 = self[1] & 0x0fffffff;
-        let a3 = self[1] >> 28;
-        let a4 = self[2] & 0x0fffffff;
-        let a5 = self[2] >> 28;
-        let a6 = self[3] & 0x0fffffff;
-        let a7 = self[3] >> 28;
-        let a8 = self[4] & 0x0fffffff;
-        let a9 = self[4] >> 28;
+impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
+    fn mul_assign(&mut self, rhs: &'b Mod_e221_3) {
+        let a0 = self[0] & 0x1fffffff;
+        let a1 = self[0] >> 29;
+        let a2 = self[1] & 0x1fffffff;
+        let a3 = self[1] >> 29;
+        let a4 = self[2] & 0x1fffffff;
+        let a5 = self[2] >> 29;
+        let a6 = self[3] & 0x1fffffff;
+        let a7 = self[3] >> 29;
 
-        let b0 = rhs[0] & 0x0fffffff;
-        let b1 = rhs[0] >> 28;
-        let b2 = rhs[1] & 0x0fffffff;
-        let b3 = rhs[1] >> 28;
-        let b4 = rhs[2] & 0x0fffffff;
-        let b5 = rhs[2] >> 28;
-        let b6 = rhs[3] & 0x0fffffff;
-        let b7 = rhs[3] >> 28;
-        let b8 = rhs[4] & 0x0fffffff;
-        let b9 = rhs[4] >> 28;
+        let b0 = rhs[0] & 0x1fffffff;
+        let b1 = rhs[0] >> 29;
+        let b2 = rhs[1] & 0x1fffffff;
+        let b3 = rhs[1] >> 29;
+        let b4 = rhs[2] & 0x1fffffff;
+        let b5 = rhs[2] >> 29;
+        let b6 = rhs[3] & 0x1fffffff;
+        let b7 = rhs[3] >> 29;
 
         // Combined multiples
         let m_0_0 = a0 * b0;
@@ -364,8 +345,6 @@ impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
         let m_0_5 = a0 * b5;
         let m_0_6 = a0 * b6;
         let m_0_7 = a0 * b7;
-        let m_0_8 = a0 * b8;
-        let m_0_9 = a0 * b9;
         let m_1_0 = a1 * b0;
         let m_1_1 = a1 * b1;
         let m_1_2 = a1 * b2;
@@ -374,8 +353,6 @@ impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
         let m_1_5 = a1 * b5;
         let m_1_6 = a1 * b6;
         let m_1_7 = a1 * b7;
-        let m_1_8 = a1 * b8;
-        let m_1_9 = a1 * b9;
         let m_2_0 = a2 * b0;
         let m_2_1 = a2 * b1;
         let m_2_2 = a2 * b2;
@@ -384,8 +361,6 @@ impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
         let m_2_5 = a2 * b5;
         let m_2_6 = a2 * b6;
         let m_2_7 = a2 * b7;
-        let m_2_8 = a2 * b8;
-        let m_2_9 = a2 * b9;
         let m_3_0 = a3 * b0;
         let m_3_1 = a3 * b1;
         let m_3_2 = a3 * b2;
@@ -394,8 +369,6 @@ impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
         let m_3_5 = a3 * b5;
         let m_3_6 = a3 * b6;
         let m_3_7 = a3 * b7;
-        let m_3_8 = a3 * b8;
-        let m_3_9 = a3 * b9;
         let m_4_0 = a4 * b0;
         let m_4_1 = a4 * b1;
         let m_4_2 = a4 * b2;
@@ -404,8 +377,6 @@ impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
         let m_4_5 = a4 * b5;
         let m_4_6 = a4 * b6;
         let m_4_7 = a4 * b7;
-        let m_4_8 = a4 * b8;
-        let m_4_9 = a4 * b9;
         let m_5_0 = a5 * b0;
         let m_5_1 = a5 * b1;
         let m_5_2 = a5 * b2;
@@ -414,8 +385,6 @@ impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
         let m_5_5 = a5 * b5;
         let m_5_6 = a5 * b6;
         let m_5_7 = a5 * b7;
-        let m_5_8 = a5 * b8;
-        let m_5_9 = a5 * b9;
         let m_6_0 = a6 * b0;
         let m_6_1 = a6 * b1;
         let m_6_2 = a6 * b2;
@@ -424,8 +393,6 @@ impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
         let m_6_5 = a6 * b5;
         let m_6_6 = a6 * b6;
         let m_6_7 = a6 * b7;
-        let m_6_8 = a6 * b8;
-        let m_6_9 = a6 * b9;
         let m_7_0 = a7 * b0;
         let m_7_1 = a7 * b1;
         let m_7_2 = a7 * b2;
@@ -434,188 +401,137 @@ impl<'b> MulAssign<&'b Mod_e255_19> for Mod_e255_19 {
         let m_7_5 = a7 * b5;
         let m_7_6 = a7 * b6;
         let m_7_7 = a7 * b7;
-        let m_7_8 = a7 * b8;
-        let m_7_9 = a7 * b9;
-        let m_8_0 = a8 * b0;
-        let m_8_1 = a8 * b1;
-        let m_8_2 = a8 * b2;
-        let m_8_3 = a8 * b3;
-        let m_8_4 = a8 * b4;
-        let m_8_5 = a8 * b5;
-        let m_8_6 = a8 * b6;
-        let m_8_7 = a8 * b7;
-        let m_8_8 = a8 * b8;
-        let m_8_9 = a8 * b9;
-        let m_9_0 = a9 * b0;
-        let m_9_1 = a9 * b1;
-        let m_9_2 = a9 * b2;
-        let m_9_3 = a9 * b3;
-        let m_9_4 = a9 * b4;
-        let m_9_5 = a9 * b5;
-        let m_9_6 = a9 * b6;
-        let m_9_7 = a9 * b7;
-        let m_9_8 = a9 * b8;
-        let m_9_9 = a9 * b9;
 
         // Compute the 40-digit combined product using 64-bit operations.
-        let d0 = m_0_0 + ((m_0_1 & 0x0fffffff) << 28) +
-                 ((m_1_0 & 0x0fffffff) << 28);
-        let c0 = d0 >> 56;
-        let d1 = (m_0_1 >> 28) + m_0_2 + ((m_0_3 & 0x0fffffff) << 28) +
-                 (m_1_0 >> 28) + m_1_1 + ((m_1_2 & 0x0fffffff) << 28) +
-                 m_2_0 + ((m_2_1 & 0x0fffffff) << 28) +
-                 ((m_3_0 & 0x0fffffff) << 28) + c0;
-        let c1 = d1 >> 56;
-        let d2 = (m_0_3 >> 28) + m_0_4 + ((m_0_5 & 0x0fffffff) << 28) +
-                 (m_1_2 >> 28) + m_1_3 + ((m_1_4 & 0x0fffffff) << 28) +
-                 (m_2_1 >> 28) + m_2_2 + ((m_2_3 & 0x0fffffff) << 28) +
-                 (m_3_0 >> 28) + m_3_1 + ((m_3_2 & 0x0fffffff) << 28) +
-                 m_4_0 + ((m_4_1 & 0x0fffffff) << 28) +
-                 ((m_5_0 & 0x0fffffff) << 28) + c1;
-        let c2 = d2 >> 56;
-        let d3 = (m_0_5 >> 28) + m_0_6 + ((m_0_7 & 0x0fffffff) << 28) +
-                 (m_1_4 >> 28) + m_1_5 + ((m_1_6 & 0x0fffffff) << 28) +
-                 (m_2_3 >> 28) + m_2_4 + ((m_2_5 & 0x0fffffff) << 28) +
-                 (m_3_2 >> 28) + m_3_3 + ((m_3_4 & 0x0fffffff) << 28) +
-                 (m_4_1 >> 28) + m_4_2 + ((m_4_3 & 0x0fffffff) << 28) +
-                 (m_5_0 >> 28) + m_5_1 + ((m_5_2 & 0x0fffffff) << 28) +
-                 m_6_0 + ((m_6_1 & 0x0fffffff) << 28) +
-                 ((m_7_0 & 0x0fffffff) << 28) + c2;
-        let c3 = d3 >> 56;
-        let d4 = (m_0_7 >> 28) + m_0_8 + ((m_0_9 & 0x0fffffff) << 28) +
-                 (m_1_6 >> 28) + m_1_7 + ((m_1_8 & 0x0fffffff) << 28) +
-                 (m_2_5 >> 28) + m_2_6 + ((m_2_7 & 0x0fffffff) << 28) +
-                 (m_3_4 >> 28) + m_3_5 + ((m_3_6 & 0x0fffffff) << 28) +
-                 (m_4_3 >> 28) + m_4_4 + ((m_4_5 & 0x0fffffff) << 28) +
-                 (m_5_2 >> 28) + m_5_3 + ((m_5_4 & 0x0fffffff) << 28) +
-                 (m_6_1 >> 28) + m_6_2 + ((m_6_3 & 0x0fffffff) << 28) +
-                 (m_7_0 >> 28) + m_7_1 + ((m_7_2 & 0x0fffffff) << 28) +
-                 m_8_0 + ((m_8_1 & 0x0fffffff) << 28) +
-                 ((m_9_0 & 0x0fffffff) << 28) + c3;
-        let c4 = d4 >> 56;
-        let d5 = (m_0_9 >> 28) +
-                 (m_1_8 >> 28) + m_1_9 +
-                 (m_2_7 >> 28) + m_2_8 + ((m_2_9 & 0x0fffffff) << 28) +
-                 (m_3_6 >> 28) + m_3_7 + ((m_3_8 & 0x0fffffff) << 28) +
-                 (m_4_5 >> 28) + m_4_6 + ((m_4_7 & 0x0fffffff) << 28) +
-                 (m_5_4 >> 28) + m_5_5 + ((m_5_6 & 0x0fffffff) << 28) +
-                 (m_6_3 >> 28) + m_6_4 + ((m_6_5 & 0x0fffffff) << 28) +
-                 (m_7_2 >> 28) + m_7_3 + ((m_7_4 & 0x0fffffff) << 28) +
-                 (m_8_1 >> 28) + m_8_2 + ((m_8_3 & 0x0fffffff) << 28) +
-                 (m_9_0 >> 28) + m_9_1 + ((m_9_2 & 0x0fffffff) << 28) + c4;
-        let c5 = d5 >> 56;
-        let d6 = (m_2_9 >> 28) +
-                 (m_3_8 >> 28) + m_3_9 +
-                 (m_4_7 >> 28) + m_4_8 + ((m_4_9 & 0x0fffffff) << 28) +
-                 (m_5_6 >> 28) + m_5_7 + ((m_5_8 & 0x0fffffff) << 28) +
-                 (m_6_5 >> 28) + m_6_6 + ((m_6_7 & 0x0fffffff) << 28) +
-                 (m_7_4 >> 28) + m_7_5 + ((m_7_6 & 0x0fffffff) << 28) +
-                 (m_8_3 >> 28) + m_8_4 + ((m_8_5 & 0x0fffffff) << 28) +
-                 (m_9_2 >> 28) + m_9_3 + ((m_9_4 & 0x0fffffff) << 28) + c5;
-        let c6 = d6 >> 56;
-        let d7 = (m_4_9 >> 28) +
-                 (m_5_8 >> 28) + m_5_9 +
-                 (m_6_7 >> 28) + m_6_8 + ((m_6_9 & 0x0fffffff) << 28) +
-                 (m_7_6 >> 28) + m_7_7 + ((m_7_8 & 0x0fffffff) << 28) +
-                 (m_8_5 >> 28) + m_8_6 + ((m_8_7 & 0x0fffffff) << 28) +
-                 (m_9_4 >> 28) + m_9_5 + ((m_9_6 & 0x0fffffff) << 28) +
+        let d0 = m_0_0 + ((m_0_1 & 0x1fffffff) << 29) +
+                 ((m_1_0 & 0x1fffffff) << 29);
+        let c0 = d0 >> 58;
+        let d1 = (m_0_1 >> 29) + m_0_2 + ((m_0_3 & 0x1fffffff) << 29) +
+                 (m_1_0 >> 29) + m_1_1 + ((m_1_2 & 0x1fffffff) << 29) +
+                 m_2_0 + ((m_2_1 & 0x1fffffff) << 29) +
+                 ((m_3_0 & 0x1fffffff) << 29) + c0;
+        let c1 = d1 >> 58;
+        let d2 = (m_0_3 >> 29) + m_0_4 + ((m_0_5 & 0x1fffffff) << 29) +
+                 (m_1_2 >> 29) + m_1_3 + ((m_1_4 & 0x1fffffff) << 29) +
+                 (m_2_1 >> 29) + m_2_2 + ((m_2_3 & 0x1fffffff) << 29) +
+                 (m_3_0 >> 29) + m_3_1 + ((m_3_2 & 0x1fffffff) << 29) +
+                 m_4_0 + ((m_4_1 & 0x1fffffff) << 29) +
+                 ((m_5_0 & 0x1fffffff) << 29) + c1;
+        let c2 = d2 >> 58;
+        let d3 = (m_0_5 >> 29) + m_0_6 + ((m_0_7 & 0x1fffffff) << 29) +
+                 (m_1_4 >> 29) + m_1_5 + ((m_1_6 & 0x1fffffff) << 29) +
+                 (m_2_3 >> 29) + m_2_4 + ((m_2_5 & 0x1fffffff) << 29) +
+                 (m_3_2 >> 29) + m_3_3 + ((m_3_4 & 0x1fffffff) << 29) +
+                 (m_4_1 >> 29) + m_4_2 + ((m_4_3 & 0x1fffffff) << 29) +
+                 (m_5_0 >> 29) + m_5_1 + ((m_5_2 & 0x1fffffff) << 29) +
+                 m_6_0 + ((m_6_1 & 0x1fffffff) << 29) +
+                 ((m_7_0 & 0x1fffffff) << 29) + c2;
+        let c3 = d3 >> 58;
+        let d4 = (m_0_7 >> 29) +
+                 (m_1_6 >> 29) + m_1_7 +
+                 (m_2_5 >> 29) + m_2_6 + ((m_2_7 & 0x1fffffff) << 29) +
+                 (m_3_4 >> 29) + m_3_5 + ((m_3_6 & 0x1fffffff) << 29) +
+                 (m_4_3 >> 29) + m_4_4 + ((m_4_5 & 0x1fffffff) << 29) +
+                 (m_5_2 >> 29) + m_5_3 + ((m_5_4 & 0x1fffffff) << 29) +
+                 (m_6_1 >> 29) + m_6_2 + ((m_6_3 & 0x1fffffff) << 29) +
+                 (m_7_0 >> 29) + m_7_1 + ((m_7_2 & 0x1fffffff) << 29) +
+                 c3;
+        let c4 = d4 >> 58;
+        let d5 = (m_2_7 >> 29) +
+                 (m_3_6 >> 29) + m_3_7 +
+                 (m_4_5 >> 29) + m_4_6 + ((m_4_7 & 0x1fffffff) << 29) +
+                 (m_5_4 >> 29) + m_5_5 + ((m_5_6 & 0x1fffffff) << 29) +
+                 (m_6_3 >> 29) + m_6_4 + ((m_6_5 & 0x1fffffff) << 29) +
+                 (m_7_2 >> 29) + m_7_3 + ((m_7_4 & 0x1fffffff) << 29) +
+                 c4;
+        let c5 = d5 >> 58;
+        let d6 = (m_4_7 >> 29) +
+                 (m_5_6 >> 29) + m_5_7 +
+                 (m_6_5 >> 29) + m_6_6 + ((m_6_7 & 0x1fffffff) << 29) +
+                 (m_7_4 >> 29) + m_7_5 + ((m_7_6 & 0x1fffffff) << 29) +
+                 c5;
+        let c6 = d6 >> 58;
+        let d7 = (m_6_7 >> 29) +
+                 (m_7_6 >> 29) + m_7_7 +
                  c6;
-        let c7 = d7 >> 56;
-        let d8 = (m_6_9 >> 28) +
-                 (m_7_8 >> 28) + m_7_9 +
-                 (m_8_7 >> 28) + m_8_8 + ((m_8_9 & 0x0fffffff) << 28) +
-                 (m_9_6 >> 28) + m_9_7 + ((m_9_8 & 0x0fffffff) << 28) +
-                 c7;
-        let c8 = d8 >> 56;
-        let d9 = (m_8_9 >> 28) +
-                 (m_9_8 >> 28) + m_9_9 + c8;
 
         // Modular reduction by a pseudo-mersenne prime of the form 2^n - c.
 
         // These are the n low-order
-        let l0_0 = d0 & 0x00ffffffffffffff;
-        let l1_0 = d1 & 0x00ffffffffffffff;
-        let l2_0 = d2 & 0x00ffffffffffffff;
-        let l3_0 = d3 & 0x00ffffffffffffff;
-        let l4_0 = d4 & 0x000000007fffffff;
+        let l0_0 = d0 & 0x03ffffffffffffff;
+        let l1_0 = d1 & 0x03ffffffffffffff;
+        let l2_0 = d2 & 0x03ffffffffffffff;
+        let l3_0 = d3 & 0x00007fffffffffff;
 
         // Shift the high bits down into another n-bit number.
-        let h0_0 = ((d4 & 0x00ffffffffffffff) >> 31) |
-                   ((d5 & 0x000000007fffffff) << 25);
-        let h1_0 = ((d5 & 0x00ffffffffffffff) >> 31) |
-                   ((d6 & 0x000000007fffffff) << 25);
-        let h2_0 = ((d6 & 0x00ffffffffffffff) >> 31) |
-                   ((d7 & 0x000000007fffffff) << 25);
-        let h3_0 = ((d7 & 0x00ffffffffffffff) >> 31) |
-                   ((d8 & 0x000000007fffffff) << 25);
-        let h4_0 = ((d8 & 0x00ffffffffffffff) >> 31) |
-                   (d9 << 25);
+        let h0_0 = ((d3 & 0x03ffffffffffffff) >> 47) |
+                   ((d4 & 0x00007fffffffffff) << 11);
+        let h1_0 = ((d4 & 0x03ffffffffffffff) >> 47) |
+                   ((d5 & 0x00007fffffffffff) << 11);
+        let h2_0 = ((d5 & 0x03ffffffffffffff) >> 47) |
+                   ((d6 & 0x00007fffffffffff) << 11);
+        let h3_0 = ((d6 & 0x03ffffffffffffff) >> 47) |
+                   (d7 << 11);
 
         // Multiply by C
         let hc0_0 = h0_0 * C_VAL;
         let hc1_0 = h1_0 * C_VAL;
         let hc2_0 = h2_0 * C_VAL;
         let hc3_0 = h3_0 * C_VAL;
-        let hc4_0 = h4_0 * C_VAL;
 
         // Add h and l.
-        let kin_0 = hc4_0 >> 31;
+        let kin_0 = hc3_0 >> 47;
         let s0_0 = l0_0 + hc0_0 + (kin_0 * C_VAL);
-        let k0_0 = s0_0 >> 56;
+        let k0_0 = s0_0 >> 58;
         let s1_0 = l1_0 + hc1_0 + k0_0;
-        let k1_0 = s1_0 >> 56;
+        let k1_0 = s1_0 >> 58;
         let s2_0 = l2_0 + hc2_0 + k1_0;
-        let k2_0 = s2_0 >> 56;
-        let s3_0 = l3_0 + hc3_0 + k2_0;
-        let k3_0 = s3_0 >> 56;
-        let s4_0 = l4_0 + (hc4_0 & 0x000000007fffffff) + k3_0;
+        let k2_0 = s2_0 >> 58;
+        let s3_0 = l3_0 + (hc3_0 & 0x00007fffffffffff) + k2_0;
 
-        self[0] = s0_0 & 0x00ffffffffffffff;
-        self[1] = s1_0 & 0x00ffffffffffffff;
-        self[2] = s2_0 & 0x00ffffffffffffff;
-        self[3] = s3_0 & 0x00ffffffffffffff;
-        self[4] = s4_0;
+        self[0] = s0_0 & 0x03ffffffffffffff;
+        self[1] = s1_0 & 0x03ffffffffffffff;
+        self[2] = s2_0 & 0x03ffffffffffffff;
+        self[3] = s3_0;
      }
 }
 
-impl<'a, 'b> Mul<&'b Mod_e255_19> for &'a Mod_e255_19 {
-    type Output = Mod_e255_19;
+impl<'a, 'b> Mul<&'b Mod_e221_3> for &'a Mod_e221_3 {
+    type Output = Mod_e221_3;
 
-    fn mul(self, a: &'b Mod_e255_19) -> Mod_e255_19 {
+    fn mul(self, a: &'b Mod_e221_3) -> Mod_e221_3 {
         let mut out = self.clone();
         out *= a;
         out
     }
 }
 
-impl PrimeField for Mod_e255_19 {
-    fn zero() -> Mod_e255_19 {
+impl PrimeField for Mod_e221_3 {
+    fn zero() -> Mod_e221_3 {
         return ZERO;
     }
 
-    fn one() -> Mod_e255_19 {
+    fn one() -> Mod_e221_3 {
         return ONE;
     }
 
-    fn m_one() -> Mod_e255_19 {
+    fn m_one() -> Mod_e221_3 {
         return M_ONE;
     }
 
-    fn modulus() -> Mod_e255_19 {
+    fn modulus() -> Mod_e221_3 {
         return MODULUS;
     }
 
     fn square(&mut self) {
-        let a0 = self[0] & 0x0fffffff;
-        let a1 = self[0] >> 28;
-        let a2 = self[1] & 0x0fffffff;
-        let a3 = self[1] >> 28;
-        let a4 = self[2] & 0x0fffffff;
-        let a5 = self[2] >> 28;
-        let a6 = self[3] & 0x0fffffff;
-        let a7 = self[3] >> 28;
-        let a8 = self[4] & 0x0fffffff;
-        let a9 = self[4] >> 28;
+        let a0 = self[0] & 0x1fffffff;
+        let a1 = self[0] >> 29;
+        let a2 = self[1] & 0x1fffffff;
+        let a3 = self[1] >> 29;
+        let a4 = self[2] & 0x1fffffff;
+        let a5 = self[2] >> 29;
+        let a6 = self[3] & 0x1fffffff;
+        let a7 = self[3] >> 29;
 
         // Combined multiples
         let m_0_0 = a0 * a0;
@@ -626,8 +542,6 @@ impl PrimeField for Mod_e255_19 {
         let m_0_5 = a0 * a5;
         let m_0_6 = a0 * a6;
         let m_0_7 = a0 * a7;
-        let m_0_8 = a0 * a8;
-        let m_0_9 = a0 * a9;
         let m_1_0 = m_0_1;
         let m_1_1 = a1 * a1;
         let m_1_2 = a1 * a2;
@@ -636,8 +550,6 @@ impl PrimeField for Mod_e255_19 {
         let m_1_5 = a1 * a5;
         let m_1_6 = a1 * a6;
         let m_1_7 = a1 * a7;
-        let m_1_8 = a1 * a8;
-        let m_1_9 = a1 * a9;
         let m_2_0 = m_0_2;
         let m_2_1 = m_1_2;
         let m_2_2 = a2 * a2;
@@ -646,8 +558,6 @@ impl PrimeField for Mod_e255_19 {
         let m_2_5 = a2 * a5;
         let m_2_6 = a2 * a6;
         let m_2_7 = a2 * a7;
-        let m_2_8 = a2 * a8;
-        let m_2_9 = a2 * a9;
         let m_3_0 = m_0_3;
         let m_3_1 = m_1_3;
         let m_3_2 = m_2_3;
@@ -656,8 +566,6 @@ impl PrimeField for Mod_e255_19 {
         let m_3_5 = a3 * a5;
         let m_3_6 = a3 * a6;
         let m_3_7 = a3 * a7;
-        let m_3_8 = a3 * a8;
-        let m_3_9 = a3 * a9;
         let m_4_0 = m_0_4;
         let m_4_1 = m_1_4;
         let m_4_2 = m_2_4;
@@ -666,8 +574,6 @@ impl PrimeField for Mod_e255_19 {
         let m_4_5 = a4 * a5;
         let m_4_6 = a4 * a6;
         let m_4_7 = a4 * a7;
-        let m_4_8 = a4 * a8;
-        let m_4_9 = a4 * a9;
         let m_5_0 = m_0_5;
         let m_5_1 = m_1_5;
         let m_5_2 = m_2_5;
@@ -676,8 +582,6 @@ impl PrimeField for Mod_e255_19 {
         let m_5_5 = a5 * a5;
         let m_5_6 = a5 * a6;
         let m_5_7 = a5 * a7;
-        let m_5_8 = a5 * a8;
-        let m_5_9 = a5 * a9;
         let m_6_0 = m_0_6;
         let m_6_1 = m_1_6;
         let m_6_2 = m_2_6;
@@ -686,8 +590,6 @@ impl PrimeField for Mod_e255_19 {
         let m_6_5 = m_5_6;
         let m_6_6 = a6 * a6;
         let m_6_7 = a6 * a7;
-        let m_6_8 = a6 * a8;
-        let m_6_9 = a6 * a9;
         let m_7_0 = m_0_7;
         let m_7_1 = m_1_7;
         let m_7_2 = m_2_7;
@@ -696,147 +598,99 @@ impl PrimeField for Mod_e255_19 {
         let m_7_5 = m_5_7;
         let m_7_6 = m_6_7;
         let m_7_7 = a7 * a7;
-        let m_7_8 = a7 * a8;
-        let m_7_9 = a7 * a9;
-        let m_8_0 = m_0_8;
-        let m_8_1 = m_1_8;
-        let m_8_2 = m_2_8;
-        let m_8_3 = m_3_8;
-        let m_8_4 = m_4_8;
-        let m_8_5 = m_5_8;
-        let m_8_6 = m_6_8;
-        let m_8_7 = m_7_8;
-        let m_8_8 = a8 * a8;
-        let m_8_9 = a8 * a9;
-        let m_9_0 = m_0_9;
-        let m_9_1 = m_1_9;
-        let m_9_2 = m_2_9;
-        let m_9_3 = m_3_9;
-        let m_9_4 = m_4_9;
-        let m_9_5 = m_5_9;
-        let m_9_6 = m_6_9;
-        let m_9_7 = m_7_9;
-        let m_9_8 = m_8_9;
-        let m_9_9 = a9 * a9;
 
         // Compute the 40-digit combined product using 64-bit operations.
-        let d0 = m_0_0 + ((m_0_1 & 0x0fffffff) << 28) +
-                 ((m_1_0 & 0x0fffffff) << 28);
-        let c0 = d0 >> 56;
-        let d1 = (m_0_1 >> 28) + m_0_2 + ((m_0_3 & 0x0fffffff) << 28) +
-                 (m_1_0 >> 28) + m_1_1 + ((m_1_2 & 0x0fffffff) << 28) +
-                 m_2_0 + ((m_2_1 & 0x0fffffff) << 28) +
-                 ((m_3_0 & 0x0fffffff) << 28) + c0;
-        let c1 = d1 >> 56;
-        let d2 = (m_0_3 >> 28) + m_0_4 + ((m_0_5 & 0x0fffffff) << 28) +
-                 (m_1_2 >> 28) + m_1_3 + ((m_1_4 & 0x0fffffff) << 28) +
-                 (m_2_1 >> 28) + m_2_2 + ((m_2_3 & 0x0fffffff) << 28) +
-                 (m_3_0 >> 28) + m_3_1 + ((m_3_2 & 0x0fffffff) << 28) +
-                 m_4_0 + ((m_4_1 & 0x0fffffff) << 28) +
-                 ((m_5_0 & 0x0fffffff) << 28) + c1;
-        let c2 = d2 >> 56;
-        let d3 = (m_0_5 >> 28) + m_0_6 + ((m_0_7 & 0x0fffffff) << 28) +
-                 (m_1_4 >> 28) + m_1_5 + ((m_1_6 & 0x0fffffff) << 28) +
-                 (m_2_3 >> 28) + m_2_4 + ((m_2_5 & 0x0fffffff) << 28) +
-                 (m_3_2 >> 28) + m_3_3 + ((m_3_4 & 0x0fffffff) << 28) +
-                 (m_4_1 >> 28) + m_4_2 + ((m_4_3 & 0x0fffffff) << 28) +
-                 (m_5_0 >> 28) + m_5_1 + ((m_5_2 & 0x0fffffff) << 28) +
-                 m_6_0 + ((m_6_1 & 0x0fffffff) << 28) +
-                 ((m_7_0 & 0x0fffffff) << 28) + c2;
-        let c3 = d3 >> 56;
-        let d4 = (m_0_7 >> 28) + m_0_8 + ((m_0_9 & 0x0fffffff) << 28) +
-                 (m_1_6 >> 28) + m_1_7 + ((m_1_8 & 0x0fffffff) << 28) +
-                 (m_2_5 >> 28) + m_2_6 + ((m_2_7 & 0x0fffffff) << 28) +
-                 (m_3_4 >> 28) + m_3_5 + ((m_3_6 & 0x0fffffff) << 28) +
-                 (m_4_3 >> 28) + m_4_4 + ((m_4_5 & 0x0fffffff) << 28) +
-                 (m_5_2 >> 28) + m_5_3 + ((m_5_4 & 0x0fffffff) << 28) +
-                 (m_6_1 >> 28) + m_6_2 + ((m_6_3 & 0x0fffffff) << 28) +
-                 (m_7_0 >> 28) + m_7_1 + ((m_7_2 & 0x0fffffff) << 28) +
-                 m_8_0 + ((m_8_1 & 0x0fffffff) << 28) +
-                 ((m_9_0 & 0x0fffffff) << 28) + c3;
-        let c4 = d4 >> 56;
-        let d5 = (m_0_9 >> 28) +
-                 (m_1_8 >> 28) + m_1_9 +
-                 (m_2_7 >> 28) + m_2_8 + ((m_2_9 & 0x0fffffff) << 28) +
-                 (m_3_6 >> 28) + m_3_7 + ((m_3_8 & 0x0fffffff) << 28) +
-                 (m_4_5 >> 28) + m_4_6 + ((m_4_7 & 0x0fffffff) << 28) +
-                 (m_5_4 >> 28) + m_5_5 + ((m_5_6 & 0x0fffffff) << 28) +
-                 (m_6_3 >> 28) + m_6_4 + ((m_6_5 & 0x0fffffff) << 28) +
-                 (m_7_2 >> 28) + m_7_3 + ((m_7_4 & 0x0fffffff) << 28) +
-                 (m_8_1 >> 28) + m_8_2 + ((m_8_3 & 0x0fffffff) << 28) +
-                 (m_9_0 >> 28) + m_9_1 + ((m_9_2 & 0x0fffffff) << 28) + c4;
-        let c5 = d5 >> 56;
-        let d6 = (m_2_9 >> 28) +
-                 (m_3_8 >> 28) + m_3_9 +
-                 (m_4_7 >> 28) + m_4_8 + ((m_4_9 & 0x0fffffff) << 28) +
-                 (m_5_6 >> 28) + m_5_7 + ((m_5_8 & 0x0fffffff) << 28) +
-                 (m_6_5 >> 28) + m_6_6 + ((m_6_7 & 0x0fffffff) << 28) +
-                 (m_7_4 >> 28) + m_7_5 + ((m_7_6 & 0x0fffffff) << 28) +
-                 (m_8_3 >> 28) + m_8_4 + ((m_8_5 & 0x0fffffff) << 28) +
-                 (m_9_2 >> 28) + m_9_3 + ((m_9_4 & 0x0fffffff) << 28) + c5;
-        let c6 = d6 >> 56;
-        let d7 = (m_4_9 >> 28) +
-                 (m_5_8 >> 28) + m_5_9 +
-                 (m_6_7 >> 28) + m_6_8 + ((m_6_9 & 0x0fffffff) << 28) +
-                 (m_7_6 >> 28) + m_7_7 + ((m_7_8 & 0x0fffffff) << 28) +
-                 (m_8_5 >> 28) + m_8_6 + ((m_8_7 & 0x0fffffff) << 28) +
-                 (m_9_4 >> 28) + m_9_5 + ((m_9_6 & 0x0fffffff) << 28) +
+        let d0 = m_0_0 + ((m_0_1 & 0x1fffffff) << 29) +
+                 ((m_1_0 & 0x1fffffff) << 29);
+        let c0 = d0 >> 58;
+        let d1 = (m_0_1 >> 29) + m_0_2 + ((m_0_3 & 0x1fffffff) << 29) +
+                 (m_1_0 >> 29) + m_1_1 + ((m_1_2 & 0x1fffffff) << 29) +
+                 m_2_0 + ((m_2_1 & 0x1fffffff) << 29) +
+                 ((m_3_0 & 0x1fffffff) << 29) + c0;
+        let c1 = d1 >> 58;
+        let d2 = (m_0_3 >> 29) + m_0_4 + ((m_0_5 & 0x1fffffff) << 29) +
+                 (m_1_2 >> 29) + m_1_3 + ((m_1_4 & 0x1fffffff) << 29) +
+                 (m_2_1 >> 29) + m_2_2 + ((m_2_3 & 0x1fffffff) << 29) +
+                 (m_3_0 >> 29) + m_3_1 + ((m_3_2 & 0x1fffffff) << 29) +
+                 m_4_0 + ((m_4_1 & 0x1fffffff) << 29) +
+                 ((m_5_0 & 0x1fffffff) << 29) + c1;
+        let c2 = d2 >> 58;
+        let d3 = (m_0_5 >> 29) + m_0_6 + ((m_0_7 & 0x1fffffff) << 29) +
+                 (m_1_4 >> 29) + m_1_5 + ((m_1_6 & 0x1fffffff) << 29) +
+                 (m_2_3 >> 29) + m_2_4 + ((m_2_5 & 0x1fffffff) << 29) +
+                 (m_3_2 >> 29) + m_3_3 + ((m_3_4 & 0x1fffffff) << 29) +
+                 (m_4_1 >> 29) + m_4_2 + ((m_4_3 & 0x1fffffff) << 29) +
+                 (m_5_0 >> 29) + m_5_1 + ((m_5_2 & 0x1fffffff) << 29) +
+                 m_6_0 + ((m_6_1 & 0x1fffffff) << 29) +
+                 ((m_7_0 & 0x1fffffff) << 29) + c2;
+        let c3 = d3 >> 58;
+        let d4 = (m_0_7 >> 29) +
+                 (m_1_6 >> 29) + m_1_7 +
+                 (m_2_5 >> 29) + m_2_6 + ((m_2_7 & 0x1fffffff) << 29) +
+                 (m_3_4 >> 29) + m_3_5 + ((m_3_6 & 0x1fffffff) << 29) +
+                 (m_4_3 >> 29) + m_4_4 + ((m_4_5 & 0x1fffffff) << 29) +
+                 (m_5_2 >> 29) + m_5_3 + ((m_5_4 & 0x1fffffff) << 29) +
+                 (m_6_1 >> 29) + m_6_2 + ((m_6_3 & 0x1fffffff) << 29) +
+                 (m_7_0 >> 29) + m_7_1 + ((m_7_2 & 0x1fffffff) << 29) +
+                 c3;
+        let c4 = d4 >> 58;
+        let d5 = (m_2_7 >> 29) +
+                 (m_3_6 >> 29) + m_3_7 +
+                 (m_4_5 >> 29) + m_4_6 + ((m_4_7 & 0x1fffffff) << 29) +
+                 (m_5_4 >> 29) + m_5_5 + ((m_5_6 & 0x1fffffff) << 29) +
+                 (m_6_3 >> 29) + m_6_4 + ((m_6_5 & 0x1fffffff) << 29) +
+                 (m_7_2 >> 29) + m_7_3 + ((m_7_4 & 0x1fffffff) << 29) +
+                 c4;
+        let c5 = d5 >> 58;
+        let d6 = (m_4_7 >> 29) +
+                 (m_5_6 >> 29) + m_5_7 +
+                 (m_6_5 >> 29) + m_6_6 + ((m_6_7 & 0x1fffffff) << 29) +
+                 (m_7_4 >> 29) + m_7_5 + ((m_7_6 & 0x1fffffff) << 29) +
+                 c5;
+        let c6 = d6 >> 58;
+        let d7 = (m_6_7 >> 29) +
+                 (m_7_6 >> 29) + m_7_7 +
                  c6;
-        let c7 = d7 >> 56;
-        let d8 = (m_6_9 >> 28) +
-                 (m_7_8 >> 28) + m_7_9 +
-                 (m_8_7 >> 28) + m_8_8 + ((m_8_9 & 0x0fffffff) << 28) +
-                 (m_9_6 >> 28) + m_9_7 + ((m_9_8 & 0x0fffffff) << 28) +
-                 c7;
-        let c8 = d8 >> 56;
-        let d9 = (m_8_9 >> 28) +
-                 (m_9_8 >> 28) + m_9_9 + c8;
 
         // Modular reduction by a pseudo-mersenne prime of the form 2^n - c.
 
         // These are the n low-order
-        let l0_0 = d0 & 0x00ffffffffffffff;
-        let l1_0 = d1 & 0x00ffffffffffffff;
-        let l2_0 = d2 & 0x00ffffffffffffff;
-        let l3_0 = d3 & 0x00ffffffffffffff;
-        let l4_0 = d4 & 0x000000007fffffff;
+        let l0_0 = d0 & 0x03ffffffffffffff;
+        let l1_0 = d1 & 0x03ffffffffffffff;
+        let l2_0 = d2 & 0x03ffffffffffffff;
+        let l3_0 = d3 & 0x00007fffffffffff;
+
 
         // Shift the high bits down into another n-bit number.
-        let h0_0 = ((d4 & 0x00ffffffffffffff) >> 31) |
-                   ((d5 & 0x000000007fffffff) << 25);
-        let h1_0 = ((d5 & 0x00ffffffffffffff) >> 31) |
-                   ((d6 & 0x000000007fffffff) << 25);
-        let h2_0 = ((d6 & 0x00ffffffffffffff) >> 31) |
-                   ((d7 & 0x000000007fffffff) << 25);
-        let h3_0 = ((d7 & 0x00ffffffffffffff) >> 31) |
-                   ((d8 & 0x000000007fffffff) << 25);
-        let h4_0 = ((d8 & 0x00ffffffffffffff) >> 31) |
-                   (d9 << 25);
+        let h0_0 = ((d3 & 0x03ffffffffffffff) >> 47) |
+                   ((d4 & 0x00007fffffffffff) << 11);
+        let h1_0 = ((d4 & 0x03ffffffffffffff) >> 47) |
+                   ((d5 & 0x00007fffffffffff) << 11);
+        let h2_0 = ((d5 & 0x03ffffffffffffff) >> 47) |
+                   ((d6 & 0x00007fffffffffff) << 11);
+        let h3_0 = ((d6 & 0x03ffffffffffffff) >> 47) |
+                   (d7 << 11);
 
         // Multiply by C
         let hc0_0 = h0_0 * C_VAL;
         let hc1_0 = h1_0 * C_VAL;
         let hc2_0 = h2_0 * C_VAL;
         let hc3_0 = h3_0 * C_VAL;
-        let hc4_0 = h4_0 * C_VAL;
 
         // Add h and l.
-        let kin_0 = hc4_0 >> 31;
+        let kin_0 = hc3_0 >> 47;
         let s0_0 = l0_0 + hc0_0 + (kin_0 * C_VAL);
-        let k0_0 = s0_0 >> 56;
+        let k0_0 = s0_0 >> 58;
         let s1_0 = l1_0 + hc1_0 + k0_0;
-        let k1_0 = s1_0 >> 56;
+        let k1_0 = s1_0 >> 58;
         let s2_0 = l2_0 + hc2_0 + k1_0;
-        let k2_0 = s2_0 >> 56;
-        let s3_0 = l3_0 + hc3_0 + k2_0;
-        let k3_0 = s3_0 >> 56;
-        let s4_0 = l4_0 + (hc4_0 & 0x000000007fffffff) + k3_0;
+        let k2_0 = s2_0 >> 58;
+        let s3_0 = l3_0 + (hc3_0 & 0x00007fffffffffff) + k2_0;
 
-        self[0] = s0_0 & 0x00ffffffffffffff;
-        self[1] = s1_0 & 0x00ffffffffffffff;
-        self[2] = s2_0 & 0x00ffffffffffffff;
-        self[3] = s3_0 & 0x00ffffffffffffff;
-        self[4] = s4_0;
+        self[0] = s0_0 & 0x03ffffffffffffff;
+        self[1] = s1_0 & 0x03ffffffffffffff;
+        self[2] = s2_0 & 0x03ffffffffffffff;
+        self[3] = s3_0;
     }
 
     fn squared(&self) -> Self {
@@ -858,15 +712,8 @@ impl PrimeField for Mod_e255_19 {
         // Third digit is 0.
         sqval.square();
 
-        // Fourth digits is 1.
-        sqval.square();
-        *self *= &sqval;
-
-        // Fifth digit is 0.
-        sqval.square();
-
         // All the remaining digits are 1.
-        for _ in 5..255 {
+        for _ in 3..221 {
             sqval.square();
             *self *= &sqval;
         }
@@ -884,30 +731,26 @@ impl PrimeField for Mod_e255_19 {
         let a0 = self[0];
         let a1 = self[1];
         let a2 = self[2];
-        let a3 = self[3];
-        let a4 = self[4] & 0x000000007fffffff;
+        let a3 = self[3] & 0x00007fffffffffff;
 
         let b = i64::from(rhs);
 
         let cin = self.carry_out();
         let s0 = a0 + b + (cin * C_VAL);
-        let c0 = s0 >> 56;
+        let c0 = s0 >> 58;
         let s1 = a1 + c0;
-        let c1 = s1 >> 56;
+        let c1 = s1 >> 58;
         let s2 = a2 + c1;
-        let c2 = s2 >> 56;
+        let c2 = s2 >> 58;
         let s3 = a3 + c2;
-        let c3 = s3 >> 56;
-        let s4 = a4 + c3;
 
-        self[0] = s0 & 0x00ffffffffffffff;
-        self[1] = s1 & 0x00ffffffffffffff;
-        self[2] = s2 & 0x00ffffffffffffff;
-        self[3] = s3 & 0x00ffffffffffffff;
-        self[4] = s4;
+        self[0] = s0 & 0x03ffffffffffffff;
+        self[1] = s1 & 0x03ffffffffffffff;
+        self[2] = s2 & 0x03ffffffffffffff;
+        self[3] = s3;
     }
 
-    fn small_add(&self, rhs: i32) -> Mod_e255_19 {
+    fn small_add(&self, rhs: i32) -> Mod_e221_3 {
         let mut out = self.clone();
 
         out.small_add_assign(rhs);
@@ -919,30 +762,26 @@ impl PrimeField for Mod_e255_19 {
         let a0 = self[0];
         let a1 = self[1];
         let a2 = self[2];
-        let a3 = self[3];
-        let a4 = self[4] & 0x000000007fffffff;
+        let a3 = self[3] & 0x00007fffffffffff;
 
         let b = i64::from(rhs);
 
         let cin = self.carry_out();
         let s0 = a0 - b + (cin * C_VAL);
-        let c0 = s0 >> 56;
+        let c0 = s0 >> 58;
         let s1 = a1 + c0;
-        let c1 = s1 >> 56;
+        let c1 = s1 >> 58;
         let s2 = a2 + c1;
-        let c2 = s2 >> 56;
+        let c2 = s2 >> 58;
         let s3 = a3 + c2;
-        let c3 = s3 >> 56;
-        let s4 = a4 + c3;
 
-        self[0] = s0 & 0x00ffffffffffffff;
-        self[1] = s1 & 0x00ffffffffffffff;
-        self[2] = s2 & 0x00ffffffffffffff;
-        self[3] = s3 & 0x00ffffffffffffff;
-        self[4] = s4;
+        self[0] = s0 & 0x03ffffffffffffff;
+        self[1] = s1 & 0x03ffffffffffffff;
+        self[2] = s2 & 0x03ffffffffffffff;
+        self[3] = s3;
     }
 
-    fn small_sub(&self, rhs: i32) -> Mod_e255_19 {
+    fn small_sub(&self, rhs: i32) -> Mod_e221_3 {
         let mut out = self.clone();
 
         out.small_sub_assign(rhs);
@@ -951,16 +790,14 @@ impl PrimeField for Mod_e255_19 {
     }
 
     fn small_mul_assign(&mut self, rhs: i32) {
-        let a0 = self[0] & 0x0fffffff;
-        let a1 = self[0] >> 28;
-        let a2 = self[1] & 0x0fffffff;
-        let a3 = self[1] >> 28;
-        let a4 = self[2] & 0x0fffffff;
-        let a5 = self[2] >> 28;
-        let a6 = self[3] & 0x0fffffff;
-        let a7 = self[3] >> 28;
-        let a8 = self[4] & 0x0fffffff;
-        let a9 = self[4] >> 28;
+        let a0 = self[0] & 0x1fffffff;
+        let a1 = self[0] >> 29;
+        let a2 = self[1] & 0x1fffffff;
+        let a3 = self[1] >> 29;
+        let a4 = self[2] & 0x1fffffff;
+        let a5 = self[2] >> 29;
+        let a6 = self[3] & 0x1fffffff;
+        let a7 = self[3] >> 29;
 
         let b = i64::from(rhs);
 
@@ -972,28 +809,23 @@ impl PrimeField for Mod_e255_19 {
         let m5 = a5 * b;
         let m6 = a6 * b;
         let m7 = a7 * b;
-        let m8 = a8 * b;
-        let m9 = a9 * b;
 
         let cin = self.carry_out();
-        let d0 = m0 + ((m1 & 0x0fffffff) << 28) + (cin * C_VAL);
-        let c0 = d0 >> 56;
-        let d1 = (m1 >> 28) + m2 + ((m3 & 0x0fffffff) << 28) + c0;
-        let c1 = d1 >> 56;
-        let d2 = (m3 >> 28) + m4 + ((m5 & 0x0fffffff) << 28) + c1;
-        let c2 = d2 >> 56;
-        let d3 = (m5 >> 28) + m6 + ((m7 & 0x0fffffff) << 28) + c2;
-        let c3 = d3 >> 56;
-        let d4 = (m7 >> 28) + m8 + (m9 << 28) + c3;
+        let d0 = m0 + ((m1 & 0x1fffffff) << 29) + (cin * C_VAL);
+        let c0 = d0 >> 58;
+        let d1 = (m1 >> 29) + m2 + ((m3 & 0x1fffffff) << 29) + c0;
+        let c1 = d1 >> 58;
+        let d2 = (m3 >> 29) + m4 + ((m5 & 0x1fffffff) << 29) + c1;
+        let c2 = d2 >> 58;
+        let d3 = (m5 >> 29) + m6 + (m7 << 29) + c2;
 
-        self[0] = d0 & 0x00ffffffffffffff;
-        self[1] = d1 & 0x00ffffffffffffff;
-        self[2] = d2 & 0x00ffffffffffffff;
-        self[3] = d3 & 0x00ffffffffffffff;
-        self[4] = d4;
+        self[0] = d0 & 0x03ffffffffffffff;
+        self[1] = d1 & 0x03ffffffffffffff;
+        self[2] = d2 & 0x03ffffffffffffff;
+        self[3] = d3;
     }
 
-    fn small_mul(&self, b: i32) -> Mod_e255_19 {
+    fn small_mul(&self, b: i32) -> Mod_e221_3 {
         let mut out = self.clone();
 
         out.small_mul_assign(b);
@@ -1004,72 +836,65 @@ impl PrimeField for Mod_e255_19 {
 
 #[cfg(test)]
 mod tests {
-    use fields::prime_field::*;
-    use fields::mod_e255_19::*;
+    use field::prime_field::*;
+    use field::mod_e221_3::*;
 
-    const TWO: Mod_e255_19 = Mod_e255_19([ 2, 0, 0, 0, 0 ]);
+    const TWO: Mod_e221_3 = Mod_e221_3([ 2, 0, 0, 0 ]);
 
-    const M_TWO: Mod_e255_19 =
-        Mod_e255_19([ 0x00ffffffffffffeb, 0x00ffffffffffffff,
-                      0x00ffffffffffffff, 0x00ffffffffffffff,
-                      0x000000007fffffff ]);
+    const M_TWO: Mod_e221_3 =
+        Mod_e221_3([ 0x03fffffffffffffb, 0x03ffffffffffffff,
+                     0x03ffffffffffffff, 0x00007fffffffffff ]);
 
-    const THREE: Mod_e255_19 = Mod_e255_19([ 3, 0, 0, 0, 0 ]);
+    const THREE: Mod_e221_3 = Mod_e221_3([ 3, 0, 0, 0 ]);
 
-    const M_THREE: Mod_e255_19 =
-        Mod_e255_19([ 0x00ffffffffffffea, 0x00ffffffffffffff,
-                      0x00ffffffffffffff, 0x00ffffffffffffff,
-                      0x000000007fffffff ]);
+    const M_THREE: Mod_e221_3 =
+        Mod_e221_3([ 0x03fffffffffffffa, 0x03ffffffffffffff,
+                     0x03ffffffffffffff, 0x00007fffffffffff ]);
 
-    const FOUR: Mod_e255_19 = Mod_e255_19([ 4, 0, 0, 0, 0 ]);
+    const FOUR: Mod_e221_3 = Mod_e221_3([ 4, 0, 0, 0 ]);
 
-    const M_FOUR: Mod_e255_19 =
-        Mod_e255_19([ 0x00ffffffffffffe9, 0x00ffffffffffffff,
-                      0x00ffffffffffffff, 0x00ffffffffffffff,
-                      0x000000007fffffff ]);
+    const M_FOUR: Mod_e221_3 =
+        Mod_e221_3([ 0x03fffffffffffff9, 0x03ffffffffffffff,
+                     0x03ffffffffffffff, 0x00007fffffffffff ]);
 
-    const SIX: Mod_e255_19 = Mod_e255_19([ 6, 0, 0, 0, 0 ]);
+    const SIX: Mod_e221_3 = Mod_e221_3([ 6, 0, 0, 0 ]);
 
-    const M_SIX: Mod_e255_19 =
-        Mod_e255_19([ 0x00ffffffffffffe7, 0x00ffffffffffffff,
-                      0x00ffffffffffffff, 0x00ffffffffffffff,
-                      0x000000007fffffff ]);
+    const M_SIX: Mod_e221_3 =
+        Mod_e221_3([ 0x03fffffffffffff7, 0x03ffffffffffffff,
+                     0x03ffffffffffffff, 0x00007fffffffffff ]);
 
-    const EIGHT: Mod_e255_19 = Mod_e255_19([ 8, 0, 0, 0, 0 ]);
+    const EIGHT: Mod_e221_3 = Mod_e221_3([ 8, 0, 0, 0 ]);
 
-    const M_EIGHT: Mod_e255_19 =
-        Mod_e255_19([ 0x00ffffffffffffe5, 0x00ffffffffffffff,
-                      0x00ffffffffffffff, 0x00ffffffffffffff,
-                      0x000000007fffffff ]);
+    const M_EIGHT: Mod_e221_3 =
+        Mod_e221_3([ 0x03fffffffffffff5, 0x03ffffffffffffff,
+                     0x03ffffffffffffff, 0x00007fffffffffff ]);
 
-    const NINE: Mod_e255_19 = Mod_e255_19([ 9, 0, 0, 0, 0 ]);
+    const NINE: Mod_e221_3 = Mod_e221_3([ 9, 0, 0, 0 ]);
 
-    const M_NINE: Mod_e255_19 =
-        Mod_e255_19([ 0x00ffffffffffffe4, 0x00ffffffffffffff,
-                      0x00ffffffffffffff, 0x00ffffffffffffff,
-                      0x000000007fffffff ]);
+    const M_NINE: Mod_e221_3 =
+        Mod_e221_3([ 0x03fffffffffffff4, 0x03ffffffffffffff,
+                     0x03ffffffffffffff, 0x00007fffffffffff ]);
 
-    const SIXTEEN: Mod_e255_19 = Mod_e255_19([ 16, 0, 0, 0, 0 ]);
+    const SIXTEEN: Mod_e221_3 = Mod_e221_3([ 16, 0, 0, 0 ]);
 
-    const M_SIXTEEN: Mod_e255_19 =
-        Mod_e255_19([ 0x00ffffffffffffdd, 0x00ffffffffffffff,
-                      0x00ffffffffffffff, 0x00ffffffffffffff,
-                      0x000000007fffffff ]);
+    const M_SIXTEEN: Mod_e221_3 =
+        Mod_e221_3([ 0x03ffffffffffffed, 0x03ffffffffffffff,
+                     0x03ffffffffffffff, 0x00007fffffffffff ]);
 
-    fn test_pack_unpack(expected: &[u8; 32]) {
-        let mut unpacked = Mod_e255_19::unpack(expected);
+    fn test_pack_unpack(expected: &[u8; 28]) {
+        let mut unpacked = Mod_e221_3::unpack(expected);
         let actual = unpacked.pack();
 
-        for i in 0..32 {
+        for i in 0..28 {
             assert!(expected[i] == actual[i]);
         }
     }
 
-    fn test_unpack_pack(expected: &mut Mod_e255_19) {
+    fn test_unpack_pack(expected: &mut Mod_e221_3) {
         let bytes = expected.pack();
-        let actual = Mod_e255_19::unpack(&bytes);
+        let actual = Mod_e221_3::unpack(&bytes);
 
-        for i in 0..5 {
+        for i in 0..4 {
             assert!(expected[i] == actual[i]);
         }
     }
@@ -1082,7 +907,6 @@ mod tests {
                            0xff, 0x00, 0xff, 0x00,
                            0xff, 0x00, 0xff, 0x00,
                            0xff, 0x00, 0xff, 0x00,
-                           0xff, 0x00, 0xff, 0x00,
                            0xff, 0x00, 0xff, 0x00]);
         test_pack_unpack(&[0x00, 0xff, 0x00, 0xff,
                            0x00, 0xff, 0x00, 0xff,
@@ -1090,34 +914,29 @@ mod tests {
                            0x00, 0xff, 0x00, 0xff,
                            0x00, 0xff, 0x00, 0xff,
                            0x00, 0xff, 0x00, 0xff,
-                           0x00, 0xff, 0x00, 0xff,
-                           0x00, 0xff, 0x00, 0x7f]);
+                           0x00, 0xff, 0x00, 0x1f]);
         test_pack_unpack(&[0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
                            0x55, 0xaa, 0x55, 0xaa,
-                           0x55, 0xaa, 0x55, 0xaa,
-                           0x55, 0xaa, 0x55, 0x2a]);
+                           0x55, 0xaa, 0x55, 0x0a]);
         test_pack_unpack(&[0xaa, 0x55, 0xaa, 0x55,
                            0xaa, 0x55, 0xaa, 0x55,
                            0xaa, 0x55, 0xaa, 0x55,
                            0xaa, 0x55, 0xaa, 0x55,
                            0xaa, 0x55, 0xaa, 0x55,
                            0xaa, 0x55, 0xaa, 0x55,
-                           0xaa, 0x55, 0xaa, 0x55,
-                           0xaa, 0x55, 0xaa, 0x55]);
+                           0xaa, 0x55, 0xaa, 0x15]);
         test_pack_unpack(&[0x00, 0xaa, 0x00, 0xaa,
                            0x00, 0xaa, 0x00, 0xaa,
                            0x00, 0xaa, 0x00, 0xaa,
                            0x00, 0xaa, 0x00, 0xaa,
                            0x00, 0xaa, 0x00, 0xaa,
                            0x00, 0xaa, 0x00, 0xaa,
-                           0x00, 0xaa, 0x00, 0xaa,
-                           0x00, 0xaa, 0x00, 0x2a]);
+                           0x00, 0xaa, 0x00, 0x0a]);
         test_pack_unpack(&[0xaa, 0x00, 0xaa, 0x00,
-                           0xaa, 0x00, 0xaa, 0x00,
                            0xaa, 0x00, 0xaa, 0x00,
                            0xaa, 0x00, 0xaa, 0x00,
                            0xaa, 0x00, 0xaa, 0x00,
@@ -1130,16 +949,14 @@ mod tests {
                            0x55, 0xff, 0x55, 0xff,
                            0x55, 0xff, 0x55, 0xff,
                            0x55, 0xff, 0x55, 0xff,
-                           0x55, 0xff, 0x55, 0xff,
-                           0x55, 0xff, 0x55, 0x7f]);
+                           0x55, 0xff, 0x55, 0x1f]);
         test_pack_unpack(&[0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
                            0xff, 0x55, 0xff, 0x55,
-                           0xff, 0x55, 0xff, 0x55,
-                           0xff, 0x55, 0xff, 0x55]);
+                           0xff, 0x55, 0xff, 0x15]);
     }
 
     #[test]
@@ -1147,71 +964,63 @@ mod tests {
         test_unpack_pack(&mut ZERO.clone());
         test_unpack_pack(&mut ONE.clone());
         test_unpack_pack(&mut M_ONE.clone());
-        test_unpack_pack(&mut Mod_e255_19([ 0x00ffffffffffffff,
-                                            0x0000000000000000,
-                                            0x00ffffffffffffff,
-                                            0x0000000000000000,
-                                            0x000000007fffffff ]));
-        test_unpack_pack(&mut Mod_e255_19([ 0x0000000000000000,
-                                            0x00ffffffffffffff,
-                                            0x0000000000000000,
-                                            0x00ffffffffffffff,
-                                            0x0000000000000000 ]));
-        test_unpack_pack(&mut Mod_e255_19([ 0x00aaaaaaaaaaaaaa,
-                                            0x0055555555555555,
-                                            0x00aaaaaaaaaaaaaa,
-                                            0x0055555555555555,
-                                            0x000000002aaaaaaa ]));
-        test_unpack_pack(&mut Mod_e255_19([ 0x0055555555555555,
-                                            0x00aaaaaaaaaaaaaa,
-                                            0x0055555555555555,
-                                            0x00aaaaaaaaaaaaaa,
-                                            0x0000000055555555 ]));
-        test_unpack_pack(&mut Mod_e255_19([ 0x00aaaaaaaaaaaaaa,
-                                            0x0000000000000000,
-                                            0x00aaaaaaaaaaaaaa,
-                                            0x0000000000000000,
-                                            0x000000002aaaaaaa ]));
-        test_unpack_pack(&mut Mod_e255_19([ 0x0000000000000000,
-                                            0x00aaaaaaaaaaaaaa,
-                                            0x0000000000000000,
-                                            0x00aaaaaaaaaaaaaa,
-                                            0x0000000000000000 ]));
-        test_unpack_pack(&mut Mod_e255_19([ 0x00ffffffffffffff,
-                                            0x0055555555555555,
-                                            0x00ffffffffffffff,
-                                            0x0055555555555555,
-                                            0x000000007fffffff ]));
-        test_unpack_pack(&mut Mod_e255_19([ 0x0055555555555555,
-                                            0x00ffffffffffffff,
-                                            0x0055555555555555,
-                                            0x00ffffffffffffff,
-                                            0x0000000055555555 ]));
+        test_unpack_pack(&mut Mod_e221_3([ 0x03ffffffffffffff,
+                                           0x0000000000000000,
+                                           0x03ffffffffffffff,
+                                           0x0000000000000000 ]));
+        test_unpack_pack(&mut Mod_e221_3([ 0x0000000000000000,
+                                           0x03ffffffffffffff,
+                                           0x0000000000000000,
+                                           0x00007fffffffffff ]));
+        test_unpack_pack(&mut Mod_e221_3([ 0x02aaaaaaaaaaaaaa,
+                                           0x0155555555555555,
+                                           0x02aaaaaaaaaaaaaa,
+                                           0x0000555555555555 ]));
+        test_unpack_pack(&mut Mod_e221_3([ 0x0155555555555555,
+                                           0x02aaaaaaaaaaaaaa,
+                                           0x0155555555555555,
+                                           0x00002aaaaaaaaaaa ]));
+        test_unpack_pack(&mut Mod_e221_3([ 0x02aaaaaaaaaaaaaa,
+                                           0x0000000000000000,
+                                           0x02aaaaaaaaaaaaaa,
+                                           0x0000000000000000 ]));
+        test_unpack_pack(&mut Mod_e221_3([ 0x0000000000000000,
+                                           0x02aaaaaaaaaaaaaa,
+                                           0x0000000000000000,
+                                           0x00002aaaaaaaaaaa ]));
+        test_unpack_pack(&mut Mod_e221_3([ 0x03ffffffffffffff,
+                                           0x0155555555555555,
+                                           0x03ffffffffffffff,
+                                           0x0000555555555555 ]));
+        test_unpack_pack(&mut Mod_e221_3([ 0x0155555555555555,
+                                           0x03ffffffffffffff,
+                                           0x0155555555555555,
+                                           0x00007fffffffffff ]));
     }
 
     #[test]
     fn test_add() {
-        let l1_zeros: [&mut Mod_e255_19; 5] = [ &mut (&ZERO + &ZERO),
-                                                 &mut (&M_ONE + &ONE),
-                                                 &mut (&ONE + &M_ONE),
-                                                 &mut (&M_TWO + &TWO),
-                                                 &mut (&TWO + &M_TWO) ];
+        let l1_zeros: [&mut Mod_e221_3; 5] = [ &mut (&ZERO + &ZERO),
+                                                &mut (&M_ONE + &ONE),
+                                                &mut (&ONE + &M_ONE),
+                                                &mut (&M_TWO + &TWO),
+                                                &mut (&TWO + &M_TWO) ];
 
-        let l1_ones: [&mut Mod_e255_19; 4] = [ &mut (&ZERO + &ONE),
+        let l1_ones: [&mut Mod_e221_3; 4] = [ &mut (&ZERO + &ONE),
                                                 &mut (&ONE + &ZERO),
                                                 &mut (&M_ONE + &TWO),
                                                 &mut (&TWO + &M_ONE) ];
 
-        let l1_twos: [&mut Mod_e255_19; 3] = [ &mut (&ZERO + &TWO),
+        let l1_twos: [&mut Mod_e221_3; 3] = [ &mut (&ZERO + &TWO),
                                                 &mut (&ONE + &ONE),
                                                 &mut (&TWO + &ZERO) ];
 
-        let l1_mones: [&mut Mod_e255_19; 4] = [ &mut (&ZERO + &M_ONE),
+        let l1_mones: [&mut Mod_e221_3; 4] = [ &mut (&ZERO + &M_ONE),
                                                  &mut (&M_ONE + &ZERO),
                                                  &mut (&M_TWO + &ONE),
                                                  &mut (&ONE + &M_TWO) ];
 
-        let l1_mtwos: [&mut Mod_e255_19; 3] = [ &mut (&ZERO + &M_TWO),
+        let l1_mtwos: [&mut Mod_e221_3; 3] = [ &mut (&ZERO + &M_TWO),
                                                  &mut (&M_ONE + &M_ONE),
                                                  &mut (&M_TWO + &ZERO) ];
 
@@ -1391,25 +1200,25 @@ mod tests {
 
     #[test]
     fn test_sub() {
-        let l1_zeros: [&mut Mod_e255_19; 3] = [ &mut (&ZERO - &ZERO),
+        let l1_zeros: [&mut Mod_e221_3; 3] = [ &mut (&ZERO - &ZERO),
                                                  &mut (&ONE - &ONE),
                                                  &mut (&TWO - &TWO) ];
 
-        let l1_ones: [&mut Mod_e255_19; 4] = [ &mut (&ZERO - &M_ONE),
+        let l1_ones: [&mut Mod_e221_3; 4] = [ &mut (&ZERO - &M_ONE),
                                                 &mut (&ONE - &ZERO),
                                                 &mut (&M_ONE - &M_TWO),
                                                 &mut (&TWO - &ONE) ];
 
-        let l1_twos: [&mut Mod_e255_19; 3] = [ &mut (&ZERO - &M_TWO),
+        let l1_twos: [&mut Mod_e221_3; 3] = [ &mut (&ZERO - &M_TWO),
                                                 &mut (&ONE - &M_ONE),
                                                 &mut (&TWO - &ZERO) ];
 
-        let l1_mones: [&mut Mod_e255_19; 4] = [ &mut (&ZERO - &ONE),
+        let l1_mones: [&mut Mod_e221_3; 4] = [ &mut (&ZERO - &ONE),
                                                  &mut (&M_ONE - &ZERO),
                                                  &mut (&M_TWO - &M_ONE),
                                                  &mut (&ONE - &TWO) ];
 
-        let l1_mtwos: [&mut Mod_e255_19; 3] = [ &mut (&ZERO - &TWO),
+        let l1_mtwos: [&mut Mod_e221_3; 3] = [ &mut (&ZERO - &TWO),
                                                  &mut (&M_ONE - &ONE),
                                                  &mut (&M_TWO - &ZERO) ];
 
@@ -1573,7 +1382,7 @@ mod tests {
 
     #[test]
     fn test_mul() {
-        let l1_zeros: [&mut Mod_e255_19; 9] = [ &mut (&ZERO * &ZERO),
+        let l1_zeros: [&mut Mod_e221_3; 9] = [ &mut (&ZERO * &ZERO),
                                                  &mut (&ONE * &ZERO),
                                                  &mut (&TWO * &ZERO),
                                                  &mut (&M_ONE * &ZERO),
@@ -1583,26 +1392,26 @@ mod tests {
                                                  &mut (&ZERO * &M_ONE),
                                                  &mut (&ZERO * &M_TWO) ];
 
-        let l1_ones: [&mut Mod_e255_19; 2] = [ &mut (&ONE * &ONE),
+        let l1_ones: [&mut Mod_e221_3; 2] = [ &mut (&ONE * &ONE),
                                                 &mut (&M_ONE * &M_ONE) ];
 
-        let l1_twos: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &TWO),
+        let l1_twos: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &TWO),
                                                 &mut (&TWO * &ONE),
                                                 &mut (&M_ONE * &M_TWO),
                                                 &mut (&M_TWO * &M_ONE) ];
 
-        let l1_fours: [&mut Mod_e255_19; 2] = [ &mut (&TWO * &TWO),
+        let l1_fours: [&mut Mod_e221_3; 2] = [ &mut (&TWO * &TWO),
                                                  &mut (&M_TWO * &M_TWO) ];
 
-        let l1_mones: [&mut Mod_e255_19; 2] = [ &mut (&ONE * &M_ONE),
+        let l1_mones: [&mut Mod_e221_3; 2] = [ &mut (&ONE * &M_ONE),
                                                  &mut (&M_ONE * &ONE) ];
 
-        let l1_mtwos: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &M_TWO),
+        let l1_mtwos: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &M_TWO),
                                                  &mut (&TWO * &M_ONE),
                                                  &mut (&M_ONE * &TWO),
                                                  &mut (&M_TWO * &ONE) ];
 
-        let l1_mfours: [&mut Mod_e255_19; 2] = [ &mut (&TWO * &M_TWO),
+        let l1_mfours: [&mut Mod_e221_3; 2] = [ &mut (&TWO * &M_TWO),
                                                   &mut (&M_TWO * &TWO) ];
 
         for i in 0..9 {
@@ -1836,7 +1645,7 @@ mod tests {
 
     #[test]
     fn test_square() {
-        let l1_zeros: [&mut Mod_e255_19; 10] = [ &mut (&ZERO * &ZERO),
+        let l1_zeros: [&mut Mod_e221_3; 10] = [ &mut (&ZERO * &ZERO),
                                                   &mut (&ONE * &ZERO),
                                                   &mut (&TWO * &ZERO),
                                                   &mut (&M_ONE * &ZERO),
@@ -1847,22 +1656,22 @@ mod tests {
                                                   &mut (&ZERO * &M_TWO),
                                                   &mut ZERO.squared() ];
 
-        let l1_ones: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &ONE),
+        let l1_ones: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &ONE),
                                                 &mut (&M_ONE * &M_ONE),
                                                 &mut ONE.squared(),
                                                 &mut M_ONE.squared() ];
 
-        let l1_twos: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &TWO),
+        let l1_twos: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &TWO),
                                                 &mut (&TWO * &ONE),
                                                 &mut (&M_ONE * &M_TWO),
                                                 &mut (&M_TWO * &M_ONE) ];
 
-        let l1_threes: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &THREE),
+        let l1_threes: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &THREE),
                                                   &mut (&THREE * &ONE),
                                                   &mut (&M_ONE * &M_THREE),
                                                   &mut (&M_THREE * &M_ONE) ];
 
-        let l1_fours: [&mut Mod_e255_19; 4] = [ &mut (&TWO * &TWO),
+        let l1_fours: [&mut Mod_e221_3; 4] = [ &mut (&TWO * &TWO),
                                                  &mut (&M_TWO * &M_TWO),
                                                  &mut TWO.squared(),
                                                  &mut M_TWO.squared() ];
@@ -1900,36 +1709,36 @@ mod tests {
 
     #[test]
     fn test_inv() {
-        let l1_ones: [&mut Mod_e255_19; 2] = [ &mut (&ONE * &ONE),
+        let l1_ones: [&mut Mod_e221_3; 2] = [ &mut (&ONE * &ONE),
                                                 &mut (&M_ONE * &M_ONE) ];
 
-        let l1_twos: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &TWO),
+        let l1_twos: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &TWO),
                                                 &mut (&TWO * &ONE),
                                                 &mut (&M_ONE * &M_TWO),
                                                 &mut (&M_TWO * &M_ONE) ];
 
-        let l1_threes: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &THREE),
+        let l1_threes: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &THREE),
                                                   &mut (&THREE * &ONE),
                                                   &mut (&M_ONE * &M_THREE),
                                                   &mut (&M_THREE * &M_ONE) ];
 
-        let l1_fours: [&mut Mod_e255_19; 2] = [ &mut (&TWO * &TWO),
+        let l1_fours: [&mut Mod_e221_3; 2] = [ &mut (&TWO * &TWO),
                                                  &mut (&M_TWO * &M_TWO) ];
 
-        let l1_mones: [&mut Mod_e255_19; 2] = [ &mut (&ONE * &M_ONE),
+        let l1_mones: [&mut Mod_e221_3; 2] = [ &mut (&ONE * &M_ONE),
                                                  &mut (&M_ONE * &ONE) ];
 
-        let l1_mtwos: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &M_TWO),
+        let l1_mtwos: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &M_TWO),
                                                  &mut (&TWO * &M_ONE),
                                                  &mut (&M_ONE * &TWO),
                                                  &mut (&M_TWO * &ONE) ];
 
-        let l1_mthrees: [&mut Mod_e255_19; 4] = [ &mut (&ONE * &M_THREE),
+        let l1_mthrees: [&mut Mod_e221_3; 4] = [ &mut (&ONE * &M_THREE),
                                                    &mut (&THREE * &M_ONE),
                                                    &mut (&M_ONE * &THREE),
                                                    &mut (&M_THREE * &ONE) ];
 
-        let l1_mfours: [&mut Mod_e255_19; 2] = [ &mut (&TWO * &M_TWO),
+        let l1_mfours: [&mut Mod_e221_3; 2] = [ &mut (&TWO * &M_TWO),
                                                   &mut (&M_TWO * &TWO) ];
 
         for i in 0..2 {
@@ -1991,7 +1800,7 @@ mod tests {
 
     #[test]
     fn test_div() {
-        let l1_ones: [&mut Mod_e255_19; 12] = [ &mut (&ONE / &ONE),
+        let l1_ones: [&mut Mod_e221_3; 12] = [ &mut (&ONE / &ONE),
                                                  &mut (&M_ONE / &M_ONE),
                                                  &mut (&TWO / &TWO),
                                                  &mut (&M_TWO / &M_TWO),
@@ -2004,7 +1813,7 @@ mod tests {
                                                  &mut (&SIXTEEN / &SIXTEEN),
                                                  &mut (&M_SIXTEEN / &M_SIXTEEN) ];
 
-        let l1_twos: [&mut Mod_e255_19; 10] = [ &mut (&TWO / &ONE),
+        let l1_twos: [&mut Mod_e221_3; 10] = [ &mut (&TWO / &ONE),
                                                  &mut (&M_TWO / &M_ONE),
                                                  &mut (&FOUR / &TWO),
                                                  &mut (&M_FOUR / &M_TWO),
@@ -2015,21 +1824,21 @@ mod tests {
                                                  &mut (&SIXTEEN / &EIGHT),
                                                  &mut (&M_SIXTEEN / &M_EIGHT) ];
 
-        let l1_threes: [&mut Mod_e255_19; 6] = [ &mut (&THREE / &ONE),
+        let l1_threes: [&mut Mod_e221_3; 6] = [ &mut (&THREE / &ONE),
                                                   &mut (&M_THREE / &M_ONE),
                                                   &mut (&SIX / &TWO),
                                                   &mut (&M_SIX / &M_TWO),
                                                   &mut (&NINE / &THREE),
                                                   &mut (&M_NINE / &M_THREE) ];
 
-        let l1_fours: [&mut Mod_e255_19; 6] = [ &mut (&FOUR / &ONE),
+        let l1_fours: [&mut Mod_e221_3; 6] = [ &mut (&FOUR / &ONE),
                                                  &mut (&M_FOUR / &M_ONE),
                                                  &mut (&EIGHT / &TWO),
                                                  &mut (&M_EIGHT / &M_TWO),
                                                  &mut (&SIXTEEN / &FOUR),
                                                  &mut (&M_SIXTEEN / &M_FOUR) ];
 
-        let l1_mones: [&mut Mod_e255_19; 12] = [ &mut (&ONE / &M_ONE),
+        let l1_mones: [&mut Mod_e221_3; 12] = [ &mut (&ONE / &M_ONE),
                                                   &mut (&M_ONE / &ONE),
                                                   &mut (&TWO / &M_TWO),
                                                   &mut (&M_TWO / &TWO),
@@ -2042,7 +1851,7 @@ mod tests {
                                                   &mut (&SIXTEEN / &M_SIXTEEN),
                                                   &mut (&M_SIXTEEN / &SIXTEEN) ];
 
-        let l1_mtwos: [&mut Mod_e255_19; 10] = [ &mut (&TWO / &M_ONE),
+        let l1_mtwos: [&mut Mod_e221_3; 10] = [ &mut (&TWO / &M_ONE),
                                                   &mut (&M_TWO / &ONE),
                                                   &mut (&FOUR / &M_TWO),
                                                   &mut (&M_FOUR / &TWO),
@@ -2053,14 +1862,14 @@ mod tests {
                                                   &mut (&SIXTEEN / &M_EIGHT),
                                                   &mut (&M_SIXTEEN / &EIGHT) ];
 
-        let l1_mthrees: [&mut Mod_e255_19; 6] = [ &mut (&THREE / &M_ONE),
+        let l1_mthrees: [&mut Mod_e221_3; 6] = [ &mut (&THREE / &M_ONE),
                                                    &mut (&M_THREE / &ONE),
                                                    &mut (&SIX / &M_TWO),
                                                    &mut (&M_SIX / &TWO),
                                                    &mut (&NINE / &M_THREE),
                                                    &mut (&M_NINE / &THREE) ];
 
-        let l1_mfours: [&mut Mod_e255_19; 6] = [ &mut (&FOUR / &M_ONE),
+        let l1_mfours: [&mut Mod_e221_3; 6] = [ &mut (&FOUR / &M_ONE),
                                                   &mut (&M_FOUR / &ONE),
                                                   &mut (&EIGHT / &M_TWO),
                                                   &mut (&M_EIGHT / &TWO),
@@ -2102,31 +1911,31 @@ mod tests {
 
     #[test]
     fn test_small_add() {
-        let l1_zeros: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_add(0),
+        let l1_zeros: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_add(0),
                                                  &mut M_ONE.small_add(1),
                                                  &mut ONE.small_add(-1),
                                                  &mut M_TWO.small_add(2),
                                                  &mut TWO.small_add(-2) ];
 
-        let l1_ones: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_add(1),
+        let l1_ones: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_add(1),
                                                 &mut M_ONE.small_add(2),
                                                 &mut ONE.small_add(0),
                                                 &mut M_TWO.small_add(3),
                                                 &mut TWO.small_add(-1) ];
 
-        let l1_twos: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_add(2),
+        let l1_twos: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_add(2),
                                                 &mut ONE.small_add(1),
                                                 &mut M_ONE.small_add(3),
                                                 &mut TWO.small_add(0),
                                                 &mut M_TWO.small_add(4) ];
 
-        let l1_mones: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_add(-1),
+        let l1_mones: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_add(-1),
                                                  &mut M_ONE.small_add(0),
                                                  &mut ONE.small_add(-2),
                                                  &mut M_TWO.small_add(1),
                                                  &mut TWO.small_add(-3) ];
 
-        let l1_mtwos: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_add(-2),
+        let l1_mtwos: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_add(-2),
                                                  &mut M_ONE.small_add(-1),
                                                  &mut ONE.small_add(-3),
                                                  &mut M_TWO.small_add(0),
@@ -2305,31 +2114,31 @@ mod tests {
 
     #[test]
     fn test_small_sub() {
-        let l1_zeros: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_sub(0),
+        let l1_zeros: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_sub(0),
                                                  &mut M_ONE.small_sub(-1),
                                                  &mut ONE.small_sub(1),
                                                  &mut M_TWO.small_sub(-2),
                                                  &mut TWO.small_sub(2) ];
 
-        let l1_ones: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_sub(-1),
+        let l1_ones: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_sub(-1),
                                                 &mut M_ONE.small_sub(-2),
                                                 &mut ONE.small_sub(0),
                                                 &mut M_TWO.small_sub(-3),
                                                 &mut TWO.small_sub(1) ];
 
-        let l1_twos: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_sub(-2),
+        let l1_twos: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_sub(-2),
                                                 &mut ONE.small_sub(-1),
                                                 &mut M_ONE.small_sub(-3),
                                                 &mut TWO.small_sub(0),
                                                 &mut M_TWO.small_sub(-4) ];
 
-        let l1_mones: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_sub(1),
+        let l1_mones: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_sub(1),
                                                  &mut M_ONE.small_sub(0),
                                                  &mut ONE.small_sub(2),
                                                  &mut M_TWO.small_sub(-1),
                                                  &mut TWO.small_sub(3) ];
 
-        let l1_mtwos: [&mut Mod_e255_19; 5] = [ &mut ZERO.small_sub(2),
+        let l1_mtwos: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_sub(2),
                                                  &mut M_ONE.small_sub(1),
                                                  &mut ONE.small_sub(3),
                                                  &mut M_TWO.small_sub(0),
@@ -2509,7 +2318,7 @@ mod tests {
     #[test]
     fn test_small_mul() {
 
-        let l1_zeros: [&mut Mod_e255_19; 9] = [ &mut ZERO.small_mul(0),
+        let l1_zeros: [&mut Mod_e221_3; 9] = [ &mut ZERO.small_mul(0),
                                                  &mut ONE.small_mul(0),
                                                  &mut TWO.small_mul(0),
                                                  &mut M_ONE.small_mul(0),
@@ -2519,26 +2328,26 @@ mod tests {
                                                  &mut ZERO.small_mul(-1),
                                                  &mut ZERO.small_mul(-2) ];
 
-        let l1_ones: [&mut Mod_e255_19; 2] = [ &mut ONE.small_mul(1),
+        let l1_ones: [&mut Mod_e221_3; 2] = [ &mut ONE.small_mul(1),
                                                 &mut M_ONE.small_mul(-1) ];
 
-        let l1_twos: [&mut Mod_e255_19; 4] = [ &mut ONE.small_mul(2),
+        let l1_twos: [&mut Mod_e221_3; 4] = [ &mut ONE.small_mul(2),
                                                 &mut TWO.small_mul(1),
                                                 &mut M_ONE.small_mul(-2),
                                                 &mut M_TWO.small_mul(-1) ];
 
-        let l1_fours: [&mut Mod_e255_19; 2] = [ &mut TWO.small_mul(2),
+        let l1_fours: [&mut Mod_e221_3; 2] = [ &mut TWO.small_mul(2),
                                                  &mut M_TWO.small_mul(-2) ];
 
-        let l1_mones: [&mut Mod_e255_19; 2] = [ &mut ONE.small_mul(-1),
+        let l1_mones: [&mut Mod_e221_3; 2] = [ &mut ONE.small_mul(-1),
                                                  &mut M_ONE.small_mul(1) ];
 
-        let l1_mtwos: [&mut Mod_e255_19; 4] = [ &mut ONE.small_mul(-2),
+        let l1_mtwos: [&mut Mod_e221_3; 4] = [ &mut ONE.small_mul(-2),
                                                  &mut TWO.small_mul(-1),
                                                  &mut M_ONE.small_mul(2),
                                                  &mut M_TWO.small_mul(1) ];
 
-        let l1_mfours: [&mut Mod_e255_19; 2] = [ &mut TWO.small_mul(-2),
+        let l1_mfours: [&mut Mod_e221_3; 2] = [ &mut TWO.small_mul(-2),
                                                   &mut M_TWO.small_mul(2) ];
 
         for i in 0..9 {
@@ -2718,5 +2527,5 @@ mod tests {
 
             assert!(M_FOUR.normalize_eq(&mut val));
         }
-    }
+   }
 }
