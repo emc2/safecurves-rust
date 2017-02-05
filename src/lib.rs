@@ -1,5 +1,5 @@
 #![allow(non_camel_case_types)]
 
-#[cfg(test)]
+extern crate rand;
 
 pub mod field;

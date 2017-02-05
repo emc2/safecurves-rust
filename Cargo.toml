@@ -6,3 +6,6 @@ authors = [ "Eric McCorkle <eric@metricspace.net>" ]
 exclude = [
     ".gitignore"
 ]
+
+[dependencies]
+rand = "0.3"

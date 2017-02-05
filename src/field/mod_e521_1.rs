@@ -1,4 +1,6 @@
 use field::prime_field::PrimeField;
+use rand::Rand;
+use rand::Rng;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::fmt::LowerHex;
@@ -85,7 +87,7 @@ impl UpperHex for Mod_e521_1 {
 }
 
 impl Mod_e521_1 {
-    fn normalize_eq(&mut self, other: &mut Mod_e521_1) -> bool {
+    pub fn normalize_eq(&mut self, other: &mut Mod_e521_1) -> bool {
         let self_bytes =  self.pack();
         let other_bytes = other.pack();
         let mut are_equal: bool = true;
@@ -1240,6 +1242,18 @@ impl<'a, 'b> Mul<&'b Mod_e521_1> for &'a Mod_e521_1 {
     fn mul(self, a: &'b Mod_e521_1) -> Mod_e521_1 {
         let mut out = self.clone();
         out *= a;
+        out
+    }
+}
+
+impl Rand for Mod_e521_1 {
+    fn rand<R: Rng>(rng: &mut R) -> Self {
+        let mut out = Mod_e521_1([0i64; 10]);
+
+        for i in 0..10 {
+            out[i] = rng.gen_range(0, MODULUS[i]);
+        }
+
         out
     }
 }

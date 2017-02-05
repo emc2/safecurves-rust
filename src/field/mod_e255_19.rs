@@ -1,4 +1,6 @@
 use field::prime_field::PrimeField;
+use rand::Rand;
+use rand::Rng;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::fmt::LowerHex;
@@ -584,6 +586,18 @@ impl<'a, 'b> Mul<&'b Mod_e255_19> for &'a Mod_e255_19 {
     fn mul(self, a: &'b Mod_e255_19) -> Mod_e255_19 {
         let mut out = self.clone();
         out *= a;
+        out
+    }
+}
+
+impl Rand for Mod_e255_19 {
+    fn rand<R: Rng>(rng: &mut R) -> Self {
+        let mut out = Mod_e255_19([0i64; 5]);
+
+        for i in 0..5 {
+            out[i] = rng.gen_range(0, MODULUS[i]);
+        }
+
         out
     }
 }
