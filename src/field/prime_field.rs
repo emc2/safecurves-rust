@@ -46,6 +46,10 @@ pub const NBITS : [u64; 32] = [0x1 * 32,
                                0x80000000 * 1];
 
 pub trait PrimeField {
+    fn normalize_self_eq(&mut self, other: &Self) -> bool;
+
+    fn normalize_eq(&mut self, other: &mut Self) -> bool;
+
     /// Get the representation of the value 0.
     fn zero() -> Self;
 
@@ -72,6 +76,8 @@ pub trait PrimeField {
 
     /// Legendre symbol for a field element.
     fn legendre(&self) -> Self;
+
+    fn sqrt(&self) -> Self;
 
     /// Add an i32 in-place.
     fn small_add_assign(&mut self, b: i32);

@@ -1,6 +1,7 @@
 use field::prime_field::PrimeField;
 use rand::Rand;
 use rand::Rng;
+use rand::random;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::fmt::LowerHex;
@@ -82,18 +83,6 @@ impl UpperHex for Mod_e255_19 {
 }
 
 impl Mod_e255_19 {
-    pub fn normalize_eq(&mut self, other: &mut Mod_e255_19) -> bool {
-        let self_bytes =  self.pack();
-        let other_bytes = other.pack();
-        let mut are_equal: bool = true;
-
-        for i in 0..32 {
-            are_equal &= self_bytes[i] == other_bytes[i];
-        }
-
-        are_equal
-    }
-
     /// Get the carry-in value.  We use the highest carry slot to
     /// stash the carry-out value of each operation, and feed that
     /// back into the next one.
@@ -123,7 +112,7 @@ impl Mod_e255_19 {
 
     /// Serialize an already normalized number as a little-endian byte
     /// array.  This must only be used on a normalized value.
-    pub fn pack_normalized(&mut self) -> [u8; 32] {
+    pub fn pack_normalized(&self) -> [u8; 32] {
         let mut bytes = [0u8; 32];
 
         bytes[0] = (self[0] & 0b11111111) as u8;
@@ -602,20 +591,86 @@ impl Rand for Mod_e255_19 {
     }
 }
 
+fn cipolla_root(n: &Mod_e255_19) -> (Mod_e255_19, Mod_e255_19) {
+    let r: Mod_e255_19 = random();
+    let mut r2n: Mod_e255_19 = r.squared();
+
+    r2n -= &n;
+
+    if r2n.legendre().normalize_self_eq(&ONE) {
+        cipolla_root(n)
+    } else {
+        (r, r2n)
+    }
+}
+
+fn cipolla_square(a: &mut Mod_e255_19, b: &mut Mod_e255_19,
+                  r: &Mod_e255_19) {
+    let mut rb2: Mod_e255_19 = b.squared();
+    rb2 *= r;
+    // b' = ab
+    *b *= a;
+    // b' = 2ab
+    b.small_mul_assign(2);
+    // a' = a^2
+    a.square();
+    // a' = a^2 + rb^2
+    *a += &rb2;
+}
+
+fn cipolla_mul(a: &mut Mod_e255_19, b: &mut Mod_e255_19,
+               sa: &Mod_e255_19, sb: &Mod_e255_19, r: &Mod_e255_19) {
+    let mut rbsb: Mod_e255_19 = b.clone();
+    rbsb *= sb;
+    rbsb *= r;
+    // b' = sa*b
+    *b *= sa;
+    // b' = sa*b + a*sb
+    *b += &(&*a * sb);
+    // a' = a*sa
+    *a *= sa;
+    // a' = a*sa + r*b*sb
+    *a += &rbsb;
+}
+
 impl PrimeField for Mod_e255_19 {
-    fn zero() -> Mod_e255_19 {
+   fn normalize_self_eq(&mut self, other: &Self) -> bool {
+        let self_bytes =  self.pack();
+        let other_bytes = other.pack_normalized();
+        let mut are_equal: bool = true;
+
+        for i in 0..32 {
+            are_equal &= self_bytes[i] == other_bytes[i];
+        }
+
+        are_equal
+    }
+
+    fn normalize_eq(&mut self, other: &mut Self) -> bool {
+        let self_bytes =  self.pack();
+        let other_bytes = other.pack();
+        let mut are_equal: bool = true;
+
+        for i in 0..32 {
+            are_equal &= self_bytes[i] == other_bytes[i];
+        }
+
+        are_equal
+    }
+
+    fn zero() -> Self {
         return ZERO;
     }
 
-    fn one() -> Mod_e255_19 {
+    fn one() -> Self {
         return ONE;
     }
 
-    fn m_one() -> Mod_e255_19 {
+    fn m_one() -> Self {
         return M_ONE;
     }
 
-    fn modulus() -> Mod_e255_19 {
+    fn modulus() -> Self {
         return MODULUS;
     }
 
@@ -916,6 +971,35 @@ impl PrimeField for Mod_e255_19 {
         out
     }
 
+    fn sqrt(&self) -> Self {
+        let (r, r2n) = cipolla_root(self);
+
+        let mut sa = r;
+        let mut sb = ONE.clone();
+
+        // First digit is 1.
+        let mut a = sa.clone();
+        let mut b = sb.clone();
+
+        // Second and third digits are 1.
+        cipolla_square(&mut sa, &mut sb, &r2n);
+        cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+
+        cipolla_square(&mut sa, &mut sb, &r2n);
+        cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+
+        // Fourth digit is 0.
+        cipolla_square(&mut sa, &mut sb, &r2n);
+
+        // All digits are 1.
+        for _ in 4..254 {
+            cipolla_square(&mut sa, &mut sb, &r2n);
+            cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+        }
+
+        a
+    }
+
     fn small_add_assign(&mut self, rhs: i32) {
         let a0 = self[0];
         let a1 = self[1];
@@ -943,7 +1027,7 @@ impl PrimeField for Mod_e255_19 {
         self[4] = s4;
     }
 
-    fn small_add(&self, rhs: i32) -> Mod_e255_19 {
+    fn small_add(&self, rhs: i32) -> Self {
         let mut out = self.clone();
 
         out.small_add_assign(rhs);
@@ -978,7 +1062,7 @@ impl PrimeField for Mod_e255_19 {
         self[4] = s4;
     }
 
-    fn small_sub(&self, rhs: i32) -> Mod_e255_19 {
+    fn small_sub(&self, rhs: i32) -> Self {
         let mut out = self.clone();
 
         out.small_sub_assign(rhs);
@@ -1029,7 +1113,7 @@ impl PrimeField for Mod_e255_19 {
         self[4] = d4;
     }
 
-    fn small_mul(&self, b: i32) -> Mod_e255_19 {
+    fn small_mul(&self, b: i32) -> Self {
         let mut out = self.clone();
 
         out.small_mul_assign(b);

@@ -1,6 +1,7 @@
 use field::prime_field::PrimeField;
 use rand::Rand;
 use rand::Rng;
+use rand::random;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::fmt::LowerHex;
@@ -80,18 +81,6 @@ impl UpperHex for Mod_e222_117 {
 }
 
 impl Mod_e222_117 {
-    pub fn normalize_eq(&mut self, other: &mut Mod_e222_117) -> bool {
-        let self_bytes =  self.pack();
-        let other_bytes = other.pack();
-        let mut are_equal: bool = true;
-
-        for i in 0..28 {
-            are_equal &= self_bytes[i] == other_bytes[i];
-        }
-
-        are_equal
-    }
-
     /// Get the carry-in value.  We use the highest carry slot to
     /// stash the carry-out value of each operation, and feed that
     /// back into the next one.
@@ -121,7 +110,7 @@ impl Mod_e222_117 {
 
     /// Serialize an already normalized number as a little-endian byte
     /// array.  This must only be used on a normalized value.
-    pub fn pack_normalized(&mut self) -> [u8; 28] {
+    pub fn pack_normalized(&self) -> [u8; 28] {
         let mut bytes = [0u8; 28];
 
         bytes[0] = (self[0] & 0b11111111) as u8;
@@ -539,7 +528,73 @@ impl Rand for Mod_e222_117 {
     }
 }
 
+fn cipolla_root(n: &Mod_e222_117) -> (Mod_e222_117, Mod_e222_117) {
+    let r: Mod_e222_117 = random();
+    let mut r2n: Mod_e222_117 = r.squared();
+
+    r2n -= &n;
+
+    if r2n.legendre().normalize_self_eq(&ONE) {
+        cipolla_root(n)
+    } else {
+        (r, r2n)
+    }
+}
+
+fn cipolla_square(a: &mut Mod_e222_117, b: &mut Mod_e222_117,
+                  r: &Mod_e222_117) {
+    let mut rb2: Mod_e222_117 = b.squared();
+    rb2 *= r;
+    // b' = ab
+    *b *= a;
+    // b' = 2ab
+    b.small_mul_assign(2);
+    // a' = a^2
+    a.square();
+    // a' = a^2 + rb^2
+    *a += &rb2;
+}
+
+fn cipolla_mul(a: &mut Mod_e222_117, b: &mut Mod_e222_117,
+               sa: &Mod_e222_117, sb: &Mod_e222_117, r: &Mod_e222_117) {
+    let mut rbsb: Mod_e222_117 = b.clone();
+    rbsb *= sb;
+    rbsb *= r;
+    // b' = sa*b
+    *b *= sa;
+    // b' = sa*b + a*sb
+    *b += &(&*a * sb);
+    // a' = a*sa
+    *a *= sa;
+    // a' = a*sa + r*b*sb
+    *a += &rbsb;
+}
+
 impl PrimeField for Mod_e222_117 {
+   fn normalize_self_eq(&mut self, other: &Mod_e222_117) -> bool {
+        let self_bytes =  self.pack();
+        let other_bytes = other.pack_normalized();
+        let mut are_equal: bool = true;
+
+        for i in 0..28 {
+            are_equal &= self_bytes[i] == other_bytes[i];
+        }
+
+        are_equal
+    }
+
+    fn normalize_eq(&mut self, other: &mut Mod_e222_117) -> bool {
+        let self_bytes =  self.pack();
+        let other_bytes = other.pack();
+        let mut are_equal: bool = true;
+
+        for i in 0..28 {
+            are_equal &= self_bytes[i] == other_bytes[i];
+        }
+
+        are_equal
+    }
+
     fn zero() -> Mod_e222_117 {
         return ZERO;
     }
@@ -806,6 +861,35 @@ impl PrimeField for Mod_e222_117 {
         }
 
         out
+    }
+
+    fn sqrt(&self) -> Self {
+        let (r, r2n) = cipolla_root(self);
+
+        let mut sa = r;
+        let mut sb = ONE.clone();
+
+        // First digit is 0.
+        cipolla_square(&mut sa, &mut sb, &r2n);
+
+        let mut a = sa.clone();
+        let mut b = sb.clone();
+
+        // Second digit is 1.
+        cipolla_square(&mut sa, &mut sb, &r2n);
+        cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+
+        // Third, fourth, fifth digits are 0.
+        cipolla_square(&mut sa, &mut sb, &r2n);
+        cipolla_square(&mut sa, &mut sb, &r2n);
+
+        // All digits are 1.
+        for _ in 5..221 {
+            cipolla_square(&mut sa, &mut sb, &r2n);
+            cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+        }
+
+        a
     }
 
     fn small_add_assign(&mut self, rhs: i32) {
