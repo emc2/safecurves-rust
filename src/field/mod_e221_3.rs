@@ -60,7 +60,7 @@ impl LowerHex for Mod_e221_3 {
         let bytes = cpy.pack();
 
         for i in 0..28 {
-            try!(write!(f, "{:02x}", bytes[31 - i]));
+            try!(write!(f, "{:02x}", bytes[27 - i]));
         }
 
         Ok(())
@@ -73,7 +73,7 @@ impl UpperHex for Mod_e221_3 {
         let bytes = cpy.pack();
 
         for i in 0..28 {
-            try!(write!(f, "{:02X}", bytes[31 - i]));
+            try!(write!(f, "{:02X}", bytes[27 - i]));
         }
 
         Ok(())
@@ -514,10 +514,13 @@ fn cipolla_root(n: &Mod_e221_3) -> (Mod_e221_3, Mod_e221_3) {
     let mut r2n: Mod_e221_3 = r.squared();
 
     r2n -= &n;
+    println!("Trying root {:x}, r^2 - n = {:x}", r, r2n);
 
     if r2n.legendre().normalize_self_eq(&ONE) {
+        println!("Bad");
         cipolla_root(n)
     } else {
+        println!("Good");
         (r, r2n)
     }
 }
@@ -2155,81 +2158,7 @@ mod tests {
             assert!(ONE.normalize_eq(&mut val));
         }
     }
-/*
-    #[test]
-    fn test_sqrt() {
-        let l1_twos: [&mut Mod_e221_3; 10] = [ &mut (&TWO / &ONE),
-                                                 &mut (&M_TWO / &M_ONE),
-                                                 &mut (&FOUR / &TWO),
-                                                 &mut (&M_FOUR / &M_TWO),
-                                                 &mut (&SIX / &THREE),
-                                                 &mut (&M_SIX / &M_THREE),
-                                                 &mut (&EIGHT / &FOUR),
-                                                 &mut (&M_EIGHT / &M_FOUR),
-                                                 &mut (&SIXTEEN / &EIGHT),
-                                                 &mut (&M_SIXTEEN / &M_EIGHT) ];
 
-        let l1_threes: [&mut Mod_e221_3; 6] = [ &mut (&THREE / &ONE),
-                                                  &mut (&M_THREE / &M_ONE),
-                                                  &mut (&SIX / &TWO),
-                                                  &mut (&M_SIX / &M_TWO),
-                                                  &mut (&NINE / &THREE),
-                                                  &mut (&M_NINE / &M_THREE) ];
-
-        let l1_fours: [&mut Mod_e221_3; 6] = [ &mut (&FOUR / &ONE),
-                                                 &mut (&M_FOUR / &M_ONE),
-                                                 &mut (&EIGHT / &TWO),
-                                                 &mut (&M_EIGHT / &M_TWO),
-                                                 &mut (&SIXTEEN / &FOUR),
-                                                 &mut (&M_SIXTEEN / &M_FOUR) ];
-
-        let l1_mones: [&mut Mod_e221_3; 12] = [ &mut (&ONE / &M_ONE),
-                                                  &mut (&M_ONE / &ONE),
-                                                  &mut (&TWO / &M_TWO),
-                                                  &mut (&M_TWO / &TWO),
-                                                  &mut (&THREE / &M_THREE),
-                                                  &mut (&M_THREE / &THREE),
-                                                  &mut (&FOUR / &M_FOUR),
-                                                  &mut (&M_FOUR / &FOUR),
-                                                  &mut (&NINE / &M_NINE),
-                                                  &mut (&M_NINE / &NINE),
-                                                  &mut (&SIXTEEN / &M_SIXTEEN),
-                                                  &mut (&M_SIXTEEN / &SIXTEEN) ];
-
-        let l1_mtwos: [&mut Mod_e221_3; 10] = [ &mut (&TWO / &M_ONE),
-                                                  &mut (&M_TWO / &ONE),
-                                                  &mut (&FOUR / &M_TWO),
-                                                  &mut (&M_FOUR / &TWO),
-                                                  &mut (&SIX / &M_THREE),
-                                                  &mut (&M_SIX / &THREE),
-                                                  &mut (&EIGHT / &M_FOUR),
-                                                  &mut (&M_EIGHT / &FOUR),
-                                                  &mut (&SIXTEEN / &M_EIGHT),
-                                                  &mut (&M_SIXTEEN / &EIGHT) ];
-
-        let l1_mthrees: [&mut Mod_e221_3; 6] = [ &mut (&THREE / &M_ONE),
-                                                   &mut (&M_THREE / &ONE),
-                                                   &mut (&SIX / &M_TWO),
-                                                   &mut (&M_SIX / &TWO),
-                                                   &mut (&NINE / &M_THREE),
-                                                   &mut (&M_NINE / &THREE) ];
-
-        let l1_mfours: [&mut Mod_e221_3; 6] = [ &mut (&FOUR / &M_ONE),
-                                                 &mut (&M_FOUR / &ONE),
-                                                 &mut (&EIGHT / &M_TWO),
-                                                 &mut (&M_EIGHT / &TWO),
-                                                 &mut (&SIXTEEN / &M_FOUR),
-                                                 &mut (&M_SIXTEEN / &FOUR) ];
-
-        for i in 0..6 {
-            let val = l1_threes[i].sqrt();
-
-            println!("{:?}", val);
-            println!("{:?}", val.squared());
-            assert!(val.squared().normalize_eq(l1_threes[i]));
-        }
-    }
-*/
     #[test]
     fn test_small_add() {
         let l1_zeros: [&mut Mod_e221_3; 5] = [ &mut ZERO.small_add(0),

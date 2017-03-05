@@ -1,7 +1,6 @@
 use field::prime_field::PrimeField;
 use rand::Rand;
 use rand::Rng;
-use rand::random;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::fmt::LowerHex;
@@ -528,48 +527,6 @@ impl Rand for Mod_e222_117 {
     }
 }
 
-fn cipolla_root(n: &Mod_e222_117) -> (Mod_e222_117, Mod_e222_117) {
-    let r: Mod_e222_117 = random();
-    let mut r2n: Mod_e222_117 = r.squared();
-
-    r2n -= &n;
-
-    if r2n.legendre().normalize_self_eq(&ONE) {
-        cipolla_root(n)
-    } else {
-        (r, r2n)
-    }
-}
-
-fn cipolla_square(a: &mut Mod_e222_117, b: &mut Mod_e222_117,
-                  r: &Mod_e222_117) {
-    let mut rb2: Mod_e222_117 = b.squared();
-    rb2 *= r;
-    // b' = ab
-    *b *= a;
-    // b' = 2ab
-    b.small_mul_assign(2);
-    // a' = a^2
-    a.square();
-    // a' = a^2 + rb^2
-    *a += &rb2;
-}
-
-fn cipolla_mul(a: &mut Mod_e222_117, b: &mut Mod_e222_117,
-               sa: &Mod_e222_117, sb: &Mod_e222_117, r: &Mod_e222_117) {
-    let mut rbsb: Mod_e222_117 = b.clone();
-    rbsb *= sb;
-    rbsb *= r;
-    // b' = sa*b
-    *b *= sa;
-    // b' = sa*b + a*sb
-    *b += &(&*a * sb);
-    // a' = a*sa
-    *a *= sa;
-    // a' = a*sa + r*b*sb
-    *a += &rbsb;
-}
-
 impl PrimeField for Mod_e222_117 {
    fn normalize_self_eq(&mut self, other: &Mod_e222_117) -> bool {
         let self_bytes =  self.pack();
@@ -866,32 +823,26 @@ impl PrimeField for Mod_e222_117 {
     }
 
     fn sqrt(&self) -> Self {
-        let (r, r2n) = cipolla_root(self);
-
-        let mut sa = r;
-        let mut sb = ONE.clone();
-
-        // First digit is 0.
-        cipolla_square(&mut sa, &mut sb, &r2n);
-
-        let mut a = sa.clone();
-        let mut b = sb.clone();
+        // First digit is 1.
+        let mut out = self.clone();
+        let mut sqval = out.clone();
 
         // Second digit is 1.
-        cipolla_square(&mut sa, &mut sb, &r2n);
-        cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+        sqval.square();
+        out *= &sqval;
 
-        // Third, fourth, fifth digits are 0.
-        cipolla_square(&mut sa, &mut sb, &r2n);
-        cipolla_square(&mut sa, &mut sb, &r2n);
+        // Third, fourth, and fifth digits are 0.
+        sqval.square();
+        sqval.square();
+        sqval.square();
 
-        // All digits are 1.
-        for _ in 5..221 {
-            cipolla_square(&mut sa, &mut sb, &r2n);
-            cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+        // All the remaining digits are 1.
+        for _ in 5..220 {
+            sqval.square();
+            out *= &sqval;
         }
 
-        a
+        out
     }
 
     fn small_add_assign(&mut self, rhs: i32) {
@@ -2217,6 +2168,52 @@ mod tests {
             let mut val = l1_mfours[i].legendre();
 
             assert!(M_ONE.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_sqrt() {
+        let l1_fours: [&mut Mod_e222_117; 6] = [ &mut (&FOUR / &ONE),
+                                                 &mut (&M_FOUR / &M_ONE),
+                                                 &mut (&EIGHT / &TWO),
+                                                 &mut (&M_EIGHT / &M_TWO),
+                                                 &mut (&SIXTEEN / &FOUR),
+                                                 &mut (&M_SIXTEEN / &M_FOUR) ];
+
+        let l1_mtwos: [&mut Mod_e222_117; 10] = [ &mut (&TWO / &M_ONE),
+                                                  &mut (&M_TWO / &ONE),
+                                                  &mut (&FOUR / &M_TWO),
+                                                  &mut (&M_FOUR / &TWO),
+                                                  &mut (&SIX / &M_THREE),
+                                                  &mut (&M_SIX / &THREE),
+                                                  &mut (&EIGHT / &M_FOUR),
+                                                  &mut (&M_EIGHT / &FOUR),
+                                                  &mut (&SIXTEEN / &M_EIGHT),
+                                                  &mut (&M_SIXTEEN / &EIGHT) ];
+
+        let l1_mthrees: [&mut Mod_e222_117; 6] = [ &mut (&THREE / &M_ONE),
+                                                   &mut (&M_THREE / &ONE),
+                                                   &mut (&SIX / &M_TWO),
+                                                   &mut (&M_SIX / &TWO),
+                                                   &mut (&NINE / &M_THREE),
+                                                   &mut (&M_NINE / &THREE) ];
+
+        for i in 0..6 {
+            let val = l1_fours[i].sqrt();
+
+            assert!(val.squared().normalize_eq(l1_fours[i]));
+        }
+
+        for i in 0..10 {
+            let val = l1_mtwos[i].sqrt();
+
+            assert!(val.squared().normalize_eq(l1_mtwos[i]));
+        }
+
+        for i in 0..6 {
+            let val = l1_mthrees[i].sqrt();
+
+            assert!(val.squared().normalize_eq(l1_mthrees[i]));
         }
     }
 
