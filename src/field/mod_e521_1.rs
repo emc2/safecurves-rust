@@ -66,8 +66,8 @@ impl LowerHex for Mod_e521_1 {
         let mut cpy = self.clone();
         let bytes = cpy.pack();
 
-        for i in 66..0 {
-            try!(write!(f, "{:02x}", bytes[i]));
+        for i in 0..66 {
+            try!(write!(f, "{:02x}", bytes[65 - i]));
         }
 
         Ok(())
@@ -79,8 +79,8 @@ impl UpperHex for Mod_e521_1 {
         let mut cpy = self.clone();
         let bytes = cpy.pack();
 
-        for i in 66..0 {
-            try!(write!(f, "{:02X}", bytes[i]));
+        for i in 0..66 {
+            try!(write!(f, "{:02X}", bytes[65 - i]));
         }
 
         Ok(())
@@ -2088,7 +2088,7 @@ impl PrimeField for Mod_e521_1 {
 
     fn legendre(&self) -> Self {
         // First digit is 1.
-        let mut out = self.squared();
+        let mut out = self.clone();
         let mut sqval = out.clone();
 
         // All the remaining digits are 1.
@@ -3531,6 +3531,151 @@ mod tests {
 
         for i in 0..6 {
             assert!(M_FOUR.normalize_eq(l1_mfours[i]));
+        }
+    }
+
+    #[test]
+    fn test_legendre() {
+        let l1_zeros: [&mut Mod_e521_1; 10] = [ &mut (&ZERO * &ZERO),
+                                                  &mut (&ONE * &ZERO),
+                                                  &mut (&TWO * &ZERO),
+                                                  &mut (&M_ONE * &ZERO),
+                                                  &mut (&M_TWO * &ZERO),
+                                                  &mut (&ZERO * &ONE),
+                                                  &mut (&ZERO * &TWO),
+                                                  &mut (&ZERO * &M_ONE),
+                                                  &mut (&ZERO * &M_TWO),
+                                                  &mut ZERO.squared() ];
+
+        let l1_ones: [&mut Mod_e521_1; 12] = [ &mut (&ONE / &ONE),
+                                                 &mut (&M_ONE / &M_ONE),
+                                                 &mut (&TWO / &TWO),
+                                                 &mut (&M_TWO / &M_TWO),
+                                                 &mut (&THREE / &THREE),
+                                                 &mut (&M_THREE / &M_THREE),
+                                                 &mut (&FOUR / &FOUR),
+                                                 &mut (&M_FOUR / &M_FOUR),
+                                                 &mut (&NINE / &NINE),
+                                                 &mut (&M_NINE / &M_NINE),
+                                                 &mut (&SIXTEEN / &SIXTEEN),
+                                                 &mut (&M_SIXTEEN / &M_SIXTEEN) ];
+
+        let l1_twos: [&mut Mod_e521_1; 10] = [ &mut (&TWO / &ONE),
+                                                 &mut (&M_TWO / &M_ONE),
+                                                 &mut (&FOUR / &TWO),
+                                                 &mut (&M_FOUR / &M_TWO),
+                                                 &mut (&SIX / &THREE),
+                                                 &mut (&M_SIX / &M_THREE),
+                                                 &mut (&EIGHT / &FOUR),
+                                                 &mut (&M_EIGHT / &M_FOUR),
+                                                 &mut (&SIXTEEN / &EIGHT),
+                                                 &mut (&M_SIXTEEN / &M_EIGHT) ];
+
+        let l1_threes: [&mut Mod_e521_1; 6] = [ &mut (&THREE / &ONE),
+                                                  &mut (&M_THREE / &M_ONE),
+                                                  &mut (&SIX / &TWO),
+                                                  &mut (&M_SIX / &M_TWO),
+                                                  &mut (&NINE / &THREE),
+                                                  &mut (&M_NINE / &M_THREE) ];
+
+        let l1_fours: [&mut Mod_e521_1; 6] = [ &mut (&FOUR / &ONE),
+                                                 &mut (&M_FOUR / &M_ONE),
+                                                 &mut (&EIGHT / &TWO),
+                                                 &mut (&M_EIGHT / &M_TWO),
+                                                 &mut (&SIXTEEN / &FOUR),
+                                                 &mut (&M_SIXTEEN / &M_FOUR) ];
+
+        let l1_mones: [&mut Mod_e521_1; 12] = [ &mut (&ONE / &M_ONE),
+                                                  &mut (&M_ONE / &ONE),
+                                                  &mut (&TWO / &M_TWO),
+                                                  &mut (&M_TWO / &TWO),
+                                                  &mut (&THREE / &M_THREE),
+                                                  &mut (&M_THREE / &THREE),
+                                                  &mut (&FOUR / &M_FOUR),
+                                                  &mut (&M_FOUR / &FOUR),
+                                                  &mut (&NINE / &M_NINE),
+                                                  &mut (&M_NINE / &NINE),
+                                                  &mut (&SIXTEEN / &M_SIXTEEN),
+                                                  &mut (&M_SIXTEEN / &SIXTEEN) ];
+
+        let l1_mtwos: [&mut Mod_e521_1; 10] = [ &mut (&TWO / &M_ONE),
+                                                  &mut (&M_TWO / &ONE),
+                                                  &mut (&FOUR / &M_TWO),
+                                                  &mut (&M_FOUR / &TWO),
+                                                  &mut (&SIX / &M_THREE),
+                                                  &mut (&M_SIX / &THREE),
+                                                  &mut (&EIGHT / &M_FOUR),
+                                                  &mut (&M_EIGHT / &FOUR),
+                                                  &mut (&SIXTEEN / &M_EIGHT),
+                                                  &mut (&M_SIXTEEN / &EIGHT) ];
+
+        let l1_mthrees: [&mut Mod_e521_1; 6] = [ &mut (&THREE / &M_ONE),
+                                                   &mut (&M_THREE / &ONE),
+                                                   &mut (&SIX / &M_TWO),
+                                                   &mut (&M_SIX / &TWO),
+                                                   &mut (&NINE / &M_THREE),
+                                                   &mut (&M_NINE / &THREE) ];
+
+        let l1_mfours: [&mut Mod_e521_1; 6] = [ &mut (&FOUR / &M_ONE),
+                                                 &mut (&M_FOUR / &ONE),
+                                                 &mut (&EIGHT / &M_TWO),
+                                                 &mut (&M_EIGHT / &TWO),
+                                                 &mut (&SIXTEEN / &M_FOUR),
+                                                 &mut (&M_SIXTEEN / &FOUR) ];
+
+        for i in 0..10 {
+            let mut val = l1_zeros[i].legendre();
+
+            assert!(ZERO.normalize_eq(&mut val));
+        }
+
+        for i in 0..12 {
+            let mut val = l1_ones[i].legendre();
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..10 {
+            let mut val = l1_twos[i].legendre();
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..6 {
+            let mut val = l1_threes[i].legendre();
+
+            println!("{:?}", val);
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..6 {
+            let mut val = l1_fours[i].legendre();
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..12 {
+            let mut val = l1_mones[i].legendre();
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..10 {
+            let mut val = l1_mtwos[i].legendre();
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..6 {
+            let mut val = l1_mthrees[i].legendre();
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..6 {
+            let mut val = l1_mfours[i].legendre();
+
+            assert!(M_ONE.normalize_eq(&mut val));
         }
     }
 
