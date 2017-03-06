@@ -17,13 +17,22 @@ use std::ops::Index;
 use std::ops::IndexMut;
 use std::ops::Neg;
 
-/// Elements of the finite field mod 2^222 - 117.  Used by the E-222
-/// curve.  Uses 29-bit digits.
+/// Elements of the finite field of integers mod 2^222 - 117.  Used by
+/// the E-222 curve.
+///
+/// This is represented using eight 29-bit digits, stored in a
+/// four-element i64 array with two digits per word.  This combined
+/// representation allows many operations to be faster.  The leftover
+/// bits in each digit are used to capture carry values.  The internal
+/// representation is lazily normalized: it may leave carry values in
+/// the highest-order digit, and it may hold a value greater than the
+/// modulus.  All operations are guaranteed to work on non-normal values
+/// of this kind.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e222_117(pub [i64; 4]);
+pub struct Mod_e222_117([i64; 4]);
 
-pub const C_VAL: i64 = 117;
+const C_VAL: i64 = 117;
 
 /// The normalized representation of the value 0.
 pub const ZERO: Mod_e222_117 = Mod_e222_117([ 0, 0, 0, 0 ]);
@@ -88,7 +97,7 @@ impl Mod_e222_117 {
     }
 
     /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^414 - 17.
+    /// holding a value that is truly less than 2^222 - 117.
     ///
     /// This can be done n mod (2^m - c) using a single add and small
     /// multiply as follows: we can detect overflow by doing
@@ -148,7 +157,7 @@ impl Mod_e222_117 {
     }
 
     /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus 2^382 - 105.
+    /// array must contain a number less than the modulus 2^222 - 117.
     pub fn unpack(bytes : &[u8; 28]) -> Mod_e222_117 {
         let mut out = Mod_e222_117([0i64; 4]);
 

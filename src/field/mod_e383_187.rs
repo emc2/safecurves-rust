@@ -17,13 +17,22 @@ use std::ops::Index;
 use std::ops::IndexMut;
 use std::ops::Neg;
 
-/// Elements of the finite field mod 2^383 - 187.  Used by the
-/// Curve383187 and M-383 curves.  Uses 28-bit digits.
+/// Elements of the finite field of integers mod 2^383 - 187.  Used by
+/// the Curve383187 and M-383 curves.
+///
+/// This is represented using fourteen 28-bit digits, stored in a
+/// seven-element i64 array with two digits per word.  This combined
+/// representation allows many operations to be faster.  The leftover
+/// bits in each digit are used to capture carry values.  The internal
+/// representation is lazily normalized: it may leave carry values in
+/// the highest-order digit, and it may hold a value greater than the
+/// modulus.  All operations are guaranteed to work on non-normal values
+/// of this kind.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e383_187(pub [i64; 7]);
+pub struct Mod_e383_187([i64; 7]);
 
-pub const C_VAL: i64 = 187;
+const C_VAL: i64 = 187;
 
 /// The normalized representation of the value 0.
 pub const ZERO: Mod_e383_187 = Mod_e383_187([ 0, 0, 0, 0, 0, 0, 0 ]);
@@ -105,7 +114,7 @@ impl Mod_e383_187 {
     }
 
     /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^414 - 17.
+    /// holding a value that is truly less than 2^383 - 187.
     ///
     /// This can be done n mod (2^m - c) using a single add and small
     /// multiply as follows: we can detect overflow by doing
@@ -182,7 +191,7 @@ impl Mod_e383_187 {
     }
 
     /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus 2^521 - 1.
+    /// array must contain a number less than the modulus 2^383 - 187.
     pub fn unpack(bytes : &[u8; 48]) -> Mod_e383_187 {
         let mut out = Mod_e383_187([0i64; 7]);
 

@@ -17,13 +17,22 @@ use std::ops::Index;
 use std::ops::IndexMut;
 use std::ops::Neg;
 
-/// Elements of the finite field mod 2^221 - 3.  Used by the M-221
-/// curve.  Uses 29-bit digits.
+/// Elements of the finite field of integers mod 2^221 - 3.  Used by
+/// the M-221 curve.
+///
+/// This is represented using eight 29-bit digits, stored in a
+/// four-element i64 array with two digits per word.  This combined
+/// representation allows many operations to be faster.  The leftover
+/// bits in each digit are used to capture carry values.  The internal
+/// representation is lazily normalized: it may leave carry values in
+/// the highest-order digit, and it may hold a value greater than the
+/// modulus.  All operations are guaranteed to work on non-normal values
+/// of this kind.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e221_3(pub [i64; 4]);
+pub struct Mod_e221_3([i64; 4]);
 
-pub const C_VAL: i64 = 3;
+const C_VAL: i64 = 3;
 
 /// The normalized representation of the value 0.
 pub const ZERO: Mod_e221_3 = Mod_e221_3([ 0, 0, 0, 0 ]);
@@ -97,7 +106,7 @@ impl Mod_e221_3 {
     }
 
     /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^414 - 17.
+    /// holding a value that is truly less than 2^221 - 3.
     ///
     /// This can be done n mod (2^m - c) using a single add and small
     /// multiply as follows: we can detect overflow by doing
@@ -157,7 +166,7 @@ impl Mod_e221_3 {
     }
 
     /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus 2^382 - 105.
+    /// array must contain a number less than the modulus 2^221 - 3.
     pub fn unpack(bytes : &[u8; 28]) -> Mod_e221_3 {
         let mut out = Mod_e221_3([0i64; 4]);
 
@@ -195,6 +204,8 @@ impl Mod_e221_3 {
         out
     }
 
+    /// Similar to the Legendre symbol, but for quartic
+    /// residues/non-residues.
     fn quartic_legendre(&self) -> Self {
         // First digit is 1.
         let mut out = self.clone();
@@ -331,6 +342,7 @@ impl<'a, 'b> Sub<&'b Mod_e221_3> for &'a Mod_e221_3 {
 
 impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
     fn mul_assign(&mut self, rhs: &'b Mod_e221_3) {
+        // Expand out to single digits
         let a0 = self[0] & 0x1fffffff;
         let a1 = self[0] >> 29;
         let a2 = self[1] & 0x1fffffff;
@@ -415,7 +427,7 @@ impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
         let m_7_6 = a7 * b6;
         let m_7_7 = a7 * b7;
 
-        // Compute the 40-digit combined product using 64-bit operations.
+        // Compute the 16-digit combined product using 64-bit operations.
         let d0 = m_0_0 + ((m_0_1 & 0x1fffffff) << 29) +
                  ((m_1_0 & 0x1fffffff) << 29);
         let c0 = d0 >> 58;
@@ -573,6 +585,7 @@ impl PrimeField for Mod_e221_3 {
     }
 
     fn square(&mut self) {
+        // Expand out to single digits
         let a0 = self[0] & 0x1fffffff;
         let a1 = self[0] >> 29;
         let a2 = self[1] & 0x1fffffff;
@@ -648,7 +661,7 @@ impl PrimeField for Mod_e221_3 {
         let m_7_6 = m_6_7;
         let m_7_7 = a7 * a7;
 
-        // Compute the 40-digit combined product using 64-bit operations.
+        // Compute the 16-digit combined product using 64-bit operations.
         let d0 = m_0_0 + ((m_0_1 & 0x1fffffff) << 29) +
                  ((m_1_0 & 0x1fffffff) << 29);
         let c0 = d0 >> 58;
@@ -793,6 +806,8 @@ impl PrimeField for Mod_e221_3 {
     }
 
     fn sqrt(&self) -> Self {
+        // Legendre's formula for 5 mod 8 primes.
+
         let mut out = self.clone();
 
         // All digits are 0 except the last.

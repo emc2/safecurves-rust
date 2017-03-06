@@ -17,13 +17,22 @@ use std::ops::Index;
 use std::ops::IndexMut;
 use std::ops::Neg;
 
-/// Elements of the finite field mod 2^251 - 9.  Used by the Curve1174
-/// curve.  Uses 28-bit digits.
+/// Elements of the finite field of integers mod 2^251 - 9.  Used by
+/// the Curve1174 curve.
+///
+/// This is represented using nine 28-bit digits, stored in a
+/// five-element i64 array with two digits per word.  This combined
+/// representation allows many operations to be faster.  The leftover
+/// bits in each digit are used to capture carry values.  The internal
+/// representation is lazily normalized: it may leave carry values in
+/// the highest-order digit, and it may hold a value greater than the
+/// modulus.  All operations are guaranteed to work on non-normal values
+/// of this kind.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e251_9(pub [i64; 5]);
+pub struct Mod_e251_9([i64; 5]);
 
-pub const C_VAL: i64 = 9;
+const C_VAL: i64 = 9;
 
 /// The normalized representation of the value 0.
 pub const ZERO: Mod_e251_9 = Mod_e251_9([ 0, 0, 0, 0, 0 ]);
@@ -37,7 +46,7 @@ pub const M_ONE: Mod_e251_9 =
                  0x00ffffffffffffff, 0x00ffffffffffffff,
                  0x0000000007ffffff ]);
 
-/// The normalized representation of the modulus 2^414 - 17.
+/// The normalized representation of the modulus 2^251 - 9.
 pub const MODULUS: Mod_e251_9 =
     Mod_e251_9([ 0x00fffffffffffff7, 0x00ffffffffffffff,
                  0x00ffffffffffffff, 0x00ffffffffffffff,
@@ -90,7 +99,7 @@ impl Mod_e251_9 {
     }
 
     /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^414 - 17.
+    /// holding a value that is truly less than 2^251 - 9.
     ///
     /// This can be done n mod (2^m - c) using a single add and small
     /// multiply as follows: we can detect overflow by doing
@@ -151,7 +160,7 @@ impl Mod_e251_9 {
     }
 
     /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus 2^382 - 105.
+    /// array must contain a number less than the modulus 2^251 - 9.
     pub fn unpack(bytes : &[u8; 32]) -> Mod_e251_9 {
         let mut out = Mod_e251_9([0i64; 5]);
 

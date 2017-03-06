@@ -18,12 +18,21 @@ use std::ops::IndexMut;
 use std::ops::Neg;
 
 /// Elements of the finite field mod 2^414 - 17.  Used by the Curve41417
-/// curve.  Uses a 15-length array of 28-bit digits.
+/// curve.
+///
+/// This is represented using fifteen 28-bit digits, stored in an
+/// eight-element i64 array with two digits per word.  This combined
+/// representation allows many operations to be faster.  The leftover
+/// bits in each digit are used to capture carry values.  The internal
+/// representation is lazily normalized: it may leave carry values in
+/// the highest-order digit, and it may hold a value greater than the
+/// modulus.  All operations are guaranteed to work on non-normal values
+/// of this kind.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e414_17(pub [i64; 8]);
+pub struct Mod_e414_17([i64; 8]);
 
-pub const C_VAL: i64 = 17;
+const C_VAL: i64 = 17;
 
 /// The normalized representation of the value 0.
 pub const ZERO: Mod_e414_17 = Mod_e414_17([ 0, 0, 0, 0, 0, 0, 0, 0 ]);
@@ -173,7 +182,7 @@ impl Mod_e414_17 {
     }
 
     /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus 2^521 - 1.
+    /// array must contain a number less than the modulus 2^414 - 17.
     pub fn unpack(bytes : &[u8; 52]) -> Mod_e414_17 {
         let mut out = Mod_e414_17([0i64; 8]);
 

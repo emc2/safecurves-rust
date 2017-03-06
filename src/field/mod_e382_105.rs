@@ -18,12 +18,21 @@ use std::ops::IndexMut;
 use std::ops::Neg;
 
 /// Elements of the finite field mod 2^382 - 105.  Used by the E-382
-/// curve.  Uses 28-bit digits.
+/// curve.
+///
+/// This is represented using fourteen 28-bit digits, stored in a
+/// seven-element i64 array with two digits per word.  This combined
+/// representation allows many operations to be faster.  The leftover
+/// bits in each digit are used to capture carry values.  The internal
+/// representation is lazily normalized: it may leave carry values in
+/// the highest-order digit, and it may hold a value greater than the
+/// modulus.  All operations are guaranteed to work on non-normal values
+/// of this kind.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e382_105(pub [i64; 7]);
+pub struct Mod_e382_105([i64; 7]);
 
-pub const C_VAL: i64 = 105;
+const C_VAL: i64 = 105;
 
 /// The normalized representation of the value 0.
 pub const ZERO: Mod_e382_105 = Mod_e382_105([ 0, 0, 0, 0, 0, 0, 0 ]);
@@ -38,7 +47,7 @@ pub const M_ONE: Mod_e382_105 =
                    0x00ffffffffffffff, 0x00ffffffffffffff,
                    0x00003fffffffffff ]);
 
-/// The normalized representation of the modulus 2^414 - 17.
+/// The normalized representation of the modulus 2^382 - 105.
 pub const MODULUS: Mod_e382_105 =
     Mod_e382_105([ 0x00ffffffffffff97, 0x00ffffffffffffff,
                    0x00ffffffffffffff, 0x00ffffffffffffff,
@@ -92,7 +101,7 @@ impl Mod_e382_105 {
     }
 
     /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^414 - 17.
+    /// holding a value that is truly less than 2^382 - 105.
     ///
     /// This can be done n mod (2^m - c) using a single add and small
     /// multiply as follows: we can detect overflow by doing
