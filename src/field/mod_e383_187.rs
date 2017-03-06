@@ -1,7 +1,6 @@
 use field::prime_field::PrimeField;
 use rand::Rand;
 use rand::Rng;
-use rand::random;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::fmt::LowerHex;
@@ -39,12 +38,25 @@ pub const M_ONE: Mod_e383_187 =
                    0x00ffffffffffffff, 0x00ffffffffffffff,
                    0x00007fffffffffff ]);
 
-/// The normalized representation of the modulus 2^414 - 17.
+/// The normalized representation of the modulus 2^383 - 187.
 pub const MODULUS: Mod_e383_187 =
     Mod_e383_187([ 0x00ffffffffffff45, 0x00ffffffffffffff,
                    0x00ffffffffffffff, 0x00ffffffffffffff,
                    0x00ffffffffffffff, 0x00ffffffffffffff,
                    0x00007fffffffffff ]);
+
+/// The normalized representation of the value -1/2
+pub const M_HALF: Mod_e383_187 =
+    Mod_e383_187([ 0x00ffffffffffffa2, 0x00ffffffffffffff,
+                   0x00ffffffffffffff, 0x00ffffffffffffff,
+                   0x00ffffffffffffff, 0x00ffffffffffffff,
+                   0x00003fffffffffff ]);
+
+const COEFF: Mod_e383_187 =
+    Mod_e383_187([ 0x003bd5336eddd6d9, 0x00b000cb8732e0d4,
+                   0x0012dde4b0a4da30, 0x0094425c260e338b,
+                   0x0015c9a422471129, 0x00730f48097cfdb0,
+                   0x000024617df95ff4 ]);
 
 impl Debug for Mod_e383_187 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
@@ -222,6 +234,32 @@ impl Mod_e383_187 {
                  (((bytes[45] as i64) << 24) & 0x00000000ff000000) |
                  (((bytes[46] as i64) << 32) & 0x000000ff00000000) |
                  (((bytes[47] as i64) << 40) & 0x0000ff0000000000);
+
+        out
+    }
+
+    fn quartic_legendre(&self) -> Self {
+        // First digit is 1.
+        let mut sqval = self.clone();
+        let mut out = self.clone();
+
+        // Second, third, and fourth digits are 0.
+        sqval.square();
+        sqval.square();
+        sqval.square();
+
+        // Fifth digit is 1.
+        sqval.square();
+        out *= &sqval;
+
+        // Sixth digit is 0.
+        sqval.square();
+
+        // All the remaining digits are 1.
+        for _ in 6..381 {
+            sqval.square();
+            out *= &sqval;
+        }
 
         out
     }
@@ -858,48 +896,6 @@ impl Rand for Mod_e383_187 {
     }
 }
 
-fn cipolla_root(n: &Mod_e383_187) -> (Mod_e383_187, Mod_e383_187) {
-    let r: Mod_e383_187 = random();
-    let mut r2n: Mod_e383_187 = r.squared();
-
-    r2n -= &n;
-
-    if r2n.legendre().normalize_self_eq(&ONE) {
-        cipolla_root(n)
-    } else {
-        (r, r2n)
-    }
-}
-
-fn cipolla_square(a: &mut Mod_e383_187, b: &mut Mod_e383_187,
-                  r: &Mod_e383_187) {
-    let mut rb2: Mod_e383_187 = b.squared();
-    rb2 *= r;
-    // b' = ab
-    *b *= a;
-    // b' = 2ab
-    b.small_mul_assign(2);
-    // a' = a^2
-    a.square();
-    // a' = a^2 + rb^2
-    *a += &rb2;
-}
-
-fn cipolla_mul(a: &mut Mod_e383_187, b: &mut Mod_e383_187,
-               sa: &Mod_e383_187, sb: &Mod_e383_187, r: &Mod_e383_187) {
-    let mut rbsb: Mod_e383_187 = b.clone();
-    rbsb *= sb;
-    rbsb *= r;
-    // b' = sa*b
-    *b *= sa;
-    // b' = sa*b + a*sb
-    *b += &(&*a * sb);
-    // a' = a*sa
-    *a *= sa;
-    // a' = a*sa + r*b*sb
-    *a += &rbsb;
-}
-
 impl PrimeField for Mod_e383_187 {
    fn normalize_self_eq(&mut self, other: &Self) -> bool {
         let self_bytes =  self.pack();
@@ -1457,38 +1453,35 @@ impl PrimeField for Mod_e383_187 {
     }
 
     fn sqrt(&self) -> Self {
-        let (r, r2n) = cipolla_root(self);
-
-        let mut sa = r;
-        let mut sb = ONE.clone();
-
         // First digit is 1.
-        let mut a = sa.clone();
-        let mut b = sb.clone();
+        let mut out = self.clone();
+        let mut sqval = out.clone();
 
-        // Second digit is 1.
-        cipolla_square(&mut sa, &mut sb, &r2n);
-        cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+        // Second and third digits are 0
+        sqval.square();
+        sqval.square();
 
-        // Third, fourth, and fifth digits are 0.
-        cipolla_square(&mut sa, &mut sb, &r2n);
-        cipolla_square(&mut sa, &mut sb, &r2n);
-        cipolla_square(&mut sa, &mut sb, &r2n);
+        // Fourth digit is 1.
+        sqval.square();
+        out *= &sqval;
 
-        // Sixth digit is 1.
-        cipolla_square(&mut sa, &mut sb, &r2n);
-        cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+        // Fifth digit is 0.
+        sqval.square();
 
-        // Seventh digit is 1.
-        cipolla_square(&mut sa, &mut sb, &r2n);
-
-        // All digits are 1.
-        for _ in 7..382 {
-            cipolla_square(&mut sa, &mut sb, &r2n);
-            cipolla_mul(&mut a, &mut b, &sa, &sb, &r2n);
+        // All the remaining digits are 1.
+        for _ in 5..380 {
+            sqval.square();
+            out *= &sqval;
         }
 
-        a
+        let mut coeff = self.quartic_legendre();
+
+        coeff -= &ONE;
+        coeff *= &M_HALF;
+        coeff *= &COEFF;
+        coeff += &ONE;
+
+        &out * &coeff
     }
 
     fn small_add_assign(&mut self, rhs: i32) {
@@ -2937,6 +2930,154 @@ mod tests {
             let mut val = l1_mfours[i].legendre();
 
             assert!(ONE.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_quartic_legendre() {
+        let l1_threes: [&mut Mod_e383_187; 6] = [ &mut (&THREE / &ONE),
+                                                  &mut (&M_THREE / &M_ONE),
+                                                  &mut (&SIX / &TWO),
+                                                  &mut (&M_SIX / &M_TWO),
+                                                  &mut (&NINE / &THREE),
+                                                  &mut (&M_NINE / &M_THREE) ];
+
+        let l1_fours: [&mut Mod_e383_187; 6] = [ &mut (&FOUR / &ONE),
+                                                 &mut (&M_FOUR / &M_ONE),
+                                                 &mut (&EIGHT / &TWO),
+                                                 &mut (&M_EIGHT / &M_TWO),
+                                                 &mut (&SIXTEEN / &FOUR),
+                                                 &mut (&M_SIXTEEN / &M_FOUR) ];
+
+        let l1_mones: [&mut Mod_e383_187; 12] = [ &mut (&ONE / &M_ONE),
+                                                  &mut (&M_ONE / &ONE),
+                                                  &mut (&TWO / &M_TWO),
+                                                  &mut (&M_TWO / &TWO),
+                                                  &mut (&THREE / &M_THREE),
+                                                  &mut (&M_THREE / &THREE),
+                                                  &mut (&FOUR / &M_FOUR),
+                                                  &mut (&M_FOUR / &FOUR),
+                                                  &mut (&NINE / &M_NINE),
+                                                  &mut (&M_NINE / &NINE),
+                                                  &mut (&SIXTEEN / &M_SIXTEEN),
+                                                  &mut (&M_SIXTEEN / &SIXTEEN) ];
+
+        let l1_mthrees: [&mut Mod_e383_187; 6] = [ &mut (&THREE / &M_ONE),
+                                                   &mut (&M_THREE / &ONE),
+                                                   &mut (&SIX / &M_TWO),
+                                                   &mut (&M_SIX / &TWO),
+                                                   &mut (&NINE / &M_THREE),
+                                                   &mut (&M_NINE / &THREE) ];
+
+        let l1_mfours: [&mut Mod_e383_187; 6] = [ &mut (&FOUR / &M_ONE),
+                                                 &mut (&M_FOUR / &ONE),
+                                                 &mut (&EIGHT / &M_TWO),
+                                                 &mut (&M_EIGHT / &TWO),
+                                                 &mut (&SIXTEEN / &M_FOUR),
+                                                 &mut (&M_SIXTEEN / &FOUR) ];
+
+        for i in 0..6 {
+            let mut val = l1_threes[i].quartic_legendre();
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..6 {
+            let mut val = l1_fours[i].quartic_legendre();
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..12 {
+            let mut val = l1_mones[i].quartic_legendre();
+
+            assert!(M_ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..6 {
+            let mut val = l1_mthrees[i].quartic_legendre();
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+
+        for i in 0..6 {
+            let mut val = l1_mfours[i].quartic_legendre();
+
+            assert!(ONE.normalize_eq(&mut val));
+        }
+    }
+
+    #[test]
+    fn test_sqrt() {
+        let l1_threes: [&mut Mod_e383_187; 6] = [ &mut (&THREE / &ONE),
+                                                  &mut (&M_THREE / &M_ONE),
+                                                  &mut (&SIX / &TWO),
+                                                  &mut (&M_SIX / &M_TWO),
+                                                  &mut (&NINE / &THREE),
+                                                  &mut (&M_NINE / &M_THREE) ];
+
+        let l1_fours: [&mut Mod_e383_187; 6] = [ &mut (&FOUR / &ONE),
+                                                 &mut (&M_FOUR / &M_ONE),
+                                                 &mut (&EIGHT / &TWO),
+                                                 &mut (&M_EIGHT / &M_TWO),
+                                                 &mut (&SIXTEEN / &FOUR),
+                                                 &mut (&M_SIXTEEN / &M_FOUR) ];
+
+        let l1_mones: [&mut Mod_e383_187; 12] = [ &mut (&ONE / &M_ONE),
+                                                  &mut (&M_ONE / &ONE),
+                                                  &mut (&TWO / &M_TWO),
+                                                  &mut (&M_TWO / &TWO),
+                                                  &mut (&THREE / &M_THREE),
+                                                  &mut (&M_THREE / &THREE),
+                                                  &mut (&FOUR / &M_FOUR),
+                                                  &mut (&M_FOUR / &FOUR),
+                                                  &mut (&NINE / &M_NINE),
+                                                  &mut (&M_NINE / &NINE),
+                                                  &mut (&SIXTEEN / &M_SIXTEEN),
+                                                  &mut (&M_SIXTEEN / &SIXTEEN) ];
+
+        let l1_mthrees: [&mut Mod_e383_187; 6] = [ &mut (&THREE / &M_ONE),
+                                                   &mut (&M_THREE / &ONE),
+                                                   &mut (&SIX / &M_TWO),
+                                                   &mut (&M_SIX / &TWO),
+                                                   &mut (&NINE / &M_THREE),
+                                                   &mut (&M_NINE / &THREE) ];
+
+        let l1_mfours: [&mut Mod_e383_187; 6] = [ &mut (&FOUR / &M_ONE),
+                                                 &mut (&M_FOUR / &ONE),
+                                                 &mut (&EIGHT / &M_TWO),
+                                                 &mut (&M_EIGHT / &TWO),
+                                                 &mut (&SIXTEEN / &M_FOUR),
+                                                 &mut (&M_SIXTEEN / &FOUR) ];
+
+        for i in 0..6 {
+            let val = l1_threes[i].sqrt();
+
+            assert!(val.squared().normalize_eq(l1_threes[i]));
+        }
+
+        for i in 0..6 {
+            let val = l1_fours[i].sqrt();
+
+            assert!(val.squared().normalize_eq(l1_fours[i]));
+        }
+
+        for i in 0..12 {
+            let val = l1_mones[i].sqrt();
+
+            assert!(val.squared().normalize_eq(l1_mones[i]));
+        }
+
+        for i in 0..6 {
+            let val = l1_mthrees[i].sqrt();
+
+            assert!(val.squared().normalize_eq(l1_mthrees[i]));
+        }
+
+        for i in 0..6 {
+            let val = l1_mfours[i].sqrt();
+
+            assert!(val.squared().normalize_eq(l1_mfours[i]));
         }
     }
 
