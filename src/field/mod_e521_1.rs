@@ -110,8 +110,8 @@ impl Mod_e521_1 {
     /// carry_out(n + c), thus, we can normalize the number by doing
     /// n - (carry_out(n + c) * (2^m - c))
     pub fn normalize(&mut self) {
-        let plusone = self.clone().small_add(C_VAL as i32);
-        let offset = MODULUS.small_mul(plusone.carry_out() as i32);
+        let plusone = &*self + (C_VAL as i32);
+        let offset = &MODULUS * (plusone.carry_out() as i32);
         *self -= &offset;
     }
 
@@ -371,6 +371,24 @@ impl<'b> AddAssign<&'b Mod_e521_1> for Mod_e521_1 {
     }
 }
 
+impl AddAssign<i32> for Mod_e521_1 {
+    fn add_assign(&mut self, rhs: i32) {
+        self.small_add_assign(rhs);
+    }
+}
+
+impl AddAssign<i16> for Mod_e521_1 {
+    fn add_assign(&mut self, rhs: i16) {
+        self.small_add_assign(rhs as i32);
+    }
+}
+
+impl AddAssign<i8> for Mod_e521_1 {
+    fn add_assign(&mut self, rhs: i8) {
+        self.small_add_assign(rhs as i32);
+    }
+}
+
 impl<'a, 'b> Add<&'b Mod_e521_1> for &'a Mod_e521_1 {
     type Output = Mod_e521_1;
 
@@ -378,6 +396,54 @@ impl<'a, 'b> Add<&'b Mod_e521_1> for &'a Mod_e521_1 {
         let mut out = self.clone();
         out += a;
         out
+    }
+}
+
+impl<'a> Add<&'a Mod_e521_1> for i32 {
+    type Output = Mod_e521_1;
+
+    fn add(self, a: &'a Mod_e521_1) -> Mod_e521_1 {
+        a.small_add(self)
+    }
+}
+
+impl<'a> Add<&'a Mod_e521_1> for i16 {
+    type Output = Mod_e521_1;
+
+    fn add(self, a: &'a Mod_e521_1) -> Mod_e521_1 {
+        a.small_add(self as i32)
+    }
+}
+
+impl<'a> Add<&'a Mod_e521_1> for i8 {
+    type Output = Mod_e521_1;
+
+    fn add(self, a: &'a Mod_e521_1) -> Mod_e521_1 {
+        a.small_add(self as i32)
+    }
+}
+
+impl<'a> Add<i32> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn add(self, a: i32) -> Mod_e521_1 {
+        self.small_add(a)
+    }
+}
+
+impl<'a> Add<i16> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn add(self, a: i16) -> Mod_e521_1 {
+        self.small_add(a as i32)
+    }
+}
+
+impl<'a> Add<i8> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn add(self, a: i8) -> Mod_e521_1 {
+        self.small_add(a as i32)
     }
 }
 
@@ -455,6 +521,24 @@ impl<'b> SubAssign<&'b Mod_e521_1> for Mod_e521_1 {
     }
 }
 
+impl SubAssign<i32> for Mod_e521_1 {
+    fn sub_assign(&mut self, rhs: i32) {
+        self.small_sub_assign(rhs);
+    }
+}
+
+impl SubAssign<i16> for Mod_e521_1 {
+    fn sub_assign(&mut self, rhs: i16) {
+        self.small_sub_assign(rhs as i32);
+    }
+}
+
+impl SubAssign<i8> for Mod_e521_1 {
+    fn sub_assign(&mut self, rhs: i8) {
+        self.small_sub_assign(rhs as i32);
+    }
+}
+
 impl<'a, 'b> Sub<&'b Mod_e521_1> for &'a Mod_e521_1 {
     type Output = Mod_e521_1;
 
@@ -462,6 +546,48 @@ impl<'a, 'b> Sub<&'b Mod_e521_1> for &'a Mod_e521_1 {
         let mut out = self.clone();
         out -= a;
         out
+    }
+}
+
+impl<'a> Sub<i32> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn sub(self, a: i32) -> Mod_e521_1 {
+        self.small_sub(a)
+    }
+}
+
+impl<'a> Sub<i16> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn sub(self, a: i16) -> Mod_e521_1 {
+        self.small_sub(a as i32)
+    }
+}
+
+impl<'a> Sub<i8> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn sub(self, a: i8) -> Mod_e521_1 {
+        self.small_sub(a as i32)
+    }
+}
+
+impl MulAssign<i32> for Mod_e521_1 {
+    fn mul_assign(&mut self, rhs: i32) {
+        self.small_mul_assign(rhs);
+    }
+}
+
+impl MulAssign<i16> for Mod_e521_1 {
+    fn mul_assign(&mut self, rhs: i16) {
+        self.small_mul_assign(rhs as i32);
+    }
+}
+
+impl MulAssign<i8> for Mod_e521_1 {
+    fn mul_assign(&mut self, rhs: i8) {
+        self.small_mul_assign(rhs as i32);
     }
 }
 
@@ -1229,6 +1355,54 @@ impl<'b> MulAssign<&'b Mod_e521_1> for Mod_e521_1 {
         self[7] = s7_0 & 0x003fffffffffffff;
         self[8] = s8_0 & 0x003fffffffffffff;
         self[9] = s9_0;
+    }
+}
+
+impl<'a> Mul<&'a Mod_e521_1> for i32 {
+    type Output = Mod_e521_1;
+
+    fn mul(self, a: &'a Mod_e521_1) -> Mod_e521_1 {
+        a.small_mul(self)
+    }
+}
+
+impl<'a> Mul<&'a Mod_e521_1> for i16 {
+    type Output = Mod_e521_1;
+
+    fn mul(self, a: &'a Mod_e521_1) -> Mod_e521_1 {
+        a.small_mul(self as i32)
+    }
+}
+
+impl<'a> Mul<&'a Mod_e521_1> for i8 {
+    type Output = Mod_e521_1;
+
+    fn mul(self, a: &'a Mod_e521_1) -> Mod_e521_1 {
+        a.small_mul(self as i32)
+    }
+}
+
+impl<'a> Mul<i32> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn mul(self, a: i32) -> Mod_e521_1 {
+        self.small_mul(a)
+    }
+}
+
+impl<'a> Mul<i16> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn mul(self, a: i16) -> Mod_e521_1 {
+        self.small_mul(a as i32)
+    }
+}
+
+impl<'a> Mul<i8> for &'a Mod_e521_1 {
+    type Output = Mod_e521_1;
+
+    fn mul(self, a: i8) -> Mod_e521_1 {
+        self.small_mul(a as i32)
     }
 }
 

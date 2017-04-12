@@ -30,7 +30,7 @@ use std::ops::Neg;
 /// of this kind.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e251_9([i64; 5]);
+pub struct Mod_e251_9(pub [i64; 5]);
 
 const C_VAL: i64 = 9;
 
@@ -106,8 +106,8 @@ impl Mod_e251_9 {
     /// carry_out(n + c), thus, we can normalize the number by doing
     /// n - (carry_out(n + c) * (2^m - c))
     pub fn normalize(&mut self) {
-        let plusc = self.clone().small_add(C_VAL as i32);
-        let offset = MODULUS.small_mul(plusc.carry_out() as i32);
+        let plusc = &*self + (C_VAL as i32);
+        let offset = &MODULUS * (plusc.carry_out() as i32);
         *self -= &offset;
     }
 
@@ -261,6 +261,24 @@ impl<'b> AddAssign<&'b Mod_e251_9> for Mod_e251_9 {
     }
 }
 
+impl AddAssign<i32> for Mod_e251_9 {
+    fn add_assign(&mut self, rhs: i32) {
+        self.small_add_assign(rhs);
+    }
+}
+
+impl AddAssign<i16> for Mod_e251_9 {
+    fn add_assign(&mut self, rhs: i16) {
+        self.small_add_assign(rhs as i32);
+    }
+}
+
+impl AddAssign<i8> for Mod_e251_9 {
+    fn add_assign(&mut self, rhs: i8) {
+        self.small_add_assign(rhs as i32);
+    }
+}
+
 impl<'a, 'b> Add<&'b Mod_e251_9> for &'a Mod_e251_9 {
     type Output = Mod_e251_9;
 
@@ -268,6 +286,54 @@ impl<'a, 'b> Add<&'b Mod_e251_9> for &'a Mod_e251_9 {
         let mut out = self.clone();
         out += a;
         out
+    }
+}
+
+impl<'a> Add<&'a Mod_e251_9> for i32 {
+    type Output = Mod_e251_9;
+
+    fn add(self, a: &'a Mod_e251_9) -> Mod_e251_9 {
+        a.small_add(self)
+    }
+}
+
+impl<'a> Add<&'a Mod_e251_9> for i16 {
+    type Output = Mod_e251_9;
+
+    fn add(self, a: &'a Mod_e251_9) -> Mod_e251_9 {
+        a.small_add(self as i32)
+    }
+}
+
+impl<'a> Add<&'a Mod_e251_9> for i8 {
+    type Output = Mod_e251_9;
+
+    fn add(self, a: &'a Mod_e251_9) -> Mod_e251_9 {
+        a.small_add(self as i32)
+    }
+}
+
+impl<'a> Add<i32> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn add(self, a: i32) -> Mod_e251_9 {
+        self.small_add(a)
+    }
+}
+
+impl<'a> Add<i16> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn add(self, a: i16) -> Mod_e251_9 {
+        self.small_add(a as i32)
+    }
+}
+
+impl<'a> Add<i8> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn add(self, a: i8) -> Mod_e251_9 {
+        self.small_add(a as i32)
     }
 }
 
@@ -320,6 +386,24 @@ impl<'b> SubAssign<&'b Mod_e251_9> for Mod_e251_9 {
     }
 }
 
+impl SubAssign<i32> for Mod_e251_9 {
+    fn sub_assign(&mut self, rhs: i32) {
+        self.small_sub_assign(rhs);
+    }
+}
+
+impl SubAssign<i16> for Mod_e251_9 {
+    fn sub_assign(&mut self, rhs: i16) {
+        self.small_sub_assign(rhs as i32);
+    }
+}
+
+impl SubAssign<i8> for Mod_e251_9 {
+    fn sub_assign(&mut self, rhs: i8) {
+        self.small_sub_assign(rhs as i32);
+    }
+}
+
 impl<'a, 'b> Sub<&'b Mod_e251_9> for &'a Mod_e251_9 {
     type Output = Mod_e251_9;
 
@@ -327,6 +411,48 @@ impl<'a, 'b> Sub<&'b Mod_e251_9> for &'a Mod_e251_9 {
         let mut out = self.clone();
         out -= a;
         out
+    }
+}
+
+impl<'a> Sub<i32> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn sub(self, a: i32) -> Mod_e251_9 {
+        self.small_sub(a)
+    }
+}
+
+impl<'a> Sub<i16> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn sub(self, a: i16) -> Mod_e251_9 {
+        self.small_sub(a as i32)
+    }
+}
+
+impl<'a> Sub<i8> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn sub(self, a: i8) -> Mod_e251_9 {
+        self.small_sub(a as i32)
+    }
+}
+
+impl MulAssign<i32> for Mod_e251_9 {
+    fn mul_assign(&mut self, rhs: i32) {
+        self.small_mul_assign(rhs);
+    }
+}
+
+impl MulAssign<i16> for Mod_e251_9 {
+    fn mul_assign(&mut self, rhs: i16) {
+        self.small_mul_assign(rhs as i32);
+    }
+}
+
+impl MulAssign<i8> for Mod_e251_9 {
+    fn mul_assign(&mut self, rhs: i8) {
+        self.small_mul_assign(rhs as i32);
     }
 }
 
@@ -543,6 +669,54 @@ impl<'b> MulAssign<&'b Mod_e251_9> for Mod_e251_9 {
         self[3] = s3_0 & 0x00ffffffffffffff;
         self[4] = s4_0;
      }
+}
+
+impl<'a> Mul<&'a Mod_e251_9> for i32 {
+    type Output = Mod_e251_9;
+
+    fn mul(self, a: &'a Mod_e251_9) -> Mod_e251_9 {
+        a.small_mul(self)
+    }
+}
+
+impl<'a> Mul<&'a Mod_e251_9> for i16 {
+    type Output = Mod_e251_9;
+
+    fn mul(self, a: &'a Mod_e251_9) -> Mod_e251_9 {
+        a.small_mul(self as i32)
+    }
+}
+
+impl<'a> Mul<&'a Mod_e251_9> for i8 {
+    type Output = Mod_e251_9;
+
+    fn mul(self, a: &'a Mod_e251_9) -> Mod_e251_9 {
+        a.small_mul(self as i32)
+    }
+}
+
+impl<'a> Mul<i32> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn mul(self, a: i32) -> Mod_e251_9 {
+        self.small_mul(a)
+    }
+}
+
+impl<'a> Mul<i16> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn mul(self, a: i16) -> Mod_e251_9 {
+        self.small_mul(a as i32)
+    }
+}
+
+impl<'a> Mul<i8> for &'a Mod_e251_9 {
+    type Output = Mod_e251_9;
+
+    fn mul(self, a: i8) -> Mod_e251_9 {
+        self.small_mul(a as i32)
+    }
 }
 
 impl<'a, 'b> Mul<&'b Mod_e251_9> for &'a Mod_e251_9 {
