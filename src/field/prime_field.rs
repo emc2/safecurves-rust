@@ -31,11 +31,29 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
     /// array must contain a number less than the modulus.
     fn unpacked(bytes: &[u8]) -> Self;
 
+    /// Serialize as a little-endian byte array.  This has the effect
+    /// of normalizing the representation.
+    fn pack(&mut self, &mut [u8]);
+
+    /// Serialize an already normalized number as a little-endian byte
+    /// array.  This must only be used on a normalized value.
+    fn pack_normalized(&self, &mut [u8]);
+
     /// Get the number of bits in the number.
     fn nbits() -> i32;
 
     /// Get the number of bytes in the packed representation.
     fn nbytes() -> i32;
+
+    /// Normalize the internal representation, resulting in the
+    /// internal digits holding a value that is truly less than the
+    /// modulus.
+    ///
+    /// This can be done n mod (2^m - c) using a single add and small
+    /// multiply as follows: we can detect overflow by doing
+    /// carry_out(n + c), thus, we can normalize the number by doing
+    /// n - (carry_out(n + c) * (2^m - c))
+    fn normalize(&mut self);
 
     /// Normalize self and compare for equality.
     fn normalize_self_eq(&mut self, other: &Self) -> bool;

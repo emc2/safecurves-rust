@@ -69,7 +69,7 @@ impl Debug for Mod_e414_17 {
 impl LowerHex for Mod_e414_17 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut cpy = self.clone();
-        let bytes = cpy.pack();
+        let bytes = cpy.packed();
 
         for i in 0..52 {
             try!(write!(f, "{:02x}", bytes[51 - i]));
@@ -82,7 +82,7 @@ impl LowerHex for Mod_e414_17 {
 impl UpperHex for Mod_e414_17 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut cpy = self.clone();
-        let bytes = cpy.pack();
+        let bytes = cpy.packed();
 
         for i in 0..52 {
             try!(write!(f, "{:02X}", bytes[51 - i]));
@@ -100,85 +100,20 @@ impl Mod_e414_17 {
         self[7] >> 22
     }
 
-    /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^414 - 17.
-    ///
-    /// This can be done n mod (2^m - c) using a single add and small
-    /// multiply as follows: we can detect overflow by doing
-    /// carry_out(n + c), thus, we can normalize the number by doing
-    /// n - (carry_out(n + c) * (2^m - c))
-    pub fn normalize(&mut self) {
-        let plusc = &*self + (C_VAL as i32);
-        let offset = &MODULUS * (plusc.carry_out() as i32);
-        *self -= &offset;
-    }
-
     /// Serialize a value as a little-endian byte array.  This has the
     /// effect of normalizing the representation.
-    pub fn pack(&mut self) -> [u8; 52] {
-        self.normalize();
-        self.pack_normalized()
+    pub fn packed(&mut self) -> [u8; 52] {
+        let mut out = [0u8; 52];
+        self.pack(&mut out);
+        out
     }
 
     /// Serialize an already normalized number as a little-endian byte
     /// array.  This must only be used on a normalized value.
-    pub fn pack_normalized(&self) -> [u8; 52] {
-        let mut bytes = [0u8; 52];
-
-        bytes[0] = (self[0] & 0b11111111) as u8;
-        bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
-        bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
-        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
-        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
-        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
-        bytes[6] = ((self[0] >> 48) & 0b11111111) as u8;
-        bytes[7] = (self[1] & 0b11111111) as u8;
-        bytes[8] = ((self[1] >> 8) & 0b11111111) as u8;
-        bytes[9] = ((self[1] >> 16) & 0b11111111) as u8;
-        bytes[10] = ((self[1] >> 24) & 0b11111111) as u8;
-        bytes[11] = ((self[1] >> 32) & 0b11111111) as u8;
-        bytes[12] = ((self[1] >> 40) & 0b11111111) as u8;
-        bytes[13] = ((self[1] >> 48) & 0b11111111) as u8;
-        bytes[14] = (self[2] & 0b11111111) as u8;
-        bytes[15] = ((self[2] >> 8) & 0b11111111) as u8;
-        bytes[16] = ((self[2] >> 16) & 0b11111111) as u8;
-        bytes[17] = ((self[2] >> 24) & 0b11111111) as u8;
-        bytes[18] = ((self[2] >> 32) & 0b11111111) as u8;
-        bytes[19] = ((self[2] >> 40) & 0b11111111) as u8;
-        bytes[20] = ((self[2] >> 48) & 0b11111111) as u8;
-        bytes[21] = (self[3] & 0b11111111) as u8;
-        bytes[22] = ((self[3] >> 8) & 0b11111111) as u8;
-        bytes[23] = ((self[3] >> 16) & 0b11111111) as u8;
-        bytes[24] = ((self[3] >> 24) & 0b11111111) as u8;
-        bytes[25] = ((self[3] >> 32) & 0b11111111) as u8;
-        bytes[26] = ((self[3] >> 40) & 0b11111111) as u8;
-        bytes[27] = ((self[3] >> 48) & 0b11111111) as u8;
-        bytes[28] = (self[4] & 0b11111111) as u8;
-        bytes[29] = ((self[4] >> 8) & 0b11111111) as u8;
-        bytes[30] = ((self[4] >> 16) & 0b11111111) as u8;
-        bytes[31] = ((self[4] >> 24) & 0b11111111) as u8;
-        bytes[32] = ((self[4] >> 32) & 0b11111111) as u8;
-        bytes[33] = ((self[4] >> 40) & 0b11111111) as u8;
-        bytes[34] = ((self[4] >> 48) & 0b11111111) as u8;
-        bytes[35] = (self[5] & 0b11111111) as u8;
-        bytes[36] = ((self[5] >> 8) & 0b11111111) as u8;
-        bytes[37] = ((self[5] >> 16) & 0b11111111) as u8;
-        bytes[38] = ((self[5] >> 24) & 0b11111111) as u8;
-        bytes[39] = ((self[5] >> 32) & 0b11111111) as u8;
-        bytes[40] = ((self[5] >> 40) & 0b11111111) as u8;
-        bytes[41] = ((self[5] >> 48) & 0b11111111) as u8;
-        bytes[42] = (self[6] & 0b11111111) as u8;
-        bytes[43] = ((self[6] >> 8) & 0b11111111) as u8;
-        bytes[44] = ((self[6] >> 16) & 0b11111111) as u8;
-        bytes[45] = ((self[6] >> 24) & 0b11111111) as u8;
-        bytes[46] = ((self[6] >> 32) & 0b11111111) as u8;
-        bytes[47] = ((self[6] >> 40) & 0b11111111) as u8;
-        bytes[48] = ((self[6] >> 48) & 0b11111111) as u8;
-        bytes[49] = (self[7] & 0b11111111) as u8;
-        bytes[50] = ((self[7] >> 8) & 0b11111111) as u8;
-        bytes[51] = ((self[7] >> 16) & 0b00111111) as u8;
-
-        bytes
+    fn packed_normalized(&self) -> [u8; 52] {
+        let mut out = [0u8; 52];
+        self.pack_normalized(&mut out);
+        out
     }
 }
 
@@ -1201,6 +1136,66 @@ impl PrimeField for Mod_e414_17 {
         out
     }
 
+    fn pack(&mut self, bytes: &mut [u8]) {
+        self.normalize();
+        self.pack_normalized(bytes)
+    }
+
+    fn pack_normalized(&self, bytes: &mut [u8]) {
+        bytes[0] = (self[0] & 0b11111111) as u8;
+        bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
+        bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
+        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
+        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
+        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
+        bytes[6] = ((self[0] >> 48) & 0b11111111) as u8;
+        bytes[7] = (self[1] & 0b11111111) as u8;
+        bytes[8] = ((self[1] >> 8) & 0b11111111) as u8;
+        bytes[9] = ((self[1] >> 16) & 0b11111111) as u8;
+        bytes[10] = ((self[1] >> 24) & 0b11111111) as u8;
+        bytes[11] = ((self[1] >> 32) & 0b11111111) as u8;
+        bytes[12] = ((self[1] >> 40) & 0b11111111) as u8;
+        bytes[13] = ((self[1] >> 48) & 0b11111111) as u8;
+        bytes[14] = (self[2] & 0b11111111) as u8;
+        bytes[15] = ((self[2] >> 8) & 0b11111111) as u8;
+        bytes[16] = ((self[2] >> 16) & 0b11111111) as u8;
+        bytes[17] = ((self[2] >> 24) & 0b11111111) as u8;
+        bytes[18] = ((self[2] >> 32) & 0b11111111) as u8;
+        bytes[19] = ((self[2] >> 40) & 0b11111111) as u8;
+        bytes[20] = ((self[2] >> 48) & 0b11111111) as u8;
+        bytes[21] = (self[3] & 0b11111111) as u8;
+        bytes[22] = ((self[3] >> 8) & 0b11111111) as u8;
+        bytes[23] = ((self[3] >> 16) & 0b11111111) as u8;
+        bytes[24] = ((self[3] >> 24) & 0b11111111) as u8;
+        bytes[25] = ((self[3] >> 32) & 0b11111111) as u8;
+        bytes[26] = ((self[3] >> 40) & 0b11111111) as u8;
+        bytes[27] = ((self[3] >> 48) & 0b11111111) as u8;
+        bytes[28] = (self[4] & 0b11111111) as u8;
+        bytes[29] = ((self[4] >> 8) & 0b11111111) as u8;
+        bytes[30] = ((self[4] >> 16) & 0b11111111) as u8;
+        bytes[31] = ((self[4] >> 24) & 0b11111111) as u8;
+        bytes[32] = ((self[4] >> 32) & 0b11111111) as u8;
+        bytes[33] = ((self[4] >> 40) & 0b11111111) as u8;
+        bytes[34] = ((self[4] >> 48) & 0b11111111) as u8;
+        bytes[35] = (self[5] & 0b11111111) as u8;
+        bytes[36] = ((self[5] >> 8) & 0b11111111) as u8;
+        bytes[37] = ((self[5] >> 16) & 0b11111111) as u8;
+        bytes[38] = ((self[5] >> 24) & 0b11111111) as u8;
+        bytes[39] = ((self[5] >> 32) & 0b11111111) as u8;
+        bytes[40] = ((self[5] >> 40) & 0b11111111) as u8;
+        bytes[41] = ((self[5] >> 48) & 0b11111111) as u8;
+        bytes[42] = (self[6] & 0b11111111) as u8;
+        bytes[43] = ((self[6] >> 8) & 0b11111111) as u8;
+        bytes[44] = ((self[6] >> 16) & 0b11111111) as u8;
+        bytes[45] = ((self[6] >> 24) & 0b11111111) as u8;
+        bytes[46] = ((self[6] >> 32) & 0b11111111) as u8;
+        bytes[47] = ((self[6] >> 40) & 0b11111111) as u8;
+        bytes[48] = ((self[6] >> 48) & 0b11111111) as u8;
+        bytes[49] = (self[7] & 0b11111111) as u8;
+        bytes[50] = ((self[7] >> 8) & 0b11111111) as u8;
+        bytes[51] = ((self[7] >> 16) & 0b00111111) as u8;
+    }
+
     fn nbits() -> i32 {
         414
     }
@@ -1209,9 +1204,15 @@ impl PrimeField for Mod_e414_17 {
         52
     }
 
+    fn normalize(&mut self) {
+        let plusc = &*self + (C_VAL as i32);
+        let offset = &MODULUS * (plusc.carry_out() as i32);
+        *self -= &offset;
+    }
+
     fn normalize_self_eq(&mut self, other: &Self) -> bool {
-        let self_bytes =  self.pack();
-        let other_bytes = other.pack_normalized();
+        let self_bytes =  self.packed();
+        let other_bytes = other.packed_normalized();
         let mut are_equal: bool = true;
 
         for i in 0..52 {
@@ -1222,8 +1223,8 @@ impl PrimeField for Mod_e414_17 {
     }
 
     fn normalize_eq(&mut self, other: &mut Self) -> bool {
-        let self_bytes =  self.pack();
-        let other_bytes = other.pack();
+        let self_bytes =  self.packed();
+        let other_bytes = other.packed();
         let mut are_equal: bool = true;
 
         for i in 0..52 {
@@ -2011,8 +2012,8 @@ mod tests {
                       0x00ffffffffffffff, 0x00000000003fffff ]);
 
     fn test_pack_unpack(expected: &[u8; 52]) {
-        let mut unpacked = Mod_e414_17::unpack(expected);
-        let actual = unpacked.pack();
+        let mut unpacked = Mod_e414_17::unpacked(expected);
+        let actual = unpacked.packed();
 
         for i in 0..52 {
             assert!(expected[i] == actual[i]);
@@ -2020,8 +2021,8 @@ mod tests {
     }
 
     fn test_unpack_pack(expected: &mut Mod_e414_17) {
-        let bytes = expected.pack();
-        let actual = Mod_e414_17::unpack(&bytes);
+        let bytes = expected.packed();
+        let actual = Mod_e414_17::unpacked(&bytes);
 
         for i in 0..8 {
             assert!(expected[i] == actual[i]);

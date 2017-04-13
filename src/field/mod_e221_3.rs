@@ -74,7 +74,7 @@ impl Debug for Mod_e221_3 {
 impl LowerHex for Mod_e221_3 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut cpy = self.clone();
-        let bytes = cpy.pack();
+        let bytes = cpy.packed();
 
         for i in 0..28 {
             try!(write!(f, "{:02x}", bytes[27 - i]));
@@ -87,7 +87,7 @@ impl LowerHex for Mod_e221_3 {
 impl UpperHex for Mod_e221_3 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut cpy = self.clone();
-        let bytes = cpy.pack();
+        let bytes = cpy.packed();
 
         for i in 0..28 {
             try!(write!(f, "{:02X}", bytes[27 - i]));
@@ -105,64 +105,20 @@ impl Mod_e221_3 {
         self[3] >> 47
     }
 
-    /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^221 - 3.
-    ///
-    /// This can be done n mod (2^m - c) using a single add and small
-    /// multiply as follows: we can detect overflow by doing
-    /// carry_out(n + c), thus, we can normalize the number by doing
-    /// n - (carry_out(n + c) * (2^m - c))
-    pub fn normalize(&mut self) {
-        let plusc = &*self + (C_VAL as i32);
-        let offset = &MODULUS * (plusc.carry_out() as i32);
-        *self -= &offset;
-    }
-
     /// Serialize a value as a little-endian byte array.  This has the
     /// effect of normalizing the representation.
-    pub fn pack(&mut self) -> [u8; 28] {
-        self.normalize();
-        self.pack_normalized()
+    pub fn packed(&mut self) -> [u8; 28] {
+        let mut out = [0u8; 28];
+        self.pack(&mut out);
+        out
     }
 
     /// Serialize an already normalized number as a little-endian byte
     /// array.  This must only be used on a normalized value.
-    pub fn pack_normalized(&self) -> [u8; 28] {
-        let mut bytes = [0u8; 28];
-
-        bytes[0] = (self[0] & 0b11111111) as u8;
-        bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
-        bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
-        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
-        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
-        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
-        bytes[6] = ((self[0] >> 48) & 0b11111111) as u8;
-        bytes[7] = (((self[0] >> 56) & 0b00000011) as u8) |
-                   (((self[1] << 2) & 0b11111100) as u8);
-        bytes[8] = ((self[1] >> 6) & 0b11111111) as u8;
-        bytes[9] = ((self[1] >> 14) & 0b11111111) as u8;
-        bytes[10] = ((self[1] >> 22) & 0b11111111) as u8;
-        bytes[11] = ((self[1] >> 30) & 0b11111111) as u8;
-        bytes[12] = ((self[1] >> 38) & 0b11111111) as u8;
-        bytes[13] = ((self[1] >> 46) & 0b11111111) as u8;
-        bytes[14] = (((self[1] >> 54) & 0b00001111) as u8) |
-                    (((self[2] << 4) & 0b11110000) as u8);
-        bytes[15] = ((self[2] >> 4) & 0b11111111) as u8;
-        bytes[16] = ((self[2] >> 12) & 0b11111111) as u8;
-        bytes[17] = ((self[2] >> 20) & 0b11111111) as u8;
-        bytes[18] = ((self[2] >> 28) & 0b11111111) as u8;
-        bytes[19] = ((self[2] >> 36) & 0b11111111) as u8;
-        bytes[20] = ((self[2] >> 44) & 0b11111111) as u8;
-        bytes[21] = (((self[2] >> 52) & 0b00111111) as u8) |
-                    (((self[3] << 6) & 0b11000000) as u8);
-        bytes[22] = ((self[3] >> 2) & 0b11111111) as u8;
-        bytes[23] = ((self[3] >> 10) & 0b11111111) as u8;
-        bytes[24] = ((self[3] >> 18) & 0b11111111) as u8;
-        bytes[25] = ((self[3] >> 26) & 0b11111111) as u8;
-        bytes[26] = ((self[3] >> 34) & 0b11111111) as u8;
-        bytes[27] = ((self[3] >> 42) & 0b00011111) as u8;
-
-        bytes
+    fn packed_normalized(&self) -> [u8; 28] {
+        let mut out = [0u8; 28];
+        self.pack_normalized(&mut out);
+        out
     }
 
     /// Similar to the Legendre symbol, but for quartic
@@ -847,6 +803,45 @@ impl PrimeField for Mod_e221_3 {
         out
     }
 
+    fn pack(&mut self, bytes: &mut [u8]) {
+        self.normalize();
+        self.pack_normalized(bytes)
+    }
+
+    fn pack_normalized(&self, bytes: &mut [u8]) {
+        bytes[0] = (self[0] & 0b11111111) as u8;
+        bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
+        bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
+        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
+        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
+        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
+        bytes[6] = ((self[0] >> 48) & 0b11111111) as u8;
+        bytes[7] = (((self[0] >> 56) & 0b00000011) as u8) |
+                   (((self[1] << 2) & 0b11111100) as u8);
+        bytes[8] = ((self[1] >> 6) & 0b11111111) as u8;
+        bytes[9] = ((self[1] >> 14) & 0b11111111) as u8;
+        bytes[10] = ((self[1] >> 22) & 0b11111111) as u8;
+        bytes[11] = ((self[1] >> 30) & 0b11111111) as u8;
+        bytes[12] = ((self[1] >> 38) & 0b11111111) as u8;
+        bytes[13] = ((self[1] >> 46) & 0b11111111) as u8;
+        bytes[14] = (((self[1] >> 54) & 0b00001111) as u8) |
+                    (((self[2] << 4) & 0b11110000) as u8);
+        bytes[15] = ((self[2] >> 4) & 0b11111111) as u8;
+        bytes[16] = ((self[2] >> 12) & 0b11111111) as u8;
+        bytes[17] = ((self[2] >> 20) & 0b11111111) as u8;
+        bytes[18] = ((self[2] >> 28) & 0b11111111) as u8;
+        bytes[19] = ((self[2] >> 36) & 0b11111111) as u8;
+        bytes[20] = ((self[2] >> 44) & 0b11111111) as u8;
+        bytes[21] = (((self[2] >> 52) & 0b00111111) as u8) |
+                    (((self[3] << 6) & 0b11000000) as u8);
+        bytes[22] = ((self[3] >> 2) & 0b11111111) as u8;
+        bytes[23] = ((self[3] >> 10) & 0b11111111) as u8;
+        bytes[24] = ((self[3] >> 18) & 0b11111111) as u8;
+        bytes[25] = ((self[3] >> 26) & 0b11111111) as u8;
+        bytes[26] = ((self[3] >> 34) & 0b11111111) as u8;
+        bytes[27] = ((self[3] >> 42) & 0b00011111) as u8;
+    }
+
     fn nbits() -> i32 {
         221
     }
@@ -855,9 +850,15 @@ impl PrimeField for Mod_e221_3 {
         28
     }
 
+    fn normalize(&mut self) {
+        let plusc = &*self + (C_VAL as i32);
+        let offset = &MODULUS * (plusc.carry_out() as i32);
+        *self -= &offset;
+    }
+
     fn normalize_self_eq(&mut self, other: &Self) -> bool {
-        let self_bytes =  self.pack();
-        let other_bytes = other.pack_normalized();
+        let self_bytes =  self.packed();
+        let other_bytes = other.packed_normalized();
         let mut are_equal: bool = true;
 
         for i in 0..28 {
@@ -868,8 +869,8 @@ impl PrimeField for Mod_e221_3 {
     }
 
     fn normalize_eq(&mut self, other: &mut Self) -> bool {
-        let self_bytes =  self.pack();
-        let other_bytes = other.pack();
+        let self_bytes =  self.packed();
+        let other_bytes = other.packed();
         let mut are_equal: bool = true;
 
         for i in 0..28 {
@@ -1291,8 +1292,8 @@ mod tests {
                      0x03ffffffffffffff, 0x00007fffffffffff ]);
 
     fn test_pack_unpack(expected: &[u8; 28]) {
-        let mut unpacked = Mod_e221_3::unpack(expected);
-        let actual = unpacked.pack();
+        let mut unpacked = Mod_e221_3::unpacked(expected);
+        let actual = unpacked.packed();
 
         for i in 0..28 {
             assert!(expected[i] == actual[i]);
@@ -1300,8 +1301,8 @@ mod tests {
     }
 
     fn test_unpack_pack(expected: &mut Mod_e221_3) {
-        let bytes = expected.pack();
-        let actual = Mod_e221_3::unpack(&bytes);
+        let bytes = expected.packed();
+        let actual = Mod_e221_3::unpacked(&bytes);
 
         for i in 0..4 {
             assert!(expected[i] == actual[i]);

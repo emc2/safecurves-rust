@@ -86,7 +86,7 @@ impl Debug for Mod_e511_187 {
 impl LowerHex for Mod_e511_187 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut cpy = self.clone();
-        let bytes = cpy.pack();
+        let bytes = cpy.packed();
 
         for i in 0..64 {
             try!(write!(f, "{:02x}", bytes[63 - i]));
@@ -99,7 +99,7 @@ impl LowerHex for Mod_e511_187 {
 impl UpperHex for Mod_e511_187 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut cpy = self.clone();
-        let bytes = cpy.pack();
+        let bytes = cpy.packed();
 
         for i in 0..64 {
             try!(write!(f, "{:02X}", bytes[63 - i]));
@@ -117,104 +117,20 @@ impl Mod_e511_187 {
         self[9] >> 25
     }
 
-    /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^511 - 187.
-    ///
-    /// This can be done n mod (2^m - c) using a single add and small
-    /// multiply as follows: we can detect overflow by doing
-    /// carry_out(n + c), thus, we can normalize the number by doing
-    /// n - (carry_out(n + c) * (2^m - c))
-    pub fn normalize(&mut self) {
-        let plusc = &*self + (C_VAL as i32);
-        let offset = &MODULUS * (plusc.carry_out() as i32);
-        *self -= &offset;
-    }
-
     /// Serialize a value as a little-endian byte array.  This has the
     /// effect of normalizing the representation.
-    pub fn pack(&mut self) -> [u8; 64] {
-        self.normalize();
-        self.pack_normalized()
+    pub fn packed(&mut self) -> [u8; 64] {
+        let mut out = [0u8; 64];
+        self.pack(&mut out);
+        out
     }
 
     /// Serialize an already normalized number as a little-endian byte
     /// array.  This must only be used on a normalized value.
-    pub fn pack_normalized(&self) -> [u8; 64] {
-        let mut bytes = [0u8; 64];
-
-        bytes[0] = (self[0] & 0b11111111) as u8;
-        bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
-        bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
-        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
-        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
-        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
-        bytes[6] = (((self[0] >> 48) & 0b00111111) |
-                    ((self[1] << 6) & 0b11000000)) as u8;
-        bytes[7] = ((self[1] >> 2) & 0b11111111) as u8;
-        bytes[8] = ((self[1] >> 10) & 0b11111111) as u8;
-        bytes[9] = ((self[1] >> 18) & 0b11111111) as u8;
-        bytes[10] = ((self[1] >> 26) & 0b11111111) as u8;
-        bytes[11] = ((self[1] >> 34) & 0b11111111) as u8;
-        bytes[12] = ((self[1] >> 42) & 0b11111111) as u8;
-        bytes[13] = (((self[1] >> 50) & 0b00001111) |
-                     ((self[2] << 4) & 0b11110000)) as u8;
-        bytes[14] = ((self[2] >> 4) & 0b11111111) as u8;
-        bytes[15] = ((self[2] >> 12) & 0b11111111) as u8;
-        bytes[16] = ((self[2] >> 20) & 0b11111111) as u8;
-        bytes[17] = ((self[2] >> 28) & 0b11111111) as u8;
-        bytes[18] = ((self[2] >> 36) & 0b11111111) as u8;
-        bytes[19] = ((self[2] >> 44) & 0b11111111) as u8;
-        bytes[20] = (((self[2] >> 52) & 0b00000011) |
-                     ((self[3] << 2) & 0b11111100)) as u8;
-        bytes[21] = ((self[3] >> 6) & 0b11111111) as u8;
-        bytes[22] = ((self[3] >> 14) & 0b11111111) as u8;
-        bytes[23] = ((self[3] >> 22) & 0b11111111) as u8;
-        bytes[24] = ((self[3] >> 30) & 0b11111111) as u8;
-        bytes[25] = ((self[3] >> 38) & 0b11111111) as u8;
-        bytes[26] = ((self[3] >> 46) & 0b11111111) as u8;
-        bytes[27] = (self[4] & 0b11111111) as u8;
-        bytes[28] = ((self[4] >> 8) & 0b11111111) as u8;
-        bytes[29] = ((self[4] >> 16) & 0b11111111) as u8;
-        bytes[30] = ((self[4] >> 24) & 0b11111111) as u8;
-        bytes[31] = ((self[4] >> 32) & 0b11111111) as u8;
-        bytes[32] = ((self[4] >> 40) & 0b11111111) as u8;
-        bytes[33] = (((self[4] >> 48) & 0b00111111) |
-                     ((self[5] << 6) & 0b11000000)) as u8;
-        bytes[34] = ((self[5] >> 2) & 0b11111111) as u8;
-        bytes[35] = ((self[5] >> 10) & 0b11111111) as u8;
-        bytes[36] = ((self[5] >> 18) & 0b11111111) as u8;
-        bytes[37] = ((self[5] >> 26) & 0b11111111) as u8;
-        bytes[38] = ((self[5] >> 34) & 0b11111111) as u8;
-        bytes[39] = ((self[5] >> 42) & 0b11111111) as u8;
-        bytes[40] = (((self[5] >> 50) & 0b00001111) |
-                     ((self[6] << 4) & 0b11110000)) as u8;
-        bytes[41] = ((self[6] >> 4) & 0b11111111) as u8;
-        bytes[42] = ((self[6] >> 12) & 0b11111111) as u8;
-        bytes[43] = ((self[6] >> 20) & 0b11111111) as u8;
-        bytes[44] = ((self[6] >> 28) & 0b11111111) as u8;
-        bytes[45] = ((self[6] >> 36) & 0b11111111) as u8;
-        bytes[46] = ((self[6] >> 44) & 0b11111111) as u8;
-        bytes[47] = (((self[6] >> 52) & 0b00000011) |
-                     ((self[7] << 2) & 0b11111100)) as u8;
-        bytes[48] = ((self[7] >> 6) & 0b11111111) as u8;
-        bytes[49] = ((self[7] >> 14) & 0b11111111) as u8;
-        bytes[50] = ((self[7] >> 22) & 0b11111111) as u8;
-        bytes[51] = ((self[7] >> 30) & 0b11111111) as u8;
-        bytes[52] = ((self[7] >> 38) & 0b11111111) as u8;
-        bytes[53] = ((self[7] >> 46) & 0b11111111) as u8;
-        bytes[54] = (self[8] & 0b11111111) as u8;
-        bytes[55] = ((self[8] >> 8) & 0b11111111) as u8;
-        bytes[56] = ((self[8] >> 16) & 0b11111111) as u8;
-        bytes[57] = ((self[8] >> 24) & 0b11111111) as u8;
-        bytes[58] = ((self[8] >> 32) & 0b11111111) as u8;
-        bytes[59] = ((self[8] >> 40) & 0b11111111) as u8;
-        bytes[60] = (((self[8] >> 48) & 0b00111111) |
-                     ((self[9] << 6) & 0b11000000)) as u8;
-        bytes[61] = ((self[9] >> 2) & 0b11111111) as u8;
-        bytes[62] = ((self[9] >> 10) & 0b11111111) as u8;
-        bytes[63] = ((self[9] >> 18) & 0b01111111) as u8;
-
-        bytes
+    fn packed_normalized(&self) -> [u8; 64] {
+        let mut out = [0u8; 64];
+        self.pack_normalized(&mut out);
+        out
     }
 
     fn quartic_legendre(&self) -> Self {
@@ -1538,6 +1454,85 @@ impl PrimeField for Mod_e511_187 {
         out
     }
 
+    fn pack(&mut self, bytes: &mut [u8]) {
+        self.normalize();
+        self.pack_normalized(bytes)
+    }
+
+    fn pack_normalized(&self, bytes: &mut [u8]) {
+        bytes[0] = (self[0] & 0b11111111) as u8;
+        bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
+        bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
+        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
+        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
+        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
+        bytes[6] = (((self[0] >> 48) & 0b00111111) |
+                    ((self[1] << 6) & 0b11000000)) as u8;
+        bytes[7] = ((self[1] >> 2) & 0b11111111) as u8;
+        bytes[8] = ((self[1] >> 10) & 0b11111111) as u8;
+        bytes[9] = ((self[1] >> 18) & 0b11111111) as u8;
+        bytes[10] = ((self[1] >> 26) & 0b11111111) as u8;
+        bytes[11] = ((self[1] >> 34) & 0b11111111) as u8;
+        bytes[12] = ((self[1] >> 42) & 0b11111111) as u8;
+        bytes[13] = (((self[1] >> 50) & 0b00001111) |
+                     ((self[2] << 4) & 0b11110000)) as u8;
+        bytes[14] = ((self[2] >> 4) & 0b11111111) as u8;
+        bytes[15] = ((self[2] >> 12) & 0b11111111) as u8;
+        bytes[16] = ((self[2] >> 20) & 0b11111111) as u8;
+        bytes[17] = ((self[2] >> 28) & 0b11111111) as u8;
+        bytes[18] = ((self[2] >> 36) & 0b11111111) as u8;
+        bytes[19] = ((self[2] >> 44) & 0b11111111) as u8;
+        bytes[20] = (((self[2] >> 52) & 0b00000011) |
+                     ((self[3] << 2) & 0b11111100)) as u8;
+        bytes[21] = ((self[3] >> 6) & 0b11111111) as u8;
+        bytes[22] = ((self[3] >> 14) & 0b11111111) as u8;
+        bytes[23] = ((self[3] >> 22) & 0b11111111) as u8;
+        bytes[24] = ((self[3] >> 30) & 0b11111111) as u8;
+        bytes[25] = ((self[3] >> 38) & 0b11111111) as u8;
+        bytes[26] = ((self[3] >> 46) & 0b11111111) as u8;
+        bytes[27] = (self[4] & 0b11111111) as u8;
+        bytes[28] = ((self[4] >> 8) & 0b11111111) as u8;
+        bytes[29] = ((self[4] >> 16) & 0b11111111) as u8;
+        bytes[30] = ((self[4] >> 24) & 0b11111111) as u8;
+        bytes[31] = ((self[4] >> 32) & 0b11111111) as u8;
+        bytes[32] = ((self[4] >> 40) & 0b11111111) as u8;
+        bytes[33] = (((self[4] >> 48) & 0b00111111) |
+                     ((self[5] << 6) & 0b11000000)) as u8;
+        bytes[34] = ((self[5] >> 2) & 0b11111111) as u8;
+        bytes[35] = ((self[5] >> 10) & 0b11111111) as u8;
+        bytes[36] = ((self[5] >> 18) & 0b11111111) as u8;
+        bytes[37] = ((self[5] >> 26) & 0b11111111) as u8;
+        bytes[38] = ((self[5] >> 34) & 0b11111111) as u8;
+        bytes[39] = ((self[5] >> 42) & 0b11111111) as u8;
+        bytes[40] = (((self[5] >> 50) & 0b00001111) |
+                     ((self[6] << 4) & 0b11110000)) as u8;
+        bytes[41] = ((self[6] >> 4) & 0b11111111) as u8;
+        bytes[42] = ((self[6] >> 12) & 0b11111111) as u8;
+        bytes[43] = ((self[6] >> 20) & 0b11111111) as u8;
+        bytes[44] = ((self[6] >> 28) & 0b11111111) as u8;
+        bytes[45] = ((self[6] >> 36) & 0b11111111) as u8;
+        bytes[46] = ((self[6] >> 44) & 0b11111111) as u8;
+        bytes[47] = (((self[6] >> 52) & 0b00000011) |
+                     ((self[7] << 2) & 0b11111100)) as u8;
+        bytes[48] = ((self[7] >> 6) & 0b11111111) as u8;
+        bytes[49] = ((self[7] >> 14) & 0b11111111) as u8;
+        bytes[50] = ((self[7] >> 22) & 0b11111111) as u8;
+        bytes[51] = ((self[7] >> 30) & 0b11111111) as u8;
+        bytes[52] = ((self[7] >> 38) & 0b11111111) as u8;
+        bytes[53] = ((self[7] >> 46) & 0b11111111) as u8;
+        bytes[54] = (self[8] & 0b11111111) as u8;
+        bytes[55] = ((self[8] >> 8) & 0b11111111) as u8;
+        bytes[56] = ((self[8] >> 16) & 0b11111111) as u8;
+        bytes[57] = ((self[8] >> 24) & 0b11111111) as u8;
+        bytes[58] = ((self[8] >> 32) & 0b11111111) as u8;
+        bytes[59] = ((self[8] >> 40) & 0b11111111) as u8;
+        bytes[60] = (((self[8] >> 48) & 0b00111111) |
+                     ((self[9] << 6) & 0b11000000)) as u8;
+        bytes[61] = ((self[9] >> 2) & 0b11111111) as u8;
+        bytes[62] = ((self[9] >> 10) & 0b11111111) as u8;
+        bytes[63] = ((self[9] >> 18) & 0b01111111) as u8;
+    }
+
     fn nbits() -> i32 {
         511
     }
@@ -1546,9 +1541,15 @@ impl PrimeField for Mod_e511_187 {
         64
     }
 
+    fn normalize(&mut self) {
+        let plusc = &*self + (C_VAL as i32);
+        let offset = &MODULUS * (plusc.carry_out() as i32);
+        *self -= &offset;
+    }
+
     fn normalize_self_eq(&mut self, other: &Self) -> bool {
-        let self_bytes = self.pack();
-        let other_bytes = other.pack_normalized();
+        let self_bytes = self.packed();
+        let other_bytes = other.packed_normalized();
         let mut are_equal: bool = true;
 
         for i in 0..64 {
@@ -1559,8 +1560,8 @@ impl PrimeField for Mod_e511_187 {
     }
 
     fn normalize_eq(&mut self, other: &mut Self) -> bool {
-        let self_bytes = self.pack();
-        let other_bytes = other.pack();
+        let self_bytes = self.packed();
+        let other_bytes = other.packed();
         let mut are_equal: bool = true;
 
         for i in 0..64 {
@@ -2643,8 +2644,8 @@ mod tests {
                        0x003fffffffffffff, 0x0000000001ffffff ]);
 
     fn test_pack_unpack(expected: &[u8; 64]) {
-        let mut unpacked = Mod_e511_187::unpack(expected);
-        let actual = unpacked.pack();
+        let mut unpacked = Mod_e511_187::unpacked(expected);
+        let actual = unpacked.packed();
 
         for i in 0..64 {
             assert!(expected[i] == actual[i]);
@@ -2652,8 +2653,8 @@ mod tests {
     }
 
     fn test_unpack_pack(expected: &mut Mod_e511_187) {
-        let bytes = expected.pack();
-        let actual = Mod_e511_187::unpack(&bytes);
+        let bytes = expected.packed();
+        let actual = Mod_e511_187::unpacked(&bytes);
 
         for i in 0..10 {
             assert!(expected[i] == actual[i]);
