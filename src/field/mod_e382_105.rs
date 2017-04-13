@@ -251,11 +251,11 @@ impl Index<usize> for Mod_e382_105 {
     }
 }
 
-impl<'a> Neg for &'a Mod_e382_105 {
+impl Neg for Mod_e382_105 {
     type Output = Mod_e382_105;
 
     fn neg(self) -> Mod_e382_105 {
-        let mut out = self.clone();
+        let mut out = self;
 
         out += &MODULUS;
         out
@@ -305,6 +305,12 @@ impl<'b> AddAssign<&'b Mod_e382_105> for Mod_e382_105 {
     }
 }
 
+impl AddAssign<Mod_e382_105> for Mod_e382_105 {
+    fn add_assign(&mut self, rhs: Mod_e382_105) {
+        *self += &rhs;
+    }
+}
+
 impl AddAssign<i32> for Mod_e382_105 {
     fn add_assign(&mut self, rhs: i32) {
         self.small_add_assign(rhs);
@@ -330,6 +336,14 @@ impl<'a, 'b> Add<&'b Mod_e382_105> for &'a Mod_e382_105 {
         let mut out = self.clone();
         out += a;
         out
+    }
+}
+
+impl Add<Mod_e382_105> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn add(self, a: Mod_e382_105) -> Mod_e382_105 {
+        &self + &a
     }
 }
 
@@ -381,9 +395,39 @@ impl<'a> Add<i8> for &'a Mod_e382_105 {
     }
 }
 
+impl Add<i32> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn add(self, a: i32) -> Mod_e382_105 {
+        &self + a
+    }
+}
+
+impl Add<i16> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn add(self, a: i16) -> Mod_e382_105 {
+        &self + a
+    }
+}
+
+impl Add<i8> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn add(self, a: i8) -> Mod_e382_105 {
+        &self + a
+    }
+}
+
 impl<'b> DivAssign<&'b Mod_e382_105> for Mod_e382_105 {
     fn div_assign(&mut self, rhs: &'b Mod_e382_105) {
         *self *= &rhs.inverted();
+    }
+}
+
+impl DivAssign<Mod_e382_105> for Mod_e382_105 {
+    fn div_assign(&mut self, rhs: Mod_e382_105) {
+        *self /= &rhs;
     }
 }
 
@@ -394,6 +438,14 @@ impl<'a, 'b> Div<&'b Mod_e382_105> for &'a Mod_e382_105 {
         let mut out = self.clone();
         out /= a;
         out
+    }
+}
+
+impl Div<Mod_e382_105> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn div(self, a: Mod_e382_105) -> Mod_e382_105 {
+        &self / &a
     }
 }
 
@@ -440,6 +492,12 @@ impl<'b> SubAssign<&'b Mod_e382_105> for Mod_e382_105 {
     }
 }
 
+impl SubAssign<Mod_e382_105> for Mod_e382_105 {
+    fn sub_assign(&mut self, rhs: Mod_e382_105) {
+        *self -= &rhs
+    }
+}
+
 impl SubAssign<i32> for Mod_e382_105 {
     fn sub_assign(&mut self, rhs: i32) {
         self.small_sub_assign(rhs);
@@ -458,6 +516,30 @@ impl SubAssign<i8> for Mod_e382_105 {
     }
 }
 
+impl Sub<i32> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn sub(self, a: i32) -> Mod_e382_105 {
+        &self - a
+    }
+}
+
+impl Sub<i16> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn sub(self, a: i16) -> Mod_e382_105 {
+        &self - a
+    }
+}
+
+impl Sub<i8> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn sub(self, a: i8) -> Mod_e382_105 {
+        &self - a
+    }
+}
+
 impl<'a, 'b> Sub<&'b Mod_e382_105> for &'a Mod_e382_105 {
     type Output = Mod_e382_105;
 
@@ -465,6 +547,14 @@ impl<'a, 'b> Sub<&'b Mod_e382_105> for &'a Mod_e382_105 {
         let mut out = self.clone();
         out -= a;
         out
+    }
+}
+
+impl Sub<Mod_e382_105> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn sub(self, a: Mod_e382_105) -> Mod_e382_105 {
+        &self - &a
     }
 }
 
@@ -936,6 +1026,12 @@ impl<'b> MulAssign<&'b Mod_e382_105> for Mod_e382_105 {
      }
 }
 
+impl MulAssign<Mod_e382_105> for Mod_e382_105 {
+    fn mul_assign(&mut self, rhs: Mod_e382_105) {
+        *self *= &rhs;
+    }
+}
+
 impl<'a> Mul<&'a Mod_e382_105> for i32 {
     type Output = Mod_e382_105;
 
@@ -984,6 +1080,30 @@ impl<'a> Mul<i8> for &'a Mod_e382_105 {
     }
 }
 
+impl Mul<i32> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn mul(self, a: i32) -> Mod_e382_105 {
+        &self * a
+    }
+}
+
+impl Mul<i16> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn mul(self, a: i16) -> Mod_e382_105 {
+        &self * a
+    }
+}
+
+impl Mul<i8> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn mul(self, a: i8) -> Mod_e382_105 {
+        &self * a
+    }
+}
+
 impl<'a, 'b> Mul<&'b Mod_e382_105> for &'a Mod_e382_105 {
     type Output = Mod_e382_105;
 
@@ -991,6 +1111,14 @@ impl<'a, 'b> Mul<&'b Mod_e382_105> for &'a Mod_e382_105 {
         let mut out = self.clone();
         out *= a;
         out
+    }
+}
+
+impl Mul<Mod_e382_105> for Mod_e382_105 {
+    type Output = Mod_e382_105;
+
+    fn mul(self, a: Mod_e382_105) -> Mod_e382_105 {
+        &self * &a
     }
 }
 

@@ -237,11 +237,11 @@ impl Index<usize> for Mod_e221_3 {
     }
 }
 
-impl<'a> Neg for &'a Mod_e221_3 {
+impl Neg for Mod_e221_3 {
     type Output = Mod_e221_3;
 
     fn neg(self) -> Mod_e221_3 {
-        let mut out = self.clone();
+        let mut out = self;
 
         out += &MODULUS;
         out
@@ -276,6 +276,12 @@ impl<'b> AddAssign<&'b Mod_e221_3> for Mod_e221_3 {
     }
 }
 
+impl AddAssign<Mod_e221_3> for Mod_e221_3 {
+    fn add_assign(&mut self, rhs: Mod_e221_3) {
+        *self += &rhs;
+    }
+}
+
 impl AddAssign<i32> for Mod_e221_3 {
     fn add_assign(&mut self, rhs: i32) {
         self.small_add_assign(rhs);
@@ -301,6 +307,14 @@ impl<'a, 'b> Add<&'b Mod_e221_3> for &'a Mod_e221_3 {
         let mut out = self.clone();
         out += a;
         out
+    }
+}
+
+impl Add<Mod_e221_3> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn add(self, a: Mod_e221_3) -> Mod_e221_3 {
+        &self + &a
     }
 }
 
@@ -352,9 +366,39 @@ impl<'a> Add<i8> for &'a Mod_e221_3 {
     }
 }
 
+impl Add<i32> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn add(self, a: i32) -> Mod_e221_3 {
+        &self + a
+    }
+}
+
+impl Add<i16> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn add(self, a: i16) -> Mod_e221_3 {
+        &self + a
+    }
+}
+
+impl Add<i8> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn add(self, a: i8) -> Mod_e221_3 {
+        &self + a
+    }
+}
+
 impl<'b> DivAssign<&'b Mod_e221_3> for Mod_e221_3 {
     fn div_assign(&mut self, rhs: &'b Mod_e221_3) {
         *self *= &rhs.inverted();
+    }
+}
+
+impl DivAssign<Mod_e221_3> for Mod_e221_3 {
+    fn div_assign(&mut self, rhs: Mod_e221_3) {
+        *self /= &rhs;
     }
 }
 
@@ -365,6 +409,14 @@ impl<'a, 'b> Div<&'b Mod_e221_3> for &'a Mod_e221_3 {
         let mut out = self.clone();
         out /= a;
         out
+    }
+}
+
+impl Div<Mod_e221_3> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn div(self, a: Mod_e221_3) -> Mod_e221_3 {
+        &self / &a
     }
 }
 
@@ -414,6 +466,12 @@ impl<'b> SubAssign<&'b Mod_e221_3> for Mod_e221_3 {
     }
 }
 
+impl SubAssign<Mod_e221_3> for Mod_e221_3 {
+    fn sub_assign(&mut self, rhs: Mod_e221_3) {
+        *self -= &rhs
+    }
+}
+
 impl<'a> Sub<i32> for &'a Mod_e221_3 {
     type Output = Mod_e221_3;
 
@@ -438,6 +496,30 @@ impl<'a> Sub<i8> for &'a Mod_e221_3 {
     }
 }
 
+impl Sub<i32> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn sub(self, a: i32) -> Mod_e221_3 {
+        &self - a
+    }
+}
+
+impl Sub<i16> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn sub(self, a: i16) -> Mod_e221_3 {
+        &self - a
+    }
+}
+
+impl Sub<i8> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn sub(self, a: i8) -> Mod_e221_3 {
+        &self - a
+    }
+}
+
 impl<'a, 'b> Sub<&'b Mod_e221_3> for &'a Mod_e221_3 {
     type Output = Mod_e221_3;
 
@@ -445,6 +527,14 @@ impl<'a, 'b> Sub<&'b Mod_e221_3> for &'a Mod_e221_3 {
         let mut out = self.clone();
         out -= a;
         out
+    }
+}
+
+impl Sub<Mod_e221_3> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn sub(self, a: Mod_e221_3) -> Mod_e221_3 {
+        &self - &a
     }
 }
 
@@ -647,6 +737,12 @@ impl<'b> MulAssign<&'b Mod_e221_3> for Mod_e221_3 {
      }
 }
 
+impl MulAssign<Mod_e221_3> for Mod_e221_3 {
+    fn mul_assign(&mut self, rhs: Mod_e221_3) {
+        *self *= &rhs;
+    }
+}
+
 impl<'a> Mul<&'a Mod_e221_3> for i32 {
     type Output = Mod_e221_3;
 
@@ -695,6 +791,30 @@ impl<'a> Mul<i8> for &'a Mod_e221_3 {
     }
 }
 
+impl Mul<i32> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn mul(self, a: i32) -> Mod_e221_3 {
+        &self * a
+    }
+}
+
+impl Mul<i16> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn mul(self, a: i16) -> Mod_e221_3 {
+        &self * a
+    }
+}
+
+impl Mul<i8> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn mul(self, a: i8) -> Mod_e221_3 {
+        &self * a
+    }
+}
+
 impl<'a, 'b> Mul<&'b Mod_e221_3> for &'a Mod_e221_3 {
     type Output = Mod_e221_3;
 
@@ -702,6 +822,14 @@ impl<'a, 'b> Mul<&'b Mod_e221_3> for &'a Mod_e221_3 {
         let mut out = self.clone();
         out *= a;
         out
+    }
+}
+
+impl Mul<Mod_e221_3> for Mod_e221_3 {
+    type Output = Mod_e221_3;
+
+    fn mul(self, a: Mod_e221_3) -> Mod_e221_3 {
+        &self * &a
     }
 }
 
@@ -1318,7 +1446,7 @@ mod tests {
 
         for i in 0..5 {
             for j in 0..5 {
-                let mut val = &*l1_zeros[i] + &*l1_zeros[j];
+                let mut val = *l1_zeros[i] + *l1_zeros[j];
 
                 assert!(ZERO.normalize_eq(&mut val));
             }
@@ -1326,7 +1454,7 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..4 {
-                let mut val = &*l1_mones[i] + &*l1_ones[j];
+                let mut val = *l1_mones[i] + *l1_ones[j];
 
                 assert!(ZERO.normalize_eq(&mut val));
             }
@@ -1334,7 +1462,7 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..4 {
-                let mut val = &*l1_ones[i] + &*l1_mones[j];
+                let mut val = *l1_ones[i] + *l1_mones[j];
 
                 assert!(ZERO.normalize_eq(&mut val));
             }
@@ -1342,7 +1470,7 @@ mod tests {
 
         for i in 0..3 {
             for j in 0..3 {
-                let mut val = &*l1_mtwos[i] + &*l1_twos[j];
+                let mut val = *l1_mtwos[i] + *l1_twos[j];
 
                 assert!(ZERO.normalize_eq(&mut val));
             }
@@ -1350,7 +1478,7 @@ mod tests {
 
         for i in 0..3 {
             for j in 0..3 {
-                let mut val = &*l1_twos[i] + &*l1_mtwos[j];
+                let mut val = *l1_twos[i] + *l1_mtwos[j];
 
                 assert!(ZERO.normalize_eq(&mut val));
             }
@@ -1358,7 +1486,7 @@ mod tests {
 
         for i in 0..5 {
             for j in 0..4 {
-                let mut val = &*l1_zeros[i] + &*l1_ones[j];
+                let mut val = *l1_zeros[i] + *l1_ones[j];
 
                 assert!(ONE.normalize_eq(&mut val));
             }
@@ -1366,7 +1494,7 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..5 {
-                let mut val = &*l1_ones[i] + &*l1_zeros[j];
+                let mut val = *l1_ones[i] + *l1_zeros[j];
 
                 assert!(ONE.normalize_eq(&mut val));
             }
@@ -1374,7 +1502,7 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..3 {
-                let mut val = &*l1_mones[i] + &*l1_twos[j];
+                let mut val = *l1_mones[i] + *l1_twos[j];
 
                 assert!(ONE.normalize_eq(&mut val));
             }
@@ -1382,7 +1510,7 @@ mod tests {
 
         for i in 0..3 {
             for j in 0..4 {
-                let mut val = &*l1_twos[i] + &*l1_mones[j];
+                let mut val = *l1_twos[i] + *l1_mones[j];
 
                 assert!(ONE.normalize_eq(&mut val));
             }
@@ -1390,7 +1518,7 @@ mod tests {
 
         for i in 0..5 {
             for j in 0..3 {
-                let mut val = &*l1_zeros[i] + &*l1_twos[j];
+                let mut val = *l1_zeros[i] + *l1_twos[j];
 
                 assert!(TWO.normalize_eq(&mut val));
             }
@@ -1398,7 +1526,7 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..4 {
-                let mut val = &*l1_ones[i] + &*l1_ones[j];
+                let mut val = *l1_ones[i] + *l1_ones[j];
 
                 assert!(TWO.normalize_eq(&mut val));
             }
@@ -1406,7 +1534,7 @@ mod tests {
 
         for i in 0..3 {
             for j in 0..5 {
-                let mut val = &*l1_twos[i] + &*l1_zeros[j];
+                let mut val = *l1_twos[i] + *l1_zeros[j];
 
                 assert!(TWO.normalize_eq(&mut val));
             }
@@ -1414,7 +1542,7 @@ mod tests {
 
         for i in 0..5 {
             for j in 0..4 {
-                let mut val = &*l1_zeros[i] + &*l1_mones[j];
+                let mut val = *l1_zeros[i] + *l1_mones[j];
 
                 assert!(M_ONE.normalize_eq(&mut val));
             }
@@ -1422,7 +1550,7 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..5 {
-                let mut val = &*l1_mones[i] + &*l1_zeros[j];
+                let mut val = *l1_mones[i] + *l1_zeros[j];
 
                 assert!(M_ONE.normalize_eq(&mut val));
             }
@@ -1430,7 +1558,7 @@ mod tests {
 
         for i in 0..3 {
             for j in 0..4 {
-                let mut val = &*l1_mtwos[i] + &*l1_ones[j];
+                let mut val = *l1_mtwos[i] + *l1_ones[j];
 
                 assert!(M_ONE.normalize_eq(&mut val));
             }
@@ -1438,7 +1566,7 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..3 {
-                let mut val = &*l1_ones[i] + &*l1_mtwos[j];
+                let mut val = *l1_ones[i] + *l1_mtwos[j];
 
                 assert!(M_ONE.normalize_eq(&mut val));
             }
@@ -1446,7 +1574,7 @@ mod tests {
 
         for i in 0..5 {
             for j in 0..3 {
-                let mut val = &*l1_zeros[i] + &*l1_mtwos[j];
+                let mut val = *l1_zeros[i] + *l1_mtwos[j];
 
                 assert!(M_TWO.normalize_eq(&mut val));
             }
@@ -1454,7 +1582,7 @@ mod tests {
 
         for i in 0..4 {
             for j in 0..4 {
-                let mut val = &*l1_mones[i] + &*l1_mones[j];
+                let mut val = *l1_mones[i] + *l1_mones[j];
 
                 assert!(M_TWO.normalize_eq(&mut val));
             }
@@ -1462,7 +1590,7 @@ mod tests {
 
         for i in 0..3 {
             for j in 0..5 {
-                let mut val = &*l1_mtwos[i] + &*l1_zeros[j];
+                let mut val = *l1_mtwos[i] + *l1_zeros[j];
 
                 assert!(M_TWO.normalize_eq(&mut val));
             }

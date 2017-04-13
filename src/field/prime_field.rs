@@ -1,5 +1,22 @@
+use std::marker::Sized;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Div;
+use std::ops::DivAssign;
+use std::ops::Mul;
+use std::ops::MulAssign;
+use std::ops::Neg;
+use std::ops::Sub;
+use std::ops::SubAssign;
+
 /// Operations on prime fields.
-pub trait PrimeField {
+pub trait PrimeField : Add<i32> + Add<i16> + Add<i8> + Add<Self> +
+    AddAssign<i32> + AddAssign<i16> + AddAssign<i8> + AddAssign<Self> +
+    Div<Self> + DivAssign<Self> +
+    MulAssign<i32> + MulAssign<i16> + MulAssign<i8> + MulAssign<Self> +
+    Mul<i32> + Mul<i16> + Mul<i8> + Mul<Self> + Neg + Sized +
+    SubAssign<i32> + SubAssign<i16> + SubAssign<i8> + SubAssign<Self> +
+    Sub<i32> + Sub<i16> + Sub<i8> + Sub<Self> {
     /// Normalize self and compare for equality.
     fn normalize_self_eq(&mut self, other: &Self) -> bool;
 
