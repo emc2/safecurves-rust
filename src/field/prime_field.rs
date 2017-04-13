@@ -1,3 +1,4 @@
+use rand::Rand;
 use std::marker::Sized;
 use std::ops::Add;
 use std::ops::AddAssign;
@@ -10,13 +11,32 @@ use std::ops::Sub;
 use std::ops::SubAssign;
 
 /// Operations on prime fields.
-pub trait PrimeField : Add<i32> + Add<i16> + Add<i8> + Add<Self> +
+pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
+    Add<i8, Output = Self> + Add<Self, Output = Self> +
     AddAssign<i32> + AddAssign<i16> + AddAssign<i8> + AddAssign<Self> +
-    Div<Self> + DivAssign<Self> +
+    Div<Self, Output = Self> + DivAssign<Self> +
     MulAssign<i32> + MulAssign<i16> + MulAssign<i8> + MulAssign<Self> +
-    Mul<i32> + Mul<i16> + Mul<i8> + Mul<Self> + Neg + Sized +
+    Mul<i32, Output = Self> + Mul<i16, Output = Self> +
+    Mul<i8, Output = Self> + Mul<Self, Output = Self> +
+    Neg<Output = Self> + Rand + Sized +
     SubAssign<i32> + SubAssign<i16> + SubAssign<i8> + SubAssign<Self> +
-    Sub<i32> + Sub<i16> + Sub<i8> + Sub<Self> {
+    Sub<i32, Output = Self> + Sub<i16, Output = Self> +
+    Sub<i8, Output = Self> + Sub<Self, Output = Self> {
+
+    /// Deserialize a little-endian byte array into a value.  The byte
+    /// array must contain a number less than the modulus.
+    fn unpack(&mut self, bytes: &[u8]);
+
+    /// Deserialize a little-endian byte array into a value.  The byte
+    /// array must contain a number less than the modulus.
+    fn unpacked(bytes: &[u8]) -> Self;
+
+    /// Get the number of bits in the number.
+    fn nbits() -> i32;
+
+    /// Get the number of bytes in the packed representation.
+    fn nbytes() -> i32;
+
     /// Normalize self and compare for equality.
     fn normalize_self_eq(&mut self, other: &Self) -> bool;
 

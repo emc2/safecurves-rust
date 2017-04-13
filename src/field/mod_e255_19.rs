@@ -170,47 +170,6 @@ impl Mod_e255_19 {
         bytes
     }
 
-    /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus 2^255 - 19.
-    pub fn unpack(bytes : &[u8; 32]) -> Mod_e255_19 {
-        let mut out = Mod_e255_19([0i64; 5]);
-
-        out[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
-                 (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[2] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[3] as i64) << 24) & 0x00000000ff000000) |
-                 (((bytes[4] as i64) << 32) & 0x000000ff00000000) |
-                 (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[6] as i64) << 48) & 0x00ff000000000000);
-        out[1] = ((bytes[7] as i64) & 0x00000000000000ff) |
-                 (((bytes[8] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[9] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[10] as i64) << 24) & 0x00000000ff000000) |
-                 (((bytes[11] as i64) << 32) & 0x000000ff00000000) |
-                 (((bytes[12] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[13] as i64) << 48) & 0x00ff000000000000);
-        out[2] = ((bytes[14] as i64) & 0x00000000000000ff) |
-                 (((bytes[15] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[16] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[17] as i64) << 24) & 0x00000000ff000000) |
-                 (((bytes[18] as i64) << 32) & 0x000000ff00000000) |
-                 (((bytes[19] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[20] as i64) << 48) & 0x00ff000000000000);
-        out[3] = ((bytes[21] as i64) & 0x00000000000000ff) |
-                 (((bytes[22] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[23] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[24] as i64) << 24) & 0x00000000ff000000) |
-                 (((bytes[25] as i64) << 32) & 0x000000ff00000000) |
-                 (((bytes[26] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[27] as i64) << 48) & 0x00ff000000000000);
-        out[4] = ((bytes[28] as i64) & 0x00000000000000ff) |
-                 (((bytes[29] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[30] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[31] as i64) << 24) & 0x000000007f000000);
-
-        out
-    }
-
     fn quartic_legendre(&self) -> Self {
         // First digit is 1.
         let mut sqval = self.clone();
@@ -934,7 +893,56 @@ impl Rand for Mod_e255_19 {
 }
 
 impl PrimeField for Mod_e255_19 {
-   fn normalize_self_eq(&mut self, other: &Self) -> bool {
+    fn unpack(&mut self, bytes: &[u8]) {
+        self[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
+                  (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
+                  (((bytes[2] as i64) << 16) & 0x0000000000ff0000) |
+                  (((bytes[3] as i64) << 24) & 0x00000000ff000000) |
+                  (((bytes[4] as i64) << 32) & 0x000000ff00000000) |
+                  (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
+                  (((bytes[6] as i64) << 48) & 0x00ff000000000000);
+        self[1] = ((bytes[7] as i64) & 0x00000000000000ff) |
+                  (((bytes[8] as i64) << 8) & 0x000000000000ff00) |
+                  (((bytes[9] as i64) << 16) & 0x0000000000ff0000) |
+                  (((bytes[10] as i64) << 24) & 0x00000000ff000000) |
+                  (((bytes[11] as i64) << 32) & 0x000000ff00000000) |
+                  (((bytes[12] as i64) << 40) & 0x0000ff0000000000) |
+                  (((bytes[13] as i64) << 48) & 0x00ff000000000000);
+        self[2] = ((bytes[14] as i64) & 0x00000000000000ff) |
+                  (((bytes[15] as i64) << 8) & 0x000000000000ff00) |
+                  (((bytes[16] as i64) << 16) & 0x0000000000ff0000) |
+                  (((bytes[17] as i64) << 24) & 0x00000000ff000000) |
+                  (((bytes[18] as i64) << 32) & 0x000000ff00000000) |
+                  (((bytes[19] as i64) << 40) & 0x0000ff0000000000) |
+                  (((bytes[20] as i64) << 48) & 0x00ff000000000000);
+        self[3] = ((bytes[21] as i64) & 0x00000000000000ff) |
+                  (((bytes[22] as i64) << 8) & 0x000000000000ff00) |
+                  (((bytes[23] as i64) << 16) & 0x0000000000ff0000) |
+                  (((bytes[24] as i64) << 24) & 0x00000000ff000000) |
+                  (((bytes[25] as i64) << 32) & 0x000000ff00000000) |
+                  (((bytes[26] as i64) << 40) & 0x0000ff0000000000) |
+                  (((bytes[27] as i64) << 48) & 0x00ff000000000000);
+        self[4] = ((bytes[28] as i64) & 0x00000000000000ff) |
+                  (((bytes[29] as i64) << 8) & 0x000000000000ff00) |
+                  (((bytes[30] as i64) << 16) & 0x0000000000ff0000) |
+                  (((bytes[31] as i64) << 24) & 0x000000007f000000);
+    }
+
+    fn unpacked(bytes: &[u8]) -> Self {
+        let mut out = ZERO;
+        out.unpack(bytes);
+        out
+    }
+
+    fn nbits() -> i32 {
+        255
+    }
+
+    fn nbytes() -> i32 {
+        32
+    }
+
+    fn normalize_self_eq(&mut self, other: &Self) -> bool {
         let self_bytes =  self.pack();
         let other_bytes = other.pack_normalized();
         let mut are_equal: bool = true;

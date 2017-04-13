@@ -165,45 +165,6 @@ impl Mod_e221_3 {
         bytes
     }
 
-    /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus 2^221 - 3.
-    pub fn unpack(bytes : &[u8; 28]) -> Mod_e221_3 {
-        let mut out = Mod_e221_3([0i64; 4]);
-
-        out[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
-                 (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
-                 (((bytes[2] as i64) << 16) & 0x0000000000ff0000) |
-                 (((bytes[3] as i64) << 24) & 0x00000000ff000000) |
-                 (((bytes[4] as i64) << 32) & 0x000000ff00000000) |
-                 (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
-                 (((bytes[6] as i64) << 48) & 0x00ff000000000000) |
-                 (((bytes[7] as i64) << 56) & 0x0300000000000000);
-        out[1] = (((bytes[7] as i64) >> 2) & 0x000000000000003f) |
-                 (((bytes[8] as i64) << 6) & 0x0000000000003fc0) |
-                 (((bytes[9] as i64) << 14) & 0x00000000003fc000) |
-                 (((bytes[10] as i64) << 22) & 0x000000003fc00000) |
-                 (((bytes[11] as i64) << 30) & 0x0000003fc0000000) |
-                 (((bytes[12] as i64) << 38) & 0x00003fc000000000) |
-                 (((bytes[13] as i64) << 46) & 0x003fc00000000000) |
-                 (((bytes[14] as i64) << 54) & 0x03c0000000000000);
-        out[2] = (((bytes[14] as i64) >> 4) & 0x000000000000000f) |
-                 (((bytes[15] as i64) << 4) & 0x0000000000000ff0) |
-                 (((bytes[16] as i64) << 12) & 0x00000000000ff000) |
-                 (((bytes[17] as i64) << 20) & 0x000000000ff00000) |
-                 (((bytes[18] as i64) << 28) & 0x0000000ff0000000) |
-                 (((bytes[19] as i64) << 36) & 0x00000ff000000000) |
-                 (((bytes[20] as i64) << 44) & 0x000ff00000000000) |
-                 (((bytes[21] as i64) << 52) & 0x03f0000000000000);
-        out[3] = (((bytes[21] as i64) >> 6) & 0x0000000000000003) |
-                 (((bytes[22] as i64) << 2) & 0x00000000000003fc) |
-                 (((bytes[23] as i64) << 10) & 0x000000000003fc00) |
-                 (((bytes[24] as i64) << 18) & 0x0000000003fc0000) |
-                 (((bytes[25] as i64) << 26) & 0x00000003fc000000) |
-                 (((bytes[26] as i64) << 34) & 0x000003fc00000000) |
-                 (((bytes[27] as i64) << 42) & 0x00007c0000000000);
-        out
-    }
-
     /// Similar to the Legendre symbol, but for quartic
     /// residues/non-residues.
     fn quartic_legendre(&self) -> Self {
@@ -846,7 +807,55 @@ impl Rand for Mod_e221_3 {
 }
 
 impl PrimeField for Mod_e221_3 {
-   fn normalize_self_eq(&mut self, other: &Self) -> bool {
+    fn unpack(&mut self, bytes: &[u8]) {
+        self[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
+                  (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
+                  (((bytes[2] as i64) << 16) & 0x0000000000ff0000) |
+                  (((bytes[3] as i64) << 24) & 0x00000000ff000000) |
+                  (((bytes[4] as i64) << 32) & 0x000000ff00000000) |
+                  (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
+                  (((bytes[6] as i64) << 48) & 0x00ff000000000000) |
+                  (((bytes[7] as i64) << 56) & 0x0300000000000000);
+        self[1] = (((bytes[7] as i64) >> 2) & 0x000000000000003f) |
+                  (((bytes[8] as i64) << 6) & 0x0000000000003fc0) |
+                  (((bytes[9] as i64) << 14) & 0x00000000003fc000) |
+                  (((bytes[10] as i64) << 22) & 0x000000003fc00000) |
+                  (((bytes[11] as i64) << 30) & 0x0000003fc0000000) |
+                  (((bytes[12] as i64) << 38) & 0x00003fc000000000) |
+                  (((bytes[13] as i64) << 46) & 0x003fc00000000000) |
+                  (((bytes[14] as i64) << 54) & 0x03c0000000000000);
+        self[2] = (((bytes[14] as i64) >> 4) & 0x000000000000000f) |
+                  (((bytes[15] as i64) << 4) & 0x0000000000000ff0) |
+                  (((bytes[16] as i64) << 12) & 0x00000000000ff000) |
+                  (((bytes[17] as i64) << 20) & 0x000000000ff00000) |
+                  (((bytes[18] as i64) << 28) & 0x0000000ff0000000) |
+                  (((bytes[19] as i64) << 36) & 0x00000ff000000000) |
+                  (((bytes[20] as i64) << 44) & 0x000ff00000000000) |
+                  (((bytes[21] as i64) << 52) & 0x03f0000000000000);
+        self[3] = (((bytes[21] as i64) >> 6) & 0x0000000000000003) |
+                  (((bytes[22] as i64) << 2) & 0x00000000000003fc) |
+                  (((bytes[23] as i64) << 10) & 0x000000000003fc00) |
+                  (((bytes[24] as i64) << 18) & 0x0000000003fc0000) |
+                  (((bytes[25] as i64) << 26) & 0x00000003fc000000) |
+                  (((bytes[26] as i64) << 34) & 0x000003fc00000000) |
+                  (((bytes[27] as i64) << 42) & 0x00007c0000000000);
+    }
+
+    fn unpacked(bytes: &[u8]) -> Self {
+        let mut out = ZERO;
+        out.unpack(bytes);
+        out
+    }
+
+    fn nbits() -> i32 {
+        221
+    }
+
+    fn nbytes() -> i32 {
+        28
+    }
+
+    fn normalize_self_eq(&mut self, other: &Self) -> bool {
         let self_bytes =  self.pack();
         let other_bytes = other.pack_normalized();
         let mut are_equal: bool = true;
