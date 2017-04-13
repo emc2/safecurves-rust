@@ -1,4 +1,5 @@
 use field::prime_field::PrimeField;
+use pack::Pack;
 use rand::Rand;
 use rand::Rng;
 use std::clone::Clone;
@@ -755,7 +756,7 @@ impl Rand for Mod_e222_117 {
     }
 }
 
-impl PrimeField for Mod_e222_117 {
+impl Pack for Mod_e222_117 {
     fn unpack(&mut self, bytes: &[u8]) {
         self[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
                   (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
@@ -835,12 +836,14 @@ impl PrimeField for Mod_e222_117 {
         bytes[27] = ((self[3] >> 42) & 0b00111111) as u8;
     }
 
-    fn nbits() -> i32 {
-        222
-    }
-
     fn nbytes() -> i32 {
         28
+    }
+}
+
+impl PrimeField for Mod_e222_117 {
+    fn nbits() -> i32 {
+        222
     }
 
     /// Normalize the representation, resulting in the internal digits

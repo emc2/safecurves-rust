@@ -1,4 +1,5 @@
 use field::prime_field::PrimeField;
+use pack::Pack;
 use rand::Rand;
 use rand::Rng;
 use std::clone::Clone;
@@ -762,7 +763,7 @@ impl Rand for Mod_e221_3 {
     }
 }
 
-impl PrimeField for Mod_e221_3 {
+impl Pack for Mod_e221_3 {
     fn unpack(&mut self, bytes: &[u8]) {
         self[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
                   (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
@@ -842,12 +843,14 @@ impl PrimeField for Mod_e221_3 {
         bytes[27] = ((self[3] >> 42) & 0b00011111) as u8;
     }
 
-    fn nbits() -> i32 {
-        221
-    }
-
     fn nbytes() -> i32 {
         28
+    }
+}
+
+impl PrimeField for Mod_e221_3 {
+    fn nbits() -> i32 {
+        221
     }
 
     fn normalize(&mut self) {

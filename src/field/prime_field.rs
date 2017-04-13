@@ -1,3 +1,4 @@
+use pack::Pack;
 use rand::Rand;
 use std::marker::Sized;
 use std::ops::Add;
@@ -18,32 +19,12 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
     MulAssign<i32> + MulAssign<i16> + MulAssign<i8> + MulAssign<Self> +
     Mul<i32, Output = Self> + Mul<i16, Output = Self> +
     Mul<i8, Output = Self> + Mul<Self, Output = Self> +
-    Neg<Output = Self> + Rand + Sized +
+    Neg<Output = Self> + Pack + Rand + Sized +
     SubAssign<i32> + SubAssign<i16> + SubAssign<i8> + SubAssign<Self> +
     Sub<i32, Output = Self> + Sub<i16, Output = Self> +
     Sub<i8, Output = Self> + Sub<Self, Output = Self> {
-
-    /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus.
-    fn unpack(&mut self, bytes: &[u8]);
-
-    /// Deserialize a little-endian byte array into a value.  The byte
-    /// array must contain a number less than the modulus.
-    fn unpacked(bytes: &[u8]) -> Self;
-
-    /// Serialize as a little-endian byte array.  This has the effect
-    /// of normalizing the representation.
-    fn pack(&mut self, &mut [u8]);
-
-    /// Serialize an already normalized number as a little-endian byte
-    /// array.  This must only be used on a normalized value.
-    fn pack_normalized(&self, &mut [u8]);
-
     /// Get the number of bits in the number.
     fn nbits() -> i32;
-
-    /// Get the number of bytes in the packed representation.
-    fn nbytes() -> i32;
 
     /// Normalize the internal representation, resulting in the
     /// internal digits holding a value that is truly less than the
