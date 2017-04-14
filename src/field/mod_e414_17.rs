@@ -1213,8 +1213,53 @@ impl Pack for Mod_e414_17 {
 }
 
 impl PrimeField for Mod_e414_17 {
+    fn fill(&mut self, bit: bool) {
+        let mut mask = bit as i64;
+
+        mask |= mask << 1;
+        mask |= mask << 2;
+        mask |= mask << 4;
+        mask |= mask << 8;
+        mask |= mask << 16;
+        mask |= mask << 32;
+
+        self[0] = mask;
+        self[1] = mask;
+        self[2] = mask;
+        self[3] = mask;
+        self[4] = mask;
+        self[5] = mask;
+        self[6] = mask;
+        self[7] = mask;
+    }
+
+    fn filled(bit: bool) -> Self {
+        let mut mask = bit as i64;
+
+        mask |= mask << 1;
+        mask |= mask << 2;
+        mask |= mask << 4;
+        mask |= mask << 8;
+        mask |= mask << 16;
+        mask |= mask << 32;
+
+        Mod_e414_17([mask; 8])
+    }
+
     fn nbits() -> i32 {
         414
+    }
+
+    fn bit_normalized(&self, idx: usize) -> bool {
+        let byte = idx / 56;
+        let bit = idx % 56;
+
+        (self[byte] >> bit) & 0x1 == 0x1
+    }
+
+    fn bit(&mut self, idx: usize) -> bool {
+        self.normalize();
+        self.bit_normalized(idx)
     }
 
     fn normalize(&mut self) {

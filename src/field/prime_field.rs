@@ -26,6 +26,19 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
     /// Get the number of bits in the number.
     fn nbits() -> i32;
 
+    /// Get the bit given by idx.  This normalizes the internal representation.
+    fn bit(&mut self, idx: usize) -> bool;
+
+    /// Get the bit given by idx, assuming the internal representation
+    /// is already normalized.
+    fn bit_normalized(&self, idx: usize) -> bool;
+
+    /// Set every bit of this number to the given bit.
+    fn fill(&mut self, bit: bool);
+
+    /// Generate a mask consisting entirely of the given bit.
+    fn filled(bit: bool) -> Self;
+
     /// Normalize the internal representation, resulting in the
     /// internal digits holding a value that is truly less than the
     /// modulus.

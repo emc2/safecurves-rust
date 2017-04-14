@@ -847,17 +847,51 @@ impl Pack for Mod_e222_117 {
 }
 
 impl PrimeField for Mod_e222_117 {
+    fn fill(&mut self, bit: bool) {
+        let mut mask = bit as i64;
+
+        mask |= mask << 1;
+        mask |= mask << 2;
+        mask |= mask << 4;
+        mask |= mask << 8;
+        mask |= mask << 16;
+        mask |= mask << 32;
+
+        self[0] = mask;
+        self[1] = mask;
+        self[2] = mask;
+        self[3] = mask;
+    }
+
+    fn filled(bit: bool) -> Self {
+        let mut mask = bit as i64;
+
+        mask |= mask << 1;
+        mask |= mask << 2;
+        mask |= mask << 4;
+        mask |= mask << 8;
+        mask |= mask << 16;
+        mask |= mask << 32;
+
+        Mod_e222_117([mask; 4])
+    }
+
     fn nbits() -> i32 {
         222
     }
 
-    /// Normalize the representation, resulting in the internal digits
-    /// holding a value that is truly less than 2^222 - 117.
-    ///
-    /// This can be done n mod (2^m - c) using a single add and small
-    /// multiply as follows: we can detect overflow by doing
-    /// carry_out(n + c), thus, we can normalize the number by doing
-    /// n - (carry_out(n + c) * (2^m - c))
+    fn bit_normalized(&self, idx: usize) -> bool {
+        let byte = idx / 58;
+        let bit = idx % 58;
+
+        (self[byte] >> bit) & 0x1 == 0x1
+    }
+
+    fn bit(&mut self, idx: usize) -> bool {
+        self.normalize();
+        self.bit_normalized(idx)
+    }
+
     fn normalize(&mut self) {
         let plusc = &*self + (C_VAL as i32);
         let offset = &MODULUS * (plusc.carry_out() as i32);

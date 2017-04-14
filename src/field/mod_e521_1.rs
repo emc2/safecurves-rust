@@ -1576,8 +1576,55 @@ impl Pack for Mod_e521_1 {
 }
 
 impl PrimeField for Mod_e521_1 {
+    fn fill(&mut self, bit: bool) {
+        let mut mask = bit as i64;
+
+        mask |= mask << 1;
+        mask |= mask << 2;
+        mask |= mask << 4;
+        mask |= mask << 8;
+        mask |= mask << 16;
+        mask |= mask << 32;
+
+        self[0] = mask;
+        self[1] = mask;
+        self[2] = mask;
+        self[3] = mask;
+        self[4] = mask;
+        self[5] = mask;
+        self[6] = mask;
+        self[7] = mask;
+        self[8] = mask;
+        self[9] = mask;
+    }
+
+    fn filled(bit: bool) -> Self {
+        let mut mask = bit as i64;
+
+        mask |= mask << 1;
+        mask |= mask << 2;
+        mask |= mask << 4;
+        mask |= mask << 8;
+        mask |= mask << 16;
+        mask |= mask << 32;
+
+        Mod_e521_1([mask; 10])
+    }
+
     fn nbits() -> i32 {
         521
+    }
+
+    fn bit_normalized(&self, idx: usize) -> bool {
+        let byte = idx / 54;
+        let bit = idx % 54;
+
+        (self[byte] >> bit) & 0x1 == 0x1
+    }
+
+    fn bit(&mut self, idx: usize) -> bool {
+        self.normalize();
+        self.bit_normalized(idx)
     }
 
     fn normalize(&mut self) {
