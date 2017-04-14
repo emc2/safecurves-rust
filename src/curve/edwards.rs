@@ -67,6 +67,22 @@ impl<C : EdwardsCurve> Add<EdwardsExtended<C>> for EdwardsExtended<C> {
     }
 }
 
+impl<C: EdwardsCurve> EdwardsExtended<C> {
+    fn normalized_bitand(&mut self, mask: &C::Scalar) {
+        self.x.normalized_bitand(mask);
+        self.y.normalized_bitand(mask);
+        self.z.normalized_bitand(mask);
+        self.t.normalized_bitand(mask);
+    }
+
+    fn normalized_bitor(&mut self, rhs: &Self) {
+        self.x.normalized_bitor(&rhs.x);
+        self.y.normalized_bitor(&rhs.y);
+        self.z.normalized_bitor(&rhs.z);
+        self.t.normalized_bitor(&rhs.t);
+    }
+}
+
 impl<C: EdwardsCurve> Point for EdwardsExtended<C> {
     type Scalar = C::Scalar;
 
@@ -93,9 +109,7 @@ impl<C: EdwardsCurve> Point for EdwardsExtended<C> {
 
     fn scalar_mult_normalized(&mut self, rhs: &Self::Scalar) {
         // This is a branchless variant of the classic Montgomery
-        // ladder using bitwise operations in lieu of branches.  It
-        // costs an additional doubling operation per step, but
-        // eliminates all control-flow dependence on the data.
+        // ladder using bitwise operations in lieu of branches.
 
         let mut r0 = Self::zero();
         let mut r1 = self.clone();
@@ -104,47 +118,37 @@ impl<C: EdwardsCurve> Point for EdwardsExtended<C> {
         for i in 0..nbits {
             let idx = nbits - 1 - i;
             let bit = rhs.bit_normalized(idx);
+            // Note that we fill everything with 0s or 1s.  This
+            // allows us to skip normalization.
             let tmask = C::Scalar::filled(bit);
             let fmask = C::Scalar::filled(!bit);
-            let mut r0d = r0.doubled();
-            let mut r1d = r1.doubled();
+            let mut d0 = r0;
+            let mut d1 = r1;
 
+            // r0 = r1 = r0 + r1
             r0 += r1;
-            r0.x.normalize();
-            r0.y.normalize();
-            r0.z.normalize();
-            r0.t.normalize();
             r1 = r0;
 
-            r0.x.normalized_bitand(&fmask);
-            r0.y.normalized_bitand(&fmask);
-            r0.z.normalized_bitand(&fmask);
-            r0.t.normalized_bitand(&fmask);
+            // d0 = bit ? r0 : r1
+            d0.normalized_bitand(&tmask);
+            d1.normalized_bitand(&fmask);
+            d0.normalized_bitor(&d1);
 
-            r0d.x.normalize_self_bitand(&tmask);
-            r0d.y.normalize_self_bitand(&tmask);
-            r0d.z.normalize_self_bitand(&tmask);
-            r0d.t.normalize_self_bitand(&tmask);
+            // d0 *= 2
+            d0.double();
 
-            r0.x.normalized_bitor(&r0d.x);
-            r0.y.normalized_bitor(&r0d.y);
-            r0.z.normalized_bitor(&r0d.z);
-            r0.t.normalized_bitor(&r0d.t);
+            // d1 = d0
+            d1 = d0;
 
-            r1.x.normalized_bitand(&tmask);
-            r1.y.normalized_bitand(&tmask);
-            r1.z.normalized_bitand(&tmask);
-            r1.t.normalized_bitand(&tmask);
+            // r0 = bit ? d0 : r0
+            r0.normalized_bitand(&fmask);
+            d0.normalized_bitand(&tmask);
+            r0.normalized_bitor(&d0);
 
-            r1d.x.normalize_self_bitand(&fmask);
-            r1d.y.normalize_self_bitand(&fmask);
-            r1d.z.normalize_self_bitand(&fmask);
-            r1d.t.normalize_self_bitand(&fmask);
-
-            r1.x.normalized_bitor(&r1d.x);
-            r1.y.normalized_bitor(&r1d.y);
-            r1.z.normalized_bitor(&r1d.z);
-            r1.t.normalized_bitor(&r1d.t);
+            // r1 = bit ? r1 : d1
+            r1.normalized_bitand(&tmask);
+            d1.normalized_bitand(&fmask);
+            r1.normalized_bitor(&d1);
         }
 
         self.x = r0.x;
