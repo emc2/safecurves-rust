@@ -1,5 +1,6 @@
 use curve::point::*;
 use field::prime_field::PrimeField;
+use normalize::Normalize;
 use std::ops::Add;
 use std::ops::AddAssign;
 

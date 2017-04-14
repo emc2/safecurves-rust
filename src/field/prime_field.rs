@@ -1,3 +1,4 @@
+use normalize::*;
 use pack::Pack;
 use rand::Rand;
 use std::marker::Sized;
@@ -19,7 +20,7 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
     MulAssign<i32> + MulAssign<i16> + MulAssign<i8> + MulAssign<Self> +
     Mul<i32, Output = Self> + Mul<i16, Output = Self> +
     Mul<i8, Output = Self> + Mul<Self, Output = Self> +
-    Neg<Output = Self> + Pack + Rand + Sized +
+    Neg<Output = Self> + Normalize + NormalizeEq + Pack + Rand + Sized +
     SubAssign<i32> + SubAssign<i16> + SubAssign<i8> + SubAssign<Self> +
     Sub<i32, Output = Self> + Sub<i16, Output = Self> +
     Sub<i8, Output = Self> + Sub<Self, Output = Self> {
@@ -38,22 +39,6 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
 
     /// Generate a mask consisting entirely of the given bit.
     fn filled(bit: bool) -> Self;
-
-    /// Normalize the internal representation, resulting in the
-    /// internal digits holding a value that is truly less than the
-    /// modulus.
-    ///
-    /// This can be done n mod (2^m - c) using a single add and small
-    /// multiply as follows: we can detect overflow by doing
-    /// carry_out(n + c), thus, we can normalize the number by doing
-    /// n - (carry_out(n + c) * (2^m - c))
-    fn normalize(&mut self);
-
-    /// Normalize self and compare for equality.
-    fn normalize_self_eq(&mut self, other: &Self) -> bool;
-
-    /// Normalize both arguments and compare for equality.
-    fn normalize_eq(&mut self, other: &mut Self) -> bool;
 
     /// Normalize both arguments and bitwise-and assign.
     fn normalize_bitand(&mut self, rhs: &mut Self);
@@ -123,4 +108,12 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
 
     /// Multiply by a single digit (represented as an i32).
     fn small_mul(&self, b: i32) -> Self;
+}
+
+pub trait PrimeFieldMask {
+    /// Set every bit of this number to the given bit.
+    fn fill(&mut self, bit: bool);
+
+    /// Generate a mask consisting entirely of the given bit.
+    fn filled(bit: bool) -> Self;
 }

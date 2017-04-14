@@ -1,4 +1,6 @@
 use field::prime_field::PrimeField;
+use normalize::Normalize;
+use normalize::NormalizeEq;
 use pack::Pack;
 use rand::Rand;
 use rand::Rng;
@@ -1547,6 +1549,40 @@ impl Pack for Mod_e511_187 {
     }
 }
 
+impl Normalize for Mod_e511_187 {
+    fn normalize(&mut self) {
+        let plusc = &*self + (C_VAL as i32);
+        let offset = &MODULUS * (plusc.carry_out() as i32);
+        *self -= &offset;
+    }
+}
+
+impl NormalizeEq for Mod_e511_187 {
+    fn normalize_self_eq(&mut self, other: &Self) -> bool {
+        let mut are_equal: bool = true;
+
+        self.normalize();
+
+        are_equal &= self[0] == other[0];
+        are_equal &= self[1] == other[1];
+        are_equal &= self[2] == other[2];
+        are_equal &= self[3] == other[3];
+        are_equal &= self[4] == other[4];
+        are_equal &= self[5] == other[5];
+        are_equal &= self[6] == other[6];
+        are_equal &= self[7] == other[7];
+        are_equal &= self[8] == other[8];
+        are_equal &= self[9] == other[9];
+
+        are_equal
+    }
+
+    fn normalize_eq(&mut self, other: &mut Self) -> bool {
+        other.normalize();
+        self.normalize_self_eq(other)
+    }
+}
+
 impl PrimeField for Mod_e511_187 {
     fn fill(&mut self, bit: bool) {
         let mut mask = bit as i64;
@@ -1595,44 +1631,6 @@ impl PrimeField for Mod_e511_187 {
     fn bit(&mut self, idx: usize) -> bool {
         self.normalize();
         self.bit_normalized(idx)
-    }
-
-    fn normalize(&mut self) {
-        let plusc = &*self + (C_VAL as i32);
-        let offset = &MODULUS * (plusc.carry_out() as i32);
-        *self -= &offset;
-    }
-
-    fn normalize_self_eq(&mut self, other: &Self) -> bool {
-        let mut are_equal: bool = true;
-
-        self.normalize();
-
-        are_equal &= self[0] == other[0];
-        are_equal &= self[1] == other[1];
-        are_equal &= self[2] == other[2];
-        are_equal &= self[3] == other[3];
-        are_equal &= self[4] == other[4];
-        are_equal &= self[5] == other[5];
-        are_equal &= self[6] == other[6];
-        are_equal &= self[7] == other[7];
-        are_equal &= self[8] == other[8];
-        are_equal &= self[9] == other[9];
-
-        are_equal
-    }
-
-    fn normalize_eq(&mut self, other: &mut Self) -> bool {
-        let mut are_equal: bool = true;
-
-        self.normalize();
-        other.normalize();
-
-        for i in 0..10 {
-            are_equal &= self[i] == other[i];
-        }
-
-        are_equal
     }
 
     fn normalize_bitand(&mut self, rhs: &mut Self) {
