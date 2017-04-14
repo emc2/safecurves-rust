@@ -149,14 +149,6 @@ impl Mod_e383_187 {
         out
     }
 
-    /// Serialize an already normalized number as a little-endian byte
-    /// array.  This must only be used on a normalized value.
-    fn packed_normalized(&self) -> [u8; 48] {
-        let mut out = [0u8; 48];
-        self.pack_normalized(&mut out);
-        out
-    }
-
     fn quartic_legendre(&self) -> Self {
         // First digit is 1.
         let mut sqval = self.clone();
@@ -1248,24 +1240,25 @@ impl PrimeField for Mod_e383_187 {
     }
 
     fn normalize_self_eq(&mut self, other: &Self) -> bool {
-        let self_bytes =  self.packed();
-        let other_bytes = other.packed_normalized();
         let mut are_equal: bool = true;
 
-        for i in 0..48 {
-            are_equal &= self_bytes[i] == other_bytes[i];
+        self.normalize();
+
+        for i in 0..7 {
+            are_equal &= self[i] == other[i];
         }
 
         are_equal
     }
 
     fn normalize_eq(&mut self, other: &mut Self) -> bool {
-        let self_bytes =  self.packed();
-        let other_bytes = other.packed();
         let mut are_equal: bool = true;
 
-        for i in 0..48 {
-            are_equal &= self_bytes[i] == other_bytes[i];
+        self.normalize();
+        other.normalize();
+
+        for i in 0..7 {
+            are_equal &= self[i] == other[i];
         }
 
         are_equal

@@ -124,14 +124,6 @@ impl Mod_e221_3 {
         out
     }
 
-    /// Serialize an already normalized number as a little-endian byte
-    /// array.  This must only be used on a normalized value.
-    fn packed_normalized(&self) -> [u8; 28] {
-        let mut out = [0u8; 28];
-        self.pack_normalized(&mut out);
-        out
-    }
-
     /// Similar to the Legendre symbol, but for quartic
     /// residues/non-residues.
     fn quartic_legendre(&self) -> Self {
@@ -870,24 +862,25 @@ impl PrimeField for Mod_e221_3 {
     }
 
     fn normalize_self_eq(&mut self, other: &Self) -> bool {
-        let self_bytes =  self.packed();
-        let other_bytes = other.packed_normalized();
         let mut are_equal: bool = true;
 
-        for i in 0..28 {
-            are_equal &= self_bytes[i] == other_bytes[i];
+        self.normalize();
+
+        for i in 0..4 {
+            are_equal &= self[i] == other[i];
         }
 
         are_equal
     }
 
     fn normalize_eq(&mut self, other: &mut Self) -> bool {
-        let self_bytes =  self.packed();
-        let other_bytes = other.packed();
         let mut are_equal: bool = true;
 
-        for i in 0..28 {
-            are_equal &= self_bytes[i] == other_bytes[i];
+        self.normalize();
+        other.normalize();
+
+        for i in 0..4 {
+            are_equal &= self[i] == other[i];
         }
 
         are_equal

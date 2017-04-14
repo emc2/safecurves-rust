@@ -134,14 +134,6 @@ impl Mod_e521_1 {
         self.pack(&mut out);
         out
     }
-
-    /// Serialize an already normalized number as a little-endian byte
-    /// array.  This must only be used on a normalized value.
-    fn packed_normalized(&self) -> [u8; 66] {
-        let mut out = [0u8; 66];
-        self.pack_normalized(&mut out);
-        out
-    }
 }
 
 impl IndexMut<usize> for Mod_e521_1 {
@@ -1595,24 +1587,25 @@ impl PrimeField for Mod_e521_1 {
     }
 
     fn normalize_self_eq(&mut self, other: &Self) -> bool {
-        let self_bytes =  self.packed();
-        let other_bytes = other.packed_normalized();
         let mut are_equal: bool = true;
 
-        for i in 0..66 {
-            are_equal &= self_bytes[i] == other_bytes[i];
+        self.normalize();
+
+        for i in 0..10 {
+            are_equal &= self[i] == other[i];
         }
 
         are_equal
     }
 
     fn normalize_eq(&mut self, other: &mut Self) -> bool {
-        let self_bytes =  self.packed();
-        let other_bytes = other.packed();
         let mut are_equal: bool = true;
 
-        for i in 0..66 {
-            are_equal &= self_bytes[i] == other_bytes[i];
+        self.normalize();
+        other.normalize();
+
+        for i in 0..10 {
+            are_equal &= self[i] == other[i];
         }
 
         are_equal
