@@ -1010,9 +1010,11 @@ impl PrimeField for Mod_e255_19 {
         self.normalize();
         other.normalize();
 
-        for i in 0..5 {
-            are_equal &= self[i] == other[i];
-        }
+        are_equal &= self[0] == other[0];
+        are_equal &= self[1] == other[1];
+        are_equal &= self[2] == other[2];
+        are_equal &= self[3] == other[3];
+        are_equal &= self[4] == other[4];
 
         are_equal
     }

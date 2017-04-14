@@ -1610,9 +1610,16 @@ impl PrimeField for Mod_e511_187 {
 
         self.normalize();
 
-        for i in 0..10 {
-            are_equal &= self[i] == other[i];
-        }
+        are_equal &= self[0] == other[0];
+        are_equal &= self[1] == other[1];
+        are_equal &= self[2] == other[2];
+        are_equal &= self[3] == other[3];
+        are_equal &= self[4] == other[4];
+        are_equal &= self[5] == other[5];
+        are_equal &= self[6] == other[6];
+        are_equal &= self[7] == other[7];
+        are_equal &= self[8] == other[8];
+        are_equal &= self[9] == other[9];
 
         are_equal
     }
