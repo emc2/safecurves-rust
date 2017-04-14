@@ -24,7 +24,7 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
     Sub<i32, Output = Self> + Sub<i16, Output = Self> +
     Sub<i8, Output = Self> + Sub<Self, Output = Self> {
     /// Get the number of bits in the number.
-    fn nbits() -> i32;
+    fn nbits() -> usize;
 
     /// Get the bit given by idx.  This normalizes the internal representation.
     fn bit(&mut self, idx: usize) -> bool;
@@ -54,6 +54,24 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
 
     /// Normalize both arguments and compare for equality.
     fn normalize_eq(&mut self, other: &mut Self) -> bool;
+
+    /// Normalize both arguments and bitwise-and assign.
+    fn normalize_bitand(&mut self, rhs: &mut Self);
+
+    /// Normalize self and bitwise-and assign.
+    fn normalize_self_bitand(&mut self, rhs: &Self);
+
+    /// Bitwise-and assign with both arguments normalized.
+    fn normalized_bitand(&mut self, rhs: &Self);
+
+    /// Normalize both arguments and bitwise-or assign.
+    fn normalize_bitor(&mut self, rhs: &mut Self);
+
+    /// Normalize self and bitwise-or assign.
+    fn normalize_self_bitor(&mut self, rhs: &Self);
+
+    /// Bitwise-or assign with both arguments normalized.
+    fn normalized_bitor(&mut self, rhs: &Self);
 
     /// Get the representation of the value 0.
     fn zero() -> Self;

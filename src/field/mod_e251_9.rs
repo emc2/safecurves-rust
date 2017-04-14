@@ -914,9 +914,7 @@ impl PrimeField for Mod_e251_9 {
         Mod_e251_9([mask; 5])
     }
 
-    fn nbits() -> i32 {
-        251
-    }
+    fn nbits() -> usize { 251 }
 
     fn bit_normalized(&self, idx: usize) -> bool {
         let byte = idx / 56;
@@ -961,6 +959,42 @@ impl PrimeField for Mod_e251_9 {
         are_equal &= self[4] == other[4];
 
         are_equal
+    }
+
+    fn normalize_bitand(&mut self, rhs: &mut Self) {
+        rhs.normalize();
+        self.normalize_self_bitand(rhs);
+    }
+
+    fn normalize_self_bitand(&mut self, rhs: &Self) {
+        self.normalize();
+        self.normalized_bitand(rhs);
+    }
+
+    fn normalized_bitand(&mut self, rhs: &Self) {
+        self[0] &= rhs[0];
+        self[1] &= rhs[1];
+        self[2] &= rhs[2];
+        self[3] &= rhs[3];
+        self[4] &= rhs[4];
+    }
+
+    fn normalize_bitor(&mut self, rhs: &mut Self) {
+        rhs.normalize();
+        self.normalize_self_bitor(rhs);
+    }
+
+    fn normalize_self_bitor(&mut self, rhs: &Self) {
+        self.normalize();
+        self.normalized_bitor(rhs);
+    }
+
+    fn normalized_bitor(&mut self, rhs: &Self) {
+        self[0] |= rhs[0];
+        self[1] |= rhs[1];
+        self[2] |= rhs[2];
+        self[3] |= rhs[3];
+        self[4] |= rhs[4];
     }
 
     fn zero() -> Self {

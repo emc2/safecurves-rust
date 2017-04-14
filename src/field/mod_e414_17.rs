@@ -1246,9 +1246,7 @@ impl PrimeField for Mod_e414_17 {
         Mod_e414_17([mask; 8])
     }
 
-    fn nbits() -> i32 {
-        414
-    }
+    fn nbits() -> usize { 414 }
 
     fn bit_normalized(&self, idx: usize) -> bool {
         let byte = idx / 56;
@@ -1296,6 +1294,48 @@ impl PrimeField for Mod_e414_17 {
         are_equal &= self[7] == other[7];
 
         are_equal
+    }
+
+    fn normalize_bitand(&mut self, rhs: &mut Self) {
+        rhs.normalize();
+        self.normalize_self_bitand(rhs);
+    }
+
+    fn normalize_self_bitand(&mut self, rhs: &Self) {
+        self.normalize();
+        self.normalized_bitand(rhs);
+    }
+
+    fn normalized_bitand(&mut self, rhs: &Self) {
+        self[0] &= rhs[0];
+        self[1] &= rhs[1];
+        self[2] &= rhs[2];
+        self[3] &= rhs[3];
+        self[4] &= rhs[4];
+        self[5] &= rhs[5];
+        self[6] &= rhs[6];
+        self[7] &= rhs[7];
+    }
+
+    fn normalize_bitor(&mut self, rhs: &mut Self) {
+        rhs.normalize();
+        self.normalize_self_bitor(rhs);
+    }
+
+    fn normalize_self_bitor(&mut self, rhs: &Self) {
+        self.normalize();
+        self.normalized_bitor(rhs);
+    }
+
+    fn normalized_bitor(&mut self, rhs: &Self) {
+        self[0] |= rhs[0];
+        self[1] |= rhs[1];
+        self[2] |= rhs[2];
+        self[3] |= rhs[3];
+        self[4] |= rhs[4];
+        self[5] |= rhs[5];
+        self[6] |= rhs[6];
+        self[7] |= rhs[7];
     }
 
     fn zero() -> Mod_e414_17 {

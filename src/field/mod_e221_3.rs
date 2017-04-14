@@ -880,9 +880,7 @@ impl PrimeField for Mod_e221_3 {
         Mod_e221_3([mask; 4])
     }
 
-    fn nbits() -> i32 {
-        221
-    }
+    fn nbits() -> usize { 221 }
 
     fn bit_normalized(&self, idx: usize) -> bool {
         let byte = idx / 58;
@@ -907,9 +905,10 @@ impl PrimeField for Mod_e221_3 {
 
         self.normalize();
 
-        for i in 0..4 {
-            are_equal &= self[i] == other[i];
-        }
+        are_equal &= self[0] == other[0];
+        are_equal &= self[1] == other[1];
+        are_equal &= self[2] == other[2];
+        are_equal &= self[3] == other[3];
 
         are_equal
     }
@@ -925,6 +924,40 @@ impl PrimeField for Mod_e221_3 {
         }
 
         are_equal
+    }
+
+    fn normalize_bitand(&mut self, rhs: &mut Self) {
+        rhs.normalize();
+        self.normalize_self_bitand(rhs);
+    }
+
+    fn normalize_self_bitand(&mut self, rhs: &Self) {
+        self.normalize();
+        self.normalized_bitand(rhs);
+    }
+
+    fn normalized_bitand(&mut self, rhs: &Self) {
+        self[0] &= rhs[0];
+        self[1] &= rhs[1];
+        self[2] &= rhs[2];
+        self[3] &= rhs[3];
+    }
+
+    fn normalize_bitor(&mut self, rhs: &mut Self) {
+        rhs.normalize();
+        self.normalize_self_bitor(rhs);
+    }
+
+    fn normalize_self_bitor(&mut self, rhs: &Self) {
+        self.normalize();
+        self.normalized_bitor(rhs);
+    }
+
+    fn normalized_bitor(&mut self, rhs: &Self) {
+        self[0] |= rhs[0];
+        self[1] |= rhs[1];
+        self[2] |= rhs[2];
+        self[3] |= rhs[3];
     }
 
     fn zero() -> Self {
