@@ -31,7 +31,7 @@ use std::ops::Neg;
 /// of this kind.
 
 #[derive(Copy, Clone)]
-pub struct Mod_e251_9(pub [i64; 5]);
+pub struct Mod_e251_9([i64; 5]);
 
 const C_VAL: i64 = 9;
 
@@ -52,6 +52,26 @@ pub const MODULUS: Mod_e251_9 =
     Mod_e251_9([ 0x00fffffffffffff7, 0x00ffffffffffffff,
                  0x00ffffffffffffff, 0x00ffffffffffffff,
                  0x0000000007ffffff ]);
+
+pub const CURVE1174_D: Mod_e251_9 =
+    Mod_e251_9([ 0x00fffffffffffb61, 0x00ffffffffffffff,
+                 0x00ffffffffffffff, 0x00ffffffffffffff,
+                 0x0000000007ffffff ]);
+
+pub const CURVE1174_BASE_X: Mod_e251_9 =
+    Mod_e251_9([ 0x00123f27bce29eda, 0x00d96a492ecd6516,
+                 0x00e7c029a190c021, 0x00ea308c479343ae,
+                 0x00000000037fbb0c ]);
+
+pub const CURVE1174_BASE_Y: Mod_e251_9 =
+    Mod_e251_9([ 0x00ccb1bf9b46360e, 0x00dee2af3f976ba4,
+                 0x001169840e0c4fe2, 0x00d47fb7cc665684,
+                 0x0000000006b72f82 ]);
+
+pub const CURVE1174_ORDER: Mod_e251_9 =
+    Mod_e251_9([ 0x0044d45fd166c971, 0x0065c4dfd3073489,
+                 0x00fffffffffff779, 0x00ffffffffffffff,
+                 0x0000000001ffffff ]);
 
 impl Debug for Mod_e251_9 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {

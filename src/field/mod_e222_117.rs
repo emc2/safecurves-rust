@@ -51,6 +51,19 @@ pub const MODULUS: Mod_e222_117 =
     Mod_e222_117([ 0x03ffffffffffff8b, 0x03ffffffffffffff,
                    0x03ffffffffffffff, 0x0000ffffffffffff ]);
 
+/// The d value in the Edwards curve equation x^2 + y^2 = 1 + dx^2y^2.
+pub const E222_D: Mod_e222_117 = Mod_e222_117([ 0x27166, 0, 0, 0 ]);
+
+pub const E222_BASE_X: Mod_e222_117 =
+    Mod_e222_117([ 0x036eb2bc3eb54e51, 0x005b41f08eb6acdc,
+                   0x009e55c9768c3033, 0x000066c4aec55a8e ]);
+
+pub const E222_BASE_Y: Mod_e222_117 = Mod_e222_117([ 0x1c, 0, 0, 0 ]);
+
+pub const E222_ORDER: Mod_e222_117 =
+    Mod_e222_117([ 0x0002f31423598cbf, 0x03fdc32f257a4cbe,
+                   0x03ffffffffffffff, 0x00003fffffffffff ]);
+
 impl Debug for Mod_e222_117 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e222_117: [ {:x}", &self[0]));

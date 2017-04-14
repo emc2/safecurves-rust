@@ -57,6 +57,30 @@ pub const MODULUS: Mod_e521_1 =
                  0x003fffffffffffff, 0x003fffffffffffff,
                  0x003fffffffffffff, 0x00000007ffffffff ]);
 
+pub const E521_D: Mod_e521_1 =
+    Mod_e521_1([ 0x003ffffffffa4331, 0x003fffffffffffff,
+                 0x003fffffffffffff, 0x003fffffffffffff,
+                 0x003fffffffffffff, 0x003fffffffffffff,
+                 0x003fffffffffffff, 0x003fffffffffffff,
+                 0x003fffffffffffff, 0x00000007ffffffff ]);
+
+pub const E521_BASE_X: Mod_e521_1 =
+    Mod_e521_1([ 0x002a940a2f19ba6c, 0x002c4cd920e2a8c0,
+                 0x0028fc99c6059d0f, 0x00090d2c6ba52755,
+                 0x003913f6ecc5ccc7, 0x00322fcf27031880,
+                 0x003d9f42fc6c818e, 0x002c8a5aca1e28ef,
+                 0x0008648b189df90c, 0x00000001d4b2d171 ]);
+
+pub const E521_BASE_Y: Mod_e521_1 =
+    Mod_e521_1([ 0xc, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+
+pub const E521_ORDER: Mod_e521_1 =
+    Mod_e521_1([ 0x002a2435f5180d6b, 0x00115a6a3c7d1503,
+                 0x0027ec53f04fbd8c, 0x003f217dcdae2bd7,
+                 0x003ffd15b6c64746, 0x003fffffffffffff,
+                 0x003fffffffffffff, 0x003fffffffffffff,
+                 0x003fffffffffffff, 0x00000001ffffffff ]);
+
 impl Debug for Mod_e521_1 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e521_1: [ {:x}", &self[0]));

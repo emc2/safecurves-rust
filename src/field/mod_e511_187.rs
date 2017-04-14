@@ -72,6 +72,22 @@ const COEFF: Mod_e511_187 =
                    0x002d9d627c653c0c, 0x000374d6bf19ff2c,
                    0x00205ac73ca62d36, 0x00000000003b3695 ]);
 
+pub const M511_BASE_X: Mod_e511_187 =
+    Mod_e511_187([ 0x5, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
+
+pub const M511_BASE_Y: Mod_e511_187 =
+    Mod_e511_187([ 0x00230a64af056fa5, 0x002f2950824ea257,
+                   0x000455940abe9f1d, 0x00290f6fd24c22b1,
+                   0x000809422b9429e8, 0x0007b8fe58e26e43,
+                   0x002399ac1cf8f6e0, 0x002eb4d52ed2234c,
+                   0x002d8530803d28fd, 0x0000000000bef702 ]);
+
+pub const M511_ORDER: Mod_e511_187 =
+    Mod_e511_187([ 0x000c15bab76baf1b, 0x00010a9aa842fe95,
+                   0x003d13779a2ac125, 0x0031fd59deacabba,
+                   0x00000017b5feff30, 0, 0, 0, 0,
+                   0x0000000000400000 ]);
+
 impl Debug for Mod_e511_187 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e511_187: [ {:x}", &self[0]));

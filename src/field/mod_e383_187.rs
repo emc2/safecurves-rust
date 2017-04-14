@@ -68,6 +68,33 @@ const COEFF: Mod_e383_187 =
                    0x0015c9a422471129, 0x00730f48097cfdb0,
                    0x000024617df95ff4 ]);
 
+pub const M383_BASE_X: Mod_e383_187 = Mod_e383_187([ 0xc, 0, 0, 0, 0, 0, 0 ]);
+
+pub const M383_BASE_Y: Mod_e383_187 =
+    Mod_e383_187([ 0x009991b62555e77e, 0x002e7d0b6e332e96,
+                   0x001290f617aa1f1b, 0x00e8988abd399286,
+                   0x00a0f328e7c165f0, 0x0034af310e304b2d,
+                   0x00001ec7ed04aaf8 ]);
+
+pub const M383_ORDER: Mod_e383_187 =
+    Mod_e383_187([ 0x00bbc225be9071d7, 0x00576f7b1b249e46,
+                   0x0073ac36ba6e7a32, 0x000000000006c796,
+                   0, 0, 0x0000100000000000 ]);
+
+pub const CURVE383187_BASE_X: Mod_e383_187 =
+    Mod_e383_187([ 0x5, 0, 0, 0, 0, 0, 0 ]);
+
+pub const CURVE383187_BASE_Y: Mod_e383_187 =
+    Mod_e383_187([ 0x0088457dd5ce46df, 0x003620c31af33707,
+                   0x0055ab3cbd7c224e, 0x007a11f2c89865f8,
+                   0x004a32370471965c, 0x001896732b12d550,
+                   0x00001eebe07dc187 ]);
+
+pub const CURVE383187_ORDER: Mod_e383_187 =
+    Mod_e383_187([ 0x00f72088b00a0e21, 0x00ae84b2b7030446,
+                   0x005287a1488acd41, 0x00000000000e85a8,
+                   0, 0, 0x0000100000000000 ]);
+
 impl Debug for Mod_e383_187 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e383_187: [ {:x}", &self[0]));

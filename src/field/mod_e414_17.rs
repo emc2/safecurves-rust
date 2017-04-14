@@ -55,6 +55,24 @@ pub const MODULUS: Mod_e414_17 =
                   0x00ffffffffffffff, 0x00ffffffffffffff,
                   0x00ffffffffffffff, 0x00000000003fffff ]);
 
+pub const CURVE41417_D: Mod_e414_17 =
+    Mod_e414_17([ 3617, 0, 0, 0, 0, 0, 0, 0 ]);
+
+pub const CURVE41417_BASE_X: Mod_e414_17 =
+    Mod_e414_17([ 0x00fd3812f3cbc595, 0x0073faa8537c64c4,
+                  0x004d6d6ba111301a, 0x00f57ff35498a4ab,
+                  0x0046369f44c03ec7, 0x00c0631c326e5fcd,
+                  0x0005141443300218, 0x00000000001a3349 ]);
+
+pub const CURVE41417_BASE_Y: Mod_e414_17 =
+    Mod_e414_17([ 0x22, 0, 0, 0, 0, 0, 0, 0 ]);
+
+pub const CURVE41417_ORDER: Mod_e414_17 =
+    Mod_e414_17([ 0x000e71a5e106af79, 0x000338ad63cf181b,
+                  0x00cf706022b36f1c, 0x00ffffeb3cc92414,
+                  0x00ffffffffffffff, 0x00ffffffffffffff,
+                  0x00ffffffffffffff, 0x000000000007ffff ]);
+
 impl Debug for Mod_e414_17 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e414_17: [ {:x}", &self[0]));

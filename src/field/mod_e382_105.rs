@@ -55,6 +55,26 @@ pub const MODULUS: Mod_e382_105 =
                    0x00ffffffffffffff, 0x00ffffffffffffff,
                    0x00003fffffffffff ]);
 
+pub const E382_D: Mod_e382_105 =
+    Mod_e382_105([ 0x00fffffffffef8e1, 0x00ffffffffffffff,
+                   0x00ffffffffffffff, 0x00ffffffffffffff,
+                   0x00ffffffffffffff, 0x00ffffffffffffff,
+                   0x00003fffffffffff ]);
+
+pub const E382_BASE_X: Mod_e382_105 =
+    Mod_e382_105([ 0x00c0cc9470f79603, 0x007dbce8105398eb,
+                   0x00b8536484119351, 0x002b0b64352923ba,
+                   0x008d20ae68f84003, 0x000391e5f05be96e,
+                   0x0000196f8dd0eab2 ]);
+
+pub const E382_BASE_Y: Mod_e382_105 = Mod_e382_105([ 0x11, 0, 0, 0, 0, 0, 0 ]);
+
+pub const E382_ORDER: Mod_e382_105 =
+    Mod_e382_105([ 0x00e27e13fd3c9719, 0x0069281b102d2773,
+                   0x00f21e95eee17c5e, 0x00ffffffffd5fb21,
+                   0x00ffffffffffffff, 0x00ffffffffffffff,
+                   0x00000fffffffffff ]);
+
 impl Debug for Mod_e382_105 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e382_105: [ {:x}", &self[0]));

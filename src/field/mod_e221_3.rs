@@ -60,6 +60,16 @@ const COEFF: Mod_e221_3 =
     Mod_e221_3([ 0x02b158a371015617, 0x0393918499ec8f01,
                  0x00dd6e73800ee6c4, 0x00002301b5e2218f ]);
 
+pub const M221_BASE_X: Mod_e221_3 = Mod_e221_3([ 0x4, 0, 0, 0 ]);
+
+pub const M221_BASE_Y: Mod_e221_3 =
+    Mod_e221_3([ 0x0307dc6c08c5056d, 0x01f08a39876ffc41,
+                 0x01571d1cef14eca3, 0x00003deb374a924e ]);
+
+pub const M221_ORDER: Mod_e221_3 =
+    Mod_e221_3([ 0x02f77f005042605b, 0x00056823b5cc3a28,
+                 0, 0x0000100000000000 ]);
+
 impl Debug for Mod_e221_3 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e221_3: [ {:x}", &self[0]));

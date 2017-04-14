@@ -64,6 +64,18 @@ const COEFF: Mod_e255_19 =
                   0x00993dfbd7a72f43, 0x004fc1df0b2b4d00,
                   0x000000002b832480 ]);
 
+pub const CURVE25519_BASE_X: Mod_e255_19 = Mod_e255_19([ 0x9, 0, 0, 0, 0]);
+
+pub const CURVE25519_BASE_Y: Mod_e255_19 =
+    Mod_e255_19([ 0x00e9c5a27eced3d9, 0x004d7e6d7c61b229,
+                  0x002c7748d14c923d, 0x00b8a086b4e01edd,
+                  0x0000000020ae19a1 ]);
+
+pub const CURVE25519_ORDER: Mod_e255_19 =
+    Mod_e255_19([ 0x0012631a5cf5d3ed, 0x00f9dea2f79cd658,
+                  0x00000000000014de, 0x0000000000000000,
+                  0x0000000010000000 ]);
+
 impl Debug for Mod_e255_19 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         try!(write!(f, "Mod_e255_19: [ {:x}", &self[0]));
