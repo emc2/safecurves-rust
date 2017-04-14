@@ -92,6 +92,11 @@ impl<C: EdwardsCurve> Point for EdwardsExtended<C> {
     }
 
     fn scalar_mult_normalized(&mut self, rhs: &Self::Scalar) {
+        // This is a branchless variant of the classic Montgomery
+        // ladder using bitwise operations in lieu of branches.  It
+        // costs an additional doubling operation per step, but
+        // eliminates all control-flow dependence on the data.
+
         let mut r0 = Self::zero();
         let mut r1 = self.clone();
         let nbits = C::Scalar::nbits();
@@ -116,25 +121,25 @@ impl<C: EdwardsCurve> Point for EdwardsExtended<C> {
             r0.z.normalized_bitand(&fmask);
             r0.t.normalized_bitand(&fmask);
 
-            r1.x.normalized_bitand(&tmask);
-            r1.y.normalized_bitand(&tmask);
-            r1.z.normalized_bitand(&tmask);
-            r1.t.normalized_bitand(&tmask);
-
             r0d.x.normalize_self_bitand(&tmask);
             r0d.y.normalize_self_bitand(&tmask);
             r0d.z.normalize_self_bitand(&tmask);
             r0d.t.normalize_self_bitand(&tmask);
 
-            r1d.x.normalize_self_bitand(&fmask);
-            r1d.y.normalize_self_bitand(&fmask);
-            r1d.z.normalize_self_bitand(&fmask);
-            r1d.t.normalize_self_bitand(&fmask);
-
             r0.x.normalized_bitor(&r0d.x);
             r0.y.normalized_bitor(&r0d.y);
             r0.z.normalized_bitor(&r0d.z);
             r0.t.normalized_bitor(&r0d.t);
+
+            r1.x.normalized_bitand(&tmask);
+            r1.y.normalized_bitand(&tmask);
+            r1.z.normalized_bitand(&tmask);
+            r1.t.normalized_bitand(&tmask);
+
+            r1d.x.normalize_self_bitand(&fmask);
+            r1d.y.normalize_self_bitand(&fmask);
+            r1d.z.normalize_self_bitand(&fmask);
+            r1d.t.normalize_self_bitand(&fmask);
 
             r1.x.normalized_bitor(&r1d.x);
             r1.y.normalized_bitor(&r1d.y);
