@@ -110,6 +110,12 @@ pub trait PrimeField : Add<i32, Output = Self> + Add<i16, Output = Self> +
     fn small_mul(&self, b: i32) -> Self;
 }
 
+/// Bitmasks corresponding to a PrimeField type.  These are used as
+/// arguments to bitwise and operations to retain or clear entire
+/// PrimeField elements at once.
+///
+/// The primary use of this is to replace some branch operations with
+/// bitwise tricks to eliminate data-dependent control-flow branches.
 pub trait PrimeFieldMask {
     /// Set every bit of this number to the given bit.
     fn fill(&mut self, bit: bool);

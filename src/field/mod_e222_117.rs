@@ -1,4 +1,5 @@
 use field::prime_field::PrimeField;
+use field::prime_field::PrimeFieldMask;
 use normalize::Normalize;
 use normalize::NormalizeEq;
 use pack::Pack;
@@ -12,8 +13,6 @@ use std::ops::AddAssign;
 use std::ops::Add;
 use std::ops::DivAssign;
 use std::ops::Div;
-use std::ops::Index;
-use std::ops::IndexMut;
 use std::ops::Neg;
 use std::ops::MulAssign;
 use std::ops::Mul;
@@ -35,6 +34,10 @@ use std::ops::Sub;
 #[derive(Copy, Clone)]
 pub struct Mod_e222_117([i64; 4]);
 
+/// Bitmasks corresponding to Mod_e222_117.
+#[derive(Copy, Clone)]
+pub struct Mod_e222_117_Mask([i64; 4]);
+
 const C_VAL: i64 = 117;
 
 /// The normalized representation of the value 0.
@@ -53,25 +56,31 @@ pub const MODULUS: Mod_e222_117 =
     Mod_e222_117([ 0x03ffffffffffff8b, 0x03ffffffffffffff,
                    0x03ffffffffffffff, 0x0000ffffffffffff ]);
 
-/// The d value in the Edwards curve equation x^2 + y^2 = 1 + dx^2y^2.
+/// The d value 160102 in the Edwards curve equation x^2 + y^2 = 1 +
+/// dx^2 y^2 for E-222.
 pub const E222_D: Mod_e222_117 = Mod_e222_117([ 0x27166, 0, 0, 0 ]);
 
+/// The x-coordinate of the base point of the curve E-222,
+/// 0x19b12bb156a389e55c9768c303316d07c23adab3736eb2bc3eb54e51.
 pub const E222_BASE_X: Mod_e222_117 =
     Mod_e222_117([ 0x036eb2bc3eb54e51, 0x005b41f08eb6acdc,
                    0x009e55c9768c3033, 0x000066c4aec55a8e ]);
 
+/// The y-coordinate of the base point of the curve E-222, 0x1c.
 pub const E222_BASE_Y: Mod_e222_117 = Mod_e222_117([ 0x1c, 0, 0, 0 ]);
 
+/// The prime subgroup order of the curve M-221,
+/// 2^218 + 438651314700378199859927091142747
 pub const E222_ORDER: Mod_e222_117 =
     Mod_e222_117([ 0x0002f31423598cbf, 0x03fdc32f257a4cbe,
                    0x03ffffffffffffff, 0x00003fffffffffff ]);
 
 impl Debug for Mod_e222_117 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        try!(write!(f, "Mod_e222_117: [ {:x}", &self[0]));
+        try!(write!(f, "Mod_e222_117: [ {:x}", &self.0[0]));
 
         for i in 1..4 {
-            try!(write!(f, ", {:x}", &self[i]));
+            try!(write!(f, ", {:x}", &self.0[i]));
         }
 
         write!(f, " ]")
@@ -109,7 +118,7 @@ impl Mod_e222_117 {
     /// stash the carry-out value of each operation, and feed that
     /// back into the next one.
     fn carry_out(&self) -> i64 {
-        self[3] >> 48
+        self.0[3] >> 48
     }
 
     /// Serialize a value as a little-endian byte array.  This has the
@@ -118,22 +127,6 @@ impl Mod_e222_117 {
         let mut out = [0u8; 28];
         self.pack(&mut out);
         out
-    }
-}
-
-impl IndexMut<usize> for Mod_e222_117 {
-    fn index_mut<'a>(&'a mut self, idx : usize) -> &'a mut i64 {
-        let ret : &'a mut i64 = &mut(self.0[idx]);
-        ret
-    }
-}
-
-impl Index<usize> for Mod_e222_117 {
-    type Output = i64;
-
-    fn index<'a>(&'a self, idx : usize) -> &'a i64 {
-        let ret : &'a i64 = &(self.0[idx]);
-        ret
     }
 }
 
@@ -150,15 +143,15 @@ impl Neg for Mod_e222_117 {
 
 impl<'b> AddAssign<&'b Mod_e222_117> for Mod_e222_117 {
     fn add_assign(&mut self, rhs: &'b Mod_e222_117) {
-        let a0 = self[0];
-        let a1 = self[1];
-        let a2 = self[2];
-        let a3 = self[3] & 0x0000ffffffffffff;
+        let a0 = self.0[0];
+        let a1 = self.0[1];
+        let a2 = self.0[2];
+        let a3 = self.0[3] & 0x0000ffffffffffff;
 
-        let b0 = rhs[0];
-        let b1 = rhs[1];
-        let b2 = rhs[2];
-        let b3 = rhs[3] & 0x0000ffffffffffff;
+        let b0 = rhs.0[0];
+        let b1 = rhs.0[1];
+        let b2 = rhs.0[2];
+        let b3 = rhs.0[3] & 0x0000ffffffffffff;
 
         let cin = self.carry_out() + rhs.carry_out();
         let s0 = a0 + b0 + (cin * C_VAL);
@@ -169,10 +162,10 @@ impl<'b> AddAssign<&'b Mod_e222_117> for Mod_e222_117 {
         let c2 = s2 >> 58;
         let s3 = a3 + b3 + c2;
 
-        self[0] = s0 & 0x03ffffffffffffff;
-        self[1] = s1 & 0x03ffffffffffffff;
-        self[2] = s2 & 0x03ffffffffffffff;
-        self[3] = s3;
+        self.0[0] = s0 & 0x03ffffffffffffff;
+        self.0[1] = s1 & 0x03ffffffffffffff;
+        self.0[2] = s2 & 0x03ffffffffffffff;
+        self.0[3] = s3;
     }
 }
 
@@ -322,15 +315,15 @@ impl Div<Mod_e222_117> for Mod_e222_117 {
 
 impl<'b> SubAssign<&'b Mod_e222_117> for Mod_e222_117 {
     fn sub_assign(&mut self, rhs: &'b Mod_e222_117) {
-        let a0 = self[0];
-        let a1 = self[1];
-        let a2 = self[2];
-        let a3 = self[3] & 0x0000ffffffffffff;
+        let a0 = self.0[0];
+        let a1 = self.0[1];
+        let a2 = self.0[2];
+        let a3 = self.0[3] & 0x0000ffffffffffff;
 
-        let b0 = rhs[0];
-        let b1 = rhs[1];
-        let b2 = rhs[2];
-        let b3 = rhs[3] & 0x0000ffffffffffff;
+        let b0 = rhs.0[0];
+        let b1 = rhs.0[1];
+        let b2 = rhs.0[2];
+        let b3 = rhs.0[3] & 0x0000ffffffffffff;
 
         let cin = self.carry_out() + rhs.carry_out();
         let s0 = a0 - b0 + (cin * C_VAL);
@@ -341,10 +334,10 @@ impl<'b> SubAssign<&'b Mod_e222_117> for Mod_e222_117 {
         let c2 = s2 >> 58;
         let s3 = a3 - b3 + c2;
 
-        self[0] = s0 & 0x03ffffffffffffff;
-        self[1] = s1 & 0x03ffffffffffffff;
-        self[2] = s2 & 0x03ffffffffffffff;
-        self[3] = s3;
+        self.0[0] = s0 & 0x03ffffffffffffff;
+        self.0[1] = s1 & 0x03ffffffffffffff;
+        self.0[2] = s2 & 0x03ffffffffffffff;
+        self.0[3] = s3;
     }
 }
 
@@ -458,23 +451,23 @@ impl MulAssign<i8> for Mod_e222_117 {
 
 impl<'b> MulAssign<&'b Mod_e222_117> for Mod_e222_117 {
     fn mul_assign(&mut self, rhs: &'b Mod_e222_117) {
-        let a0 = self[0] & 0x1fffffff;
-        let a1 = self[0] >> 29;
-        let a2 = self[1] & 0x1fffffff;
-        let a3 = self[1] >> 29;
-        let a4 = self[2] & 0x1fffffff;
-        let a5 = self[2] >> 29;
-        let a6 = self[3] & 0x1fffffff;
-        let a7 = self[3] >> 29;
+        let a0 = self.0[0] & 0x1fffffff;
+        let a1 = self.0[0] >> 29;
+        let a2 = self.0[1] & 0x1fffffff;
+        let a3 = self.0[1] >> 29;
+        let a4 = self.0[2] & 0x1fffffff;
+        let a5 = self.0[2] >> 29;
+        let a6 = self.0[3] & 0x1fffffff;
+        let a7 = self.0[3] >> 29;
 
-        let b0 = rhs[0] & 0x1fffffff;
-        let b1 = rhs[0] >> 29;
-        let b2 = rhs[1] & 0x1fffffff;
-        let b3 = rhs[1] >> 29;
-        let b4 = rhs[2] & 0x1fffffff;
-        let b5 = rhs[2] >> 29;
-        let b6 = rhs[3] & 0x1fffffff;
-        let b7 = rhs[3] >> 29;
+        let b0 = rhs.0[0] & 0x1fffffff;
+        let b1 = rhs.0[0] >> 29;
+        let b2 = rhs.0[1] & 0x1fffffff;
+        let b3 = rhs.0[1] >> 29;
+        let b4 = rhs.0[2] & 0x1fffffff;
+        let b5 = rhs.0[2] >> 29;
+        let b6 = rhs.0[3] & 0x1fffffff;
+        let b7 = rhs.0[3] >> 29;
 
         // Combined multiples
         let m_0_0 = a0 * b0;
@@ -648,10 +641,10 @@ impl<'b> MulAssign<&'b Mod_e222_117> for Mod_e222_117 {
         let k2_0 = s2_0 >> 58;
         let s3_0 = l3_0 + (hm3_0 & 0x0000ffffffffffff) + k2_0;
 
-        self[0] = s0_0 & 0x03ffffffffffffff;
-        self[1] = s1_0 & 0x03ffffffffffffff;
-        self[2] = s2_0 & 0x03ffffffffffffff;
-        self[3] = s3_0;
+        self.0[0] = s0_0 & 0x03ffffffffffffff;
+        self.0[1] = s1_0 & 0x03ffffffffffffff;
+        self.0[2] = s2_0 & 0x03ffffffffffffff;
+        self.0[3] = s3_0;
     }
 }
 
@@ -756,7 +749,7 @@ impl Rand for Mod_e222_117 {
         let mut out = Mod_e222_117([0i64; 4]);
 
         for i in 0..4 {
-            out[i] = rng.gen_range(0, MODULUS[i]);
+            out.0[i] = rng.gen_range(0, MODULUS.0[i]);
         }
 
         out
@@ -765,7 +758,7 @@ impl Rand for Mod_e222_117 {
 
 impl Pack for Mod_e222_117 {
     fn unpack(&mut self, bytes: &[u8]) {
-        self[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
+        self.0[0] = ((bytes[0] as i64) & 0x00000000000000ff) |
                   (((bytes[1] as i64) << 8) & 0x000000000000ff00) |
                   (((bytes[2] as i64) << 16) & 0x0000000000ff0000) |
                   (((bytes[3] as i64) << 24) & 0x00000000ff000000) |
@@ -773,7 +766,7 @@ impl Pack for Mod_e222_117 {
                   (((bytes[5] as i64) << 40) & 0x0000ff0000000000) |
                   (((bytes[6] as i64) << 48) & 0x00ff000000000000) |
                   (((bytes[7] as i64) << 56) & 0x0300000000000000);
-        self[1] = (((bytes[7] as i64) >> 2) & 0x000000000000003f) |
+        self.0[1] = (((bytes[7] as i64) >> 2) & 0x000000000000003f) |
                   (((bytes[8] as i64) << 6) & 0x0000000000003fc0) |
                   (((bytes[9] as i64) << 14) & 0x00000000003fc000) |
                   (((bytes[10] as i64) << 22) & 0x000000003fc00000) |
@@ -781,7 +774,7 @@ impl Pack for Mod_e222_117 {
                   (((bytes[12] as i64) << 38) & 0x00003fc000000000) |
                   (((bytes[13] as i64) << 46) & 0x003fc00000000000) |
                   (((bytes[14] as i64) << 54) & 0x03c0000000000000);
-        self[2] = (((bytes[14] as i64) >> 4) & 0x000000000000000f) |
+        self.0[2] = (((bytes[14] as i64) >> 4) & 0x000000000000000f) |
                   (((bytes[15] as i64) << 4) & 0x0000000000000ff0) |
                   (((bytes[16] as i64) << 12) & 0x00000000000ff000) |
                   (((bytes[17] as i64) << 20) & 0x000000000ff00000) |
@@ -789,7 +782,7 @@ impl Pack for Mod_e222_117 {
                   (((bytes[19] as i64) << 36) & 0x00000ff000000000) |
                   (((bytes[20] as i64) << 44) & 0x000ff00000000000) |
                   (((bytes[21] as i64) << 52) & 0x03f0000000000000);
-        self[3] = (((bytes[21] as i64) >> 6) & 0x0000000000000003) |
+        self.0[3] = (((bytes[21] as i64) >> 6) & 0x0000000000000003) |
                   (((bytes[22] as i64) << 2) & 0x00000000000003fc) |
                   (((bytes[23] as i64) << 10) & 0x000000000003fc00) |
                   (((bytes[24] as i64) << 18) & 0x0000000003fc0000) |
@@ -810,37 +803,37 @@ impl Pack for Mod_e222_117 {
     }
 
     fn pack_normalized(&self, bytes: &mut [u8]) {
-        bytes[0] = (self[0] & 0b11111111) as u8;
-        bytes[1] = ((self[0] >> 8) & 0b11111111) as u8;
-        bytes[2] = ((self[0] >> 16) & 0b11111111) as u8;
-        bytes[3] = ((self[0] >> 24) & 0b11111111) as u8;
-        bytes[4] = ((self[0] >> 32) & 0b11111111) as u8;
-        bytes[5] = ((self[0] >> 40) & 0b11111111) as u8;
-        bytes[6] = ((self[0] >> 48) & 0b11111111) as u8;
-        bytes[7] = (((self[0] >> 56) & 0b00000011) as u8) |
-                   (((self[1] << 2) & 0b11111100) as u8);
-        bytes[8] = ((self[1] >> 6) & 0b11111111) as u8;
-        bytes[9] = ((self[1] >> 14) & 0b11111111) as u8;
-        bytes[10] = ((self[1] >> 22) & 0b11111111) as u8;
-        bytes[11] = ((self[1] >> 30) & 0b11111111) as u8;
-        bytes[12] = ((self[1] >> 38) & 0b11111111) as u8;
-        bytes[13] = ((self[1] >> 46) & 0b11111111) as u8;
-        bytes[14] = (((self[1] >> 54) & 0b00001111) as u8) |
-                    (((self[2] << 4) & 0b11110000) as u8);
-        bytes[15] = ((self[2] >> 4) & 0b11111111) as u8;
-        bytes[16] = ((self[2] >> 12) & 0b11111111) as u8;
-        bytes[17] = ((self[2] >> 20) & 0b11111111) as u8;
-        bytes[18] = ((self[2] >> 28) & 0b11111111) as u8;
-        bytes[19] = ((self[2] >> 36) & 0b11111111) as u8;
-        bytes[20] = ((self[2] >> 44) & 0b11111111) as u8;
-        bytes[21] = (((self[2] >> 52) & 0b00111111) as u8) |
-                    (((self[3] << 6) & 0b11000000) as u8);
-        bytes[22] = ((self[3] >> 2) & 0b11111111) as u8;
-        bytes[23] = ((self[3] >> 10) & 0b11111111) as u8;
-        bytes[24] = ((self[3] >> 18) & 0b11111111) as u8;
-        bytes[25] = ((self[3] >> 26) & 0b11111111) as u8;
-        bytes[26] = ((self[3] >> 34) & 0b11111111) as u8;
-        bytes[27] = ((self[3] >> 42) & 0b00111111) as u8;
+        bytes[0] = (self.0[0] & 0b11111111) as u8;
+        bytes[1] = ((self.0[0] >> 8) & 0b11111111) as u8;
+        bytes[2] = ((self.0[0] >> 16) & 0b11111111) as u8;
+        bytes[3] = ((self.0[0] >> 24) & 0b11111111) as u8;
+        bytes[4] = ((self.0[0] >> 32) & 0b11111111) as u8;
+        bytes[5] = ((self.0[0] >> 40) & 0b11111111) as u8;
+        bytes[6] = ((self.0[0] >> 48) & 0b11111111) as u8;
+        bytes[7] = (((self.0[0] >> 56) & 0b00000011) as u8) |
+                   (((self.0[1] << 2) & 0b11111100) as u8);
+        bytes[8] = ((self.0[1] >> 6) & 0b11111111) as u8;
+        bytes[9] = ((self.0[1] >> 14) & 0b11111111) as u8;
+        bytes[10] = ((self.0[1] >> 22) & 0b11111111) as u8;
+        bytes[11] = ((self.0[1] >> 30) & 0b11111111) as u8;
+        bytes[12] = ((self.0[1] >> 38) & 0b11111111) as u8;
+        bytes[13] = ((self.0[1] >> 46) & 0b11111111) as u8;
+        bytes[14] = (((self.0[1] >> 54) & 0b00001111) as u8) |
+                    (((self.0[2] << 4) & 0b11110000) as u8);
+        bytes[15] = ((self.0[2] >> 4) & 0b11111111) as u8;
+        bytes[16] = ((self.0[2] >> 12) & 0b11111111) as u8;
+        bytes[17] = ((self.0[2] >> 20) & 0b11111111) as u8;
+        bytes[18] = ((self.0[2] >> 28) & 0b11111111) as u8;
+        bytes[19] = ((self.0[2] >> 36) & 0b11111111) as u8;
+        bytes[20] = ((self.0[2] >> 44) & 0b11111111) as u8;
+        bytes[21] = (((self.0[2] >> 52) & 0b00111111) as u8) |
+                    (((self.0[3] << 6) & 0b11000000) as u8);
+        bytes[22] = ((self.0[3] >> 2) & 0b11111111) as u8;
+        bytes[23] = ((self.0[3] >> 10) & 0b11111111) as u8;
+        bytes[24] = ((self.0[3] >> 18) & 0b11111111) as u8;
+        bytes[25] = ((self.0[3] >> 26) & 0b11111111) as u8;
+        bytes[26] = ((self.0[3] >> 34) & 0b11111111) as u8;
+        bytes[27] = ((self.0[3] >> 42) & 0b00111111) as u8;
     }
 
     fn nbytes() -> i32 {
@@ -862,10 +855,10 @@ impl NormalizeEq for Mod_e222_117 {
 
         self.normalize();
 
-        are_equal &= self[0] == other[0];
-        are_equal &= self[1] == other[1];
-        are_equal &= self[2] == other[2];
-        are_equal &= self[3] == other[3];
+        are_equal &= self.0[0] == other.0[0];
+        are_equal &= self.0[1] == other.0[1];
+        are_equal &= self.0[2] == other.0[2];
+        are_equal &= self.0[3] == other.0[3];
 
         are_equal
     }
@@ -873,6 +866,37 @@ impl NormalizeEq for Mod_e222_117 {
     fn normalize_eq(&mut self, other: &mut Self) -> bool {
         other.normalize();
         self.normalize_self_eq(other)
+    }
+}
+
+impl PrimeFieldMask for Mod_e222_117_Mask {
+    fn fill(&mut self, bit: bool) {
+        let mut mask = bit as i64;
+
+        mask |= mask << 1;
+        mask |= mask << 2;
+        mask |= mask << 4;
+        mask |= mask << 8;
+        mask |= mask << 16;
+        mask |= mask << 32;
+
+        self.0[0] = mask;
+        self.0[1] = mask;
+        self.0[2] = mask;
+        self.0[3] = mask;
+    }
+
+    fn filled(bit: bool) -> Self {
+        let mut mask = bit as i64;
+
+        mask |= mask << 1;
+        mask |= mask << 2;
+        mask |= mask << 4;
+        mask |= mask << 8;
+        mask |= mask << 16;
+        mask |= mask << 32;
+
+        Mod_e222_117_Mask([mask; 4])
     }
 }
 
@@ -887,10 +911,10 @@ impl PrimeField for Mod_e222_117 {
         mask |= mask << 16;
         mask |= mask << 32;
 
-        self[0] = mask;
-        self[1] = mask;
-        self[2] = mask;
-        self[3] = mask;
+        self.0[0] = mask;
+        self.0[1] = mask;
+        self.0[2] = mask;
+        self.0[3] = mask;
     }
 
     fn filled(bit: bool) -> Self {
@@ -912,7 +936,7 @@ impl PrimeField for Mod_e222_117 {
         let byte = idx / 58;
         let bit = idx % 58;
 
-        (self[byte] >> bit) & 0x1 == 0x1
+        (self.0[byte] >> bit) & 0x1 == 0x1
     }
 
     fn bit(&mut self, idx: usize) -> bool {
@@ -931,10 +955,10 @@ impl PrimeField for Mod_e222_117 {
     }
 
     fn normalized_bitand(&mut self, rhs: &Self) {
-        self[0] &= rhs[0];
-        self[1] &= rhs[1];
-        self[2] &= rhs[2];
-        self[3] &= rhs[3];
+        self.0[0] &= rhs.0[0];
+        self.0[1] &= rhs.0[1];
+        self.0[2] &= rhs.0[2];
+        self.0[3] &= rhs.0[3];
     }
 
     fn normalize_bitor(&mut self, rhs: &mut Self) {
@@ -948,10 +972,10 @@ impl PrimeField for Mod_e222_117 {
     }
 
     fn normalized_bitor(&mut self, rhs: &Self) {
-        self[0] |= rhs[0];
-        self[1] |= rhs[1];
-        self[2] |= rhs[2];
-        self[3] |= rhs[3];
+        self.0[0] |= rhs.0[0];
+        self.0[1] |= rhs.0[1];
+        self.0[2] |= rhs.0[2];
+        self.0[3] |= rhs.0[3];
     }
 
     fn zero() -> Mod_e222_117 {
@@ -971,14 +995,14 @@ impl PrimeField for Mod_e222_117 {
     }
 
     fn square(&mut self) {
-        let a0 = self[0] & 0x1fffffff;
-        let a1 = self[0] >> 29;
-        let a2 = self[1] & 0x1fffffff;
-        let a3 = self[1] >> 29;
-        let a4 = self[2] & 0x1fffffff;
-        let a5 = self[2] >> 29;
-        let a6 = self[3] & 0x1fffffff;
-        let a7 = self[3] >> 29;
+        let a0 = self.0[0] & 0x1fffffff;
+        let a1 = self.0[0] >> 29;
+        let a2 = self.0[1] & 0x1fffffff;
+        let a3 = self.0[1] >> 29;
+        let a4 = self.0[2] & 0x1fffffff;
+        let a5 = self.0[2] >> 29;
+        let a6 = self.0[3] & 0x1fffffff;
+        let a7 = self.0[3] >> 29;
 
         // Combined multiples
         let m_0_0 = a0 * a0;
@@ -1152,10 +1176,10 @@ impl PrimeField for Mod_e222_117 {
         let k2_0 = s2_0 >> 58;
         let s3_0 = l3_0 + (hm3_0 & 0x0000ffffffffffff) + k2_0;
 
-        self[0] = s0_0 & 0x03ffffffffffffff;
-        self[1] = s1_0 & 0x03ffffffffffffff;
-        self[2] = s2_0 & 0x03ffffffffffffff;
-        self[3] = s3_0;
+        self.0[0] = s0_0 & 0x03ffffffffffffff;
+        self.0[1] = s1_0 & 0x03ffffffffffffff;
+        self.0[2] = s2_0 & 0x03ffffffffffffff;
+        self.0[3] = s3_0;
     }
 
     fn squared(&self) -> Self {
@@ -1248,10 +1272,10 @@ impl PrimeField for Mod_e222_117 {
     }
 
     fn small_add_assign(&mut self, rhs: i32) {
-        let a0 = self[0];
-        let a1 = self[1];
-        let a2 = self[2];
-        let a3 = self[3] & 0x0000ffffffffffff;
+        let a0 = self.0[0];
+        let a1 = self.0[1];
+        let a2 = self.0[2];
+        let a3 = self.0[3] & 0x0000ffffffffffff;
 
         let b = i64::from(rhs);
 
@@ -1264,10 +1288,10 @@ impl PrimeField for Mod_e222_117 {
         let c2 = s2 >> 58;
         let s3 = a3 + c2;
 
-        self[0] = s0 & 0x03ffffffffffffff;
-        self[1] = s1 & 0x03ffffffffffffff;
-        self[2] = s2 & 0x03ffffffffffffff;
-        self[3] = s3;
+        self.0[0] = s0 & 0x03ffffffffffffff;
+        self.0[1] = s1 & 0x03ffffffffffffff;
+        self.0[2] = s2 & 0x03ffffffffffffff;
+        self.0[3] = s3;
     }
 
     fn small_add(&self, rhs: i32) -> Mod_e222_117 {
@@ -1279,10 +1303,10 @@ impl PrimeField for Mod_e222_117 {
     }
 
     fn small_sub_assign(&mut self, rhs: i32) {
-        let a0 = self[0];
-        let a1 = self[1];
-        let a2 = self[2];
-        let a3 = self[3] & 0x0000ffffffffffff;
+        let a0 = self.0[0];
+        let a1 = self.0[1];
+        let a2 = self.0[2];
+        let a3 = self.0[3] & 0x0000ffffffffffff;
 
         let b = i64::from(rhs);
 
@@ -1295,10 +1319,10 @@ impl PrimeField for Mod_e222_117 {
         let c2 = s2 >> 58;
         let s3 = a3 + c2;
 
-        self[0] = s0 & 0x03ffffffffffffff;
-        self[1] = s1 & 0x03ffffffffffffff;
-        self[2] = s2 & 0x03ffffffffffffff;
-        self[3] = s3;
+        self.0[0] = s0 & 0x03ffffffffffffff;
+        self.0[1] = s1 & 0x03ffffffffffffff;
+        self.0[2] = s2 & 0x03ffffffffffffff;
+        self.0[3] = s3;
     }
 
     fn small_sub(&self, rhs: i32) -> Mod_e222_117 {
@@ -1310,14 +1334,14 @@ impl PrimeField for Mod_e222_117 {
     }
 
     fn small_mul_assign(&mut self, rhs: i32) {
-        let a0 = self[0] & 0x1fffffff;
-        let a1 = self[0] >> 29;
-        let a2 = self[1] & 0x1fffffff;
-        let a3 = self[1] >> 29;
-        let a4 = self[2] & 0x1fffffff;
-        let a5 = self[2] >> 29;
-        let a6 = self[3] & 0x1fffffff;
-        let a7 = self[3] >> 29;
+        let a0 = self.0[0] & 0x1fffffff;
+        let a1 = self.0[0] >> 29;
+        let a2 = self.0[1] & 0x1fffffff;
+        let a3 = self.0[1] >> 29;
+        let a4 = self.0[2] & 0x1fffffff;
+        let a5 = self.0[2] >> 29;
+        let a6 = self.0[3] & 0x1fffffff;
+        let a7 = self.0[3] >> 29;
 
         let b = i64::from(rhs);
 
@@ -1339,10 +1363,10 @@ impl PrimeField for Mod_e222_117 {
         let c2 = d2 >> 58;
         let d3 = (m5 >> 29) + m6 + (m7 << 29) + c2;
 
-        self[0] = d0 & 0x03ffffffffffffff;
-        self[1] = d1 & 0x03ffffffffffffff;
-        self[2] = d2 & 0x03ffffffffffffff;
-        self[3] = d3;
+        self.0[0] = d0 & 0x03ffffffffffffff;
+        self.0[1] = d1 & 0x03ffffffffffffff;
+        self.0[2] = d2 & 0x03ffffffffffffff;
+        self.0[3] = d3;
     }
 
     fn small_mul(&self, b: i32) -> Mod_e222_117 {
@@ -1412,11 +1436,9 @@ mod tests {
 
     fn test_unpack_pack(expected: &mut Mod_e222_117) {
         let bytes = expected.packed();
-        let actual = Mod_e222_117::unpacked(&bytes);
+        let mut actual = Mod_e222_117::unpacked(&bytes);
 
-        for i in 0..4 {
-            assert!(expected[i] == actual[i]);
-        }
+        assert!(expected.normalize_eq(&mut actual));
     }
 
     #[test]
